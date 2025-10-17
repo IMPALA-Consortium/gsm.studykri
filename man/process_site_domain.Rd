@@ -4,7 +4,7 @@
 \alias{process_site_domain}
 \title{Process site metadata domain}
 \usage{
-process_site_domain(df, new_study_id, used_site_ids)
+process_site_domain(df, new_study_id, used_site_ids, generated_sites = NULL)
 }
 \description{
 Process site metadata domain

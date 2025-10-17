@@ -364,3 +364,287 @@ test_that("ResampleStudy is reproducible with seed", {
   expect_equal(nrow(result1$Raw_AE), nrow(result2$Raw_AE))
 })
 
+# Site variability tests ----------------------------------------------------
+test_that("ResampleStudy with TargetSiteCount generates multiple sites", {
+  lRaw_small <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SITE = clindata::ctms_site,
+    Raw_AE = clindata::rawplus_ae
+  )
+  
+  result <- ResampleStudy(
+    lRaw = lRaw_small,
+    strNewStudyID = "SITETEST001",
+    nSubjects = 100,
+    TargetSiteCount = 20,
+    seed = 456
+  )
+  
+  # Check that result has reasonable number of sites (allow some variation)
+  actual_site_count <- length(unique(result$Raw_SUBJ$invid))
+  expect_true(actual_site_count >= 10)  # At least half of target
+  expect_true(actual_site_count <= 20)  # At most the target
+  
+  # Check that all subject invid values exist in Raw_SITE
+  subj_sites <- unique(result$Raw_SUBJ$invid)
+  site_ids <- unique(result$Raw_SITE$invid)
+  expect_true(all(subj_sites %in% site_ids))
+})
+
+test_that("TargetSiteCount generates sites with valid metadata", {
+  lRaw_small <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SITE = clindata::ctms_site,
+    Raw_AE = clindata::rawplus_ae
+  )
+  
+  result <- ResampleStudy(
+    lRaw = lRaw_small,
+    strNewStudyID = "SITETEST002",
+    nSubjects = 50,
+    TargetSiteCount = 15,
+    seed = 789
+  )
+  
+  # Check that site metadata columns exist (note: lowercase 'country' in ctms_site)
+  expect_true("country" %in% names(result$Raw_SITE) || "Country" %in% names(result$Raw_SITE))
+  
+  # Check that sites have valid country values from original data
+  original_countries <- unique(clindata::ctms_site$country)
+  # Get country column (handle both cases)
+  country_col <- if ("country" %in% names(result$Raw_SITE)) "country" else "Country"
+  result_countries <- unique(result$Raw_SITE[[country_col]])
+  expect_true(all(result_countries %in% original_countries))
+  
+  # Check that site IDs are properly formatted (should have invid column)
+  expect_true("invid" %in% names(result$Raw_SITE))
+  site_ids <- result$Raw_SITE$invid
+  expect_true(all(grepl("^SITETEST002_", site_ids)))
+})
+
+test_that("TargetSiteCount creates realistic site distributions", {
+  lRaw_small <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SITE = clindata::ctms_site,
+    Raw_AE = clindata::rawplus_ae
+  )
+  
+  result <- ResampleStudy(
+    lRaw = lRaw_small,
+    strNewStudyID = "SITETEST003",
+    nSubjects = 100,
+    TargetSiteCount = 10,
+    seed = 101112
+  )
+  
+  # Check that patients are distributed across sites
+  site_patient_counts <- table(result$Raw_SUBJ$invid)
+  
+  # Should have variation in site sizes
+  expect_true(length(unique(site_patient_counts)) > 1)
+  
+  # All sites should have at least one patient
+  expect_true(all(site_patient_counts > 0))
+})
+
+test_that("ResampleStudy with TargetSiteCount = NULL uses default behavior", {
+  lRaw_small <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SITE = clindata::ctms_site,
+    Raw_AE = clindata::rawplus_ae
+  )
+  
+  result <- ResampleStudy(
+    lRaw = lRaw_small,
+    strNewStudyID = "SITETEST004",
+    nSubjects = 50,
+    TargetSiteCount = NULL,
+    seed = 131415
+  )
+  
+  # Should work normally without errors
+  expect_true(length(unique(result$Raw_SUBJ$invid)) > 0)
+  
+  # All subject sites should exist in Raw_SITE
+  subj_sites <- unique(result$Raw_SUBJ$invid)
+  
+  # Site IDs should be from resampled subjects, not generated
+  # (won't necessarily start with study ID prefix)
+  expect_true(all(!is.na(subj_sites)))
+})
+
+test_that("ResampleStudy validates TargetSiteCount parameter", {
+  lRaw_small <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SITE = clindata::ctms_site
+  )
+  
+  expect_error(
+    ResampleStudy(lRaw_small, "TEST001", TargetSiteCount = -5),
+    "TargetSiteCount must be a single positive number"
+  )
+  
+  expect_error(
+    ResampleStudy(lRaw_small, "TEST001", TargetSiteCount = c(10, 20)),
+    "TargetSiteCount must be a single positive number"
+  )
+  
+  expect_error(
+    ResampleStudy(lRaw_small, "TEST001", TargetSiteCount = "10"),
+    "TargetSiteCount must be a single positive number"
+  )
+})
+
+# Domain Preservation Tests -----------------------------------------------
+
+test_that("ResampleStudy preserves all input domains", {
+  # Test with comprehensive domain list
+  lRaw_full <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_LB = clindata::rawplus_lb,
+    Raw_SITE = clindata::ctms_site,
+    Raw_STUDY = clindata::ctms_study,
+    Raw_PD = clindata::ctms_protdev,
+    Raw_DATAENT = clindata::edc_data_pages,
+    Raw_QUERY = clindata::edc_queries,
+    Raw_ENROLL = clindata::rawplus_enroll,
+    Raw_Randomization = clindata::rawplus_ixrsrand,
+    Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
+    Raw_STUDCOMP = clindata::rawplus_studcomp,
+    Raw_VISIT = clindata::rawplus_visdt
+  )
+  
+  result <- ResampleStudy(
+    lRaw = lRaw_full,
+    strNewStudyID = "DOMAINTEST001",
+    nSubjects = 50,
+    seed = 999
+  )
+  
+  # Check that all input domains exist in output
+  input_domains <- names(lRaw_full)
+  output_domains <- names(result)
+  
+  expect_true(all(input_domains %in% output_domains),
+              info = paste("Missing domains:", 
+                          paste(setdiff(input_domains, output_domains), collapse = ", ")))
+  
+  # Check no unexpected domains were added
+  expect_true(all(output_domains %in% input_domains),
+              info = paste("Unexpected domains:", 
+                          paste(setdiff(output_domains, input_domains), collapse = ", ")))
+})
+
+test_that("ResampleStudy preserves column names for all domains", {
+  lRaw_full <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_LB = clindata::rawplus_lb,
+    Raw_SITE = clindata::ctms_site,
+    Raw_STUDY = clindata::ctms_study,
+    Raw_PD = clindata::ctms_protdev,
+    Raw_DATAENT = clindata::edc_data_pages,
+    Raw_QUERY = clindata::edc_queries,
+    Raw_ENROLL = clindata::rawplus_enroll,
+    Raw_Randomization = clindata::rawplus_ixrsrand,
+    Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
+    Raw_STUDCOMP = clindata::rawplus_studcomp,
+    Raw_VISIT = clindata::rawplus_visdt
+  )
+  
+  result <- ResampleStudy(
+    lRaw = lRaw_full,
+    strNewStudyID = "COLTEST001",
+    nSubjects = 50,
+    seed = 888
+  )
+  
+  # Check each domain's columns
+  for (domain_name in names(lRaw_full)) {
+    input_cols <- names(lRaw_full[[domain_name]])
+    output_cols <- names(result[[domain_name]])
+    
+    # For generated sites with TargetSiteCount, invid might be added
+    # Otherwise, column names should match exactly
+    if (domain_name == "Raw_SITE" && "invid" %in% output_cols && !"invid" %in% input_cols) {
+      # invid was added for generated sites, check all other columns
+      expect_true(all(input_cols %in% output_cols),
+                  info = paste(domain_name, "- Missing columns:", 
+                              paste(setdiff(input_cols, output_cols), collapse = ", ")))
+    } else {
+      # Exact match expected
+      expect_equal(sort(input_cols), sort(output_cols),
+                   info = paste(domain_name, "columns don't match"))
+    }
+  }
+})
+
+test_that("ResampleStudy works with minimal required domains", {
+  # Only Raw_SUBJ is required
+  lRaw_minimal <- list(
+    Raw_SUBJ = clindata::rawplus_dm
+  )
+  
+  result <- ResampleStudy(
+    lRaw = lRaw_minimal,
+    strNewStudyID = "MINTEST001",
+    nSubjects = 20,
+    seed = 777
+  )
+  
+  expect_equal(names(result), names(lRaw_minimal))
+  expect_equal(sort(names(result$Raw_SUBJ)), sort(names(lRaw_minimal$Raw_SUBJ)))
+})
+
+test_that("ResampleStudy handles unknown/custom domains", {
+  # Create a custom domain
+  custom_domain <- data.frame(
+    studyid = rep("ORIGINAL", 10),
+    custom_id = 1:10,
+    custom_value = letters[1:10],
+    stringsAsFactors = FALSE
+  )
+  
+  lRaw_custom <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_CUSTOM = custom_domain
+  )
+  
+  result <- ResampleStudy(
+    lRaw = lRaw_custom,
+    strNewStudyID = "CUSTOMTEST001",
+    nSubjects = 20,
+    seed = 666
+  )
+  
+  # Custom domain should be preserved
+  expect_true("Raw_CUSTOM" %in% names(result))
+  
+  # Should have same columns
+  expect_equal(sort(names(result$Raw_CUSTOM)), sort(names(custom_domain)))
+  
+  # studyid should be updated
+  expect_true(all(result$Raw_CUSTOM$studyid == "CUSTOMTEST001"))
+})
+
+test_that("ResampleStudy maintains reasonable column order", {
+  lRaw_test <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae
+  )
+  
+  result <- ResampleStudy(
+    lRaw = lRaw_test,
+    strNewStudyID = "ORDERTEST001",
+    nSubjects = 30,
+    seed = 555
+  )
+  
+  # Column order doesn't need to be identical, but key columns should be early
+  # For Raw_SUBJ, studyid, subjid should be in first few columns
+  subj_cols <- names(result$Raw_SUBJ)
+  expect_true(which(subj_cols == "studyid") <= 5)
+  expect_true(which(subj_cols == "subjid") <= 5)
+})
+

@@ -8,6 +8,7 @@ ResampleStudy(
   lRaw,
   strNewStudyID,
   nSubjects = NULL,
+  TargetSiteCount = NULL,
   replacement = TRUE,
   strOversamplDomain = NULL,
   vOversamplQuantileRange = c(0, 1),
@@ -21,6 +22,12 @@ ResampleStudy(
 
 \item{nSubjects}{Integer number of subjects to sample. NULL (default) samples same
 number as enrolled subjects in original data}
+
+\item{TargetSiteCount}{Numeric. Approximate target number of sites in the resampled study.
+If NULL (default), uses sites from sampled subjects naturally.
+If specified, generates approximately N sites with weighted patient distributions.
+Note: Final site count may vary as sites with zero patients are excluded.
+Must be a positive integer.}
 
 \item{replacement}{Logical indicating whether to sample with replacement (default: TRUE)}
 
@@ -45,9 +52,17 @@ This function performs the following steps:
 \enumerate{
 \item Optionally filters subjects by their activity level in a specified domain
 \item Samples subjects with or without replacement
-\item Randomizes site assignments by shuffling invid values
+\item Randomizes site assignments by shuffling invid values (or generates new sites if TargetSiteCount specified)
 \item Updates all subject, study, and site IDs across all domains
 \item Maintains referential integrity across domains
+}
+
+When \code{TargetSiteCount} is specified:
+\itemize{
+\item Generates TargetSiteCount site IDs with metadata sampled from original sites
+\item Samples patient counts per site from the distribution observed in sampled subjects
+\item Creates weighted site assignment: subjects are assigned to sites proportionally to sampled patient counts
+\item Final site count may be less than target if some sites receive no patients through sampling
 }
 
 The function handles multiple subject ID formats:
@@ -77,6 +92,15 @@ lStudy2 <- ResampleStudy(
   strOversamplDomain = "Raw_AE",
   vOversamplQuantileRange = c(0.75, 1.0),
   seed = 456
+)
+
+# Generate study with target of ~30 sites
+lStudy3 <- ResampleStudy(
+  lRaw,
+  "STUDY003",
+  nSubjects = 200,
+  TargetSiteCount = 30,
+  seed = 789
 )
 
 }

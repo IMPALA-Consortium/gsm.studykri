@@ -8,6 +8,11 @@
 #' @param strNewStudyID Character string for the new study ID
 #' @param nSubjects Integer number of subjects to sample. NULL (default) samples same
 #'   number as enrolled subjects in original data
+#' @param TargetSiteCount Numeric. Approximate target number of sites in the resampled study.
+#'   If NULL (default), uses sites from sampled subjects naturally.
+#'   If specified, generates approximately N sites with weighted patient distributions.
+#'   Note: Final site count may vary as sites with zero patients are excluded.
+#'   Must be a positive integer.
 #' @param replacement Logical indicating whether to sample with replacement (default: TRUE)
 #' @param strOversamplDomain Character string naming a domain to use for stratified sampling.
 #'   NULL (default) samples from all enrolled subjects
@@ -21,9 +26,15 @@
 #' This function performs the following steps:
 #' 1. Optionally filters subjects by their activity level in a specified domain
 #' 2. Samples subjects with or without replacement
-#' 3. Randomizes site assignments by shuffling invid values
+#' 3. Randomizes site assignments by shuffling invid values (or generates new sites if TargetSiteCount specified)
 #' 4. Updates all subject, study, and site IDs across all domains
 #' 5. Maintains referential integrity across domains
+#'
+#' When `TargetSiteCount` is specified:
+#' - Generates TargetSiteCount site IDs with metadata sampled from original sites
+#' - Samples patient counts per site from the distribution observed in sampled subjects
+#' - Creates weighted site assignment: subjects are assigned to sites proportionally to sampled patient counts
+#' - Final site count may be less than target if some sites receive no patients through sampling
 #'
 #' The function handles multiple subject ID formats:
 #' - subjid: Simple ID (e.g., "0496")
@@ -51,12 +62,22 @@
 #'   vOversamplQuantileRange = c(0.75, 1.0),
 #'   seed = 456
 #' )
+#' 
+#' # Generate study with target of ~30 sites
+#' lStudy3 <- ResampleStudy(
+#'   lRaw,
+#'   "STUDY003",
+#'   nSubjects = 200,
+#'   TargetSiteCount = 30,
+#'   seed = 789
+#' )
 #'
 #' @export
 ResampleStudy <- function(
   lRaw,
   strNewStudyID,
   nSubjects = NULL,
+  TargetSiteCount = NULL,
   replacement = TRUE,
   strOversamplDomain = NULL,
   vOversamplQuantileRange = c(0, 1),
@@ -115,6 +136,13 @@ ResampleStudy <- function(
   
   if (vOversamplQuantileRange[1] > vOversamplQuantileRange[2]) {
     stop("vOversamplQuantileRange[1] must be <= vOversamplQuantileRange[2]")
+  }
+  
+  if (!is.null(TargetSiteCount)) {
+    if (!is.numeric(TargetSiteCount) || length(TargetSiteCount) != 1 || TargetSiteCount < 1) {
+      stop("TargetSiteCount must be a single positive number")
+    }
+    TargetSiteCount <- as.integer(TargetSiteCount)
   }
   
   # ---- Stratified Filtering (if applicable) ----
@@ -219,9 +247,59 @@ ResampleStudy <- function(
   # Get sampled subjects
   sampled_subj <- enrolled_subj[sampled_indices, ]
   
-  # ---- Randomize Site Assignments ----
-  # Shuffle invid column to break original subject-site relationship
-  sampled_subj$invid <- sample(sampled_subj$invid, nrow(sampled_subj))
+  # ---- Handle Site Generation/Randomization ----
+  generated_sites <- NULL
+  
+  if (!is.null(TargetSiteCount)) {
+    # Generate new sites with weighted patient distribution
+    
+    # 1. Generate site IDs
+    new_site_nums <- seq_len(TargetSiteCount)
+    
+    # 2. Sample metadata for each site from original sites
+    sampled_site_indices <- sample(1:nrow(lRaw$Raw_SITE), size = TargetSiteCount, replace = TRUE)
+    generated_sites <- lRaw$Raw_SITE[sampled_site_indices, ]
+    
+    # 3. Create invid column for generated sites (this is what subjects will reference)
+    new_site_ids <- paste0(strNewStudyID, "_", new_site_nums)
+    generated_sites$invid <- new_site_ids
+    
+    # Update studyid
+    if (has_column(generated_sites, "studyid")) {
+      generated_sites$studyid <- strNewStudyID
+    }
+    
+    # 4. Sample patient counts from sampled subject data
+    # Count patients per site in the already-sampled subjects
+    site_col_subj <- if (has_column(sampled_subj, "invid")) "invid" else "siteid"
+    observed_counts <- as.vector(table(sampled_subj[[site_col_subj]]))
+    
+    # Sample patient counts for new sites from this vector
+    sampled_counts <- sample(observed_counts, size = TargetSiteCount, replace = TRUE)
+    
+    # 5. Create weighted ID vector
+    # Replicate each site ID by its sampled patient count
+    weighted_site_ids <- rep(new_site_ids, times = sampled_counts)
+    
+    # 6. Assign subjects to sites via weighted sampling
+    # Always use invid for the new assignments
+    sampled_subj$invid <- sample(weighted_site_ids, size = nrow(sampled_subj), replace = TRUE)
+    
+    # Update siteid if present (extract numeric part from invid)
+    if (has_column(sampled_subj, "siteid")) {
+      # Extract numeric part: "STUDY001_5" -> "5"
+      sampled_subj$siteid <- gsub("^.*_", "", sampled_subj$invid)
+    }
+    
+    # Only keep sites that actually have subjects assigned
+    used_site_ids <- unique(sampled_subj$invid)
+    generated_sites <- generated_sites[generated_sites$invid %in% used_site_ids, ]
+    
+  } else {
+    # Default behavior: randomize existing site assignments
+    # Shuffle invid column to break original subject-site relationship
+    sampled_subj$invid <- sample(sampled_subj$invid, nrow(sampled_subj))
+  }
   
   # ---- Create Subject Mapping ----
   subject_mapping <- data.frame(
@@ -251,7 +329,7 @@ ResampleStudy <- function(
       } else {
         used_site_ids <- unique(subject_mapping$old_invid)
       }
-      lResult[[domain_name]] <- process_site_domain(domain_df, strNewStudyID, used_site_ids)
+      lResult[[domain_name]] <- process_site_domain(domain_df, strNewStudyID, used_site_ids, generated_sites)
       
     } else if (domain_name == "Raw_COUNTRY") {
       # Metadata: Country - link through site
@@ -355,10 +433,20 @@ process_subject_domain <- function(df, subject_mapping, new_study_id, sampled_su
   # Update invid if present (use randomized site from sampled_subj)
   if (has_column(result, "invid")) {
     # Get the new site assignment for each subject
-    subj_to_site <- setNames(
-      paste0(new_study_id, "_", sampled_subj$invid),
-      sampled_subj$subjid
-    )
+    # Check if invid already has study prefix (from TargetSiteCount)
+    sample_invid <- sampled_subj$invid[1]
+    already_prefixed <- !is.na(sample_invid) && grepl(paste0("^", new_study_id, "_"), sample_invid)
+    
+    if (already_prefixed) {
+      # invid already has the study prefix, use as-is
+      subj_to_site <- setNames(sampled_subj$invid, sampled_subj$subjid)
+    } else {
+      # invid needs the study prefix added
+      subj_to_site <- setNames(
+        paste0(new_study_id, "_", sampled_subj$invid),
+        sampled_subj$subjid
+      )
+    }
     # Map through old subjid to get correct new site
     result$invid <- subj_to_site[old_subjid_col]
   }
@@ -456,7 +544,13 @@ process_study_domain <- function(df, new_study_id) {
 
 #' Process site metadata domain
 #' @keywords internal
-process_site_domain <- function(df, new_study_id, used_site_ids) {
+process_site_domain <- function(df, new_study_id, used_site_ids, generated_sites = NULL) {
+  # If we have generated sites from TargetSiteCount, use them directly
+  if (!is.null(generated_sites)) {
+    return(generated_sites)
+  }
+  
+  # Otherwise, use default logic
   # Detect site ID column name
   site_col <- if (has_column(df, "invid")) {
     "invid"
