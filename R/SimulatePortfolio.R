@@ -582,3 +582,152 @@ process_site_domain <- function(df, new_study_id, used_site_ids, generated_sites
   return(result)
 }
 
+# Helper Functions for SimulatePortfolio -----------------------------------
+
+generate_default_config <- function(lRaw, nStudies, seed) {
+  if (!is.null(seed)) set.seed(seed)
+  
+  max_subj <- nrow(lRaw$Raw_SUBJ)
+  
+  data.frame(
+    studyid = sprintf("PORTFOLIO%03d", seq_len(nStudies)),
+    nSubjects = sample(20:min(100, max_subj), nStudies, replace = TRUE),
+    TargetSiteCount = NA_integer_,
+    replacement = TRUE,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' Simulate a Portfolio of Studies
+#'
+#' Creates a portfolio of multiple synthetic studies by resampling from source data.
+#' Each study is generated using ResampleStudy with configurable parameters.
+#'
+#' @param lRaw list. Named list of raw data domains (must include Raw_SUBJ).
+#' @param dfConfig data.frame. Optional configuration for each study. Must contain
+#'   columns 'studyid' and 'nSubjects'. See Details.
+#' @param nStudies numeric. Number of studies to generate if dfConfig is NULL. Default: 5.
+#' @param seed numeric. Random seed for reproducibility. Default: NULL.
+#'
+#' @return list. Combined portfolio with same structure as lRaw, containing data
+#'   from all simulated studies row-bound together.
+#'
+#' @details
+#' If dfConfig is provided, it should contain:
+#' - studyid: Unique study identifier
+#' - nSubjects: Number of subjects per study
+#' - TargetSiteCount: (Optional) Target number of sites
+#' - strOversamplDomain: (Optional) Domain for stratified sampling
+#' - vOversamplQuantileRange_min/max: (Optional) Quantile range for stratification
+#' - replacement: (Optional) Sample with replacement (default TRUE)
+#'
+#' If dfConfig is NULL, generates default configuration with random parameters.
+#'
+#' @examples
+#' # Simple portfolio with default parameters
+#' lRaw <- list(
+#'   Raw_SUBJ = clindata::rawplus_dm,
+#'   Raw_AE = clindata::rawplus_ae,
+#'   Raw_SITE = clindata::ctms_site
+#' )
+#' 
+#' lPortfolio <- SimulatePortfolio(lRaw, nStudies = 3, seed = 123)
+#' 
+#' # Custom configuration
+#' dfConfig <- data.frame(
+#'   studyid = c("TRIAL001", "TRIAL002"),
+#'   nSubjects = c(50, 75),
+#'   TargetSiteCount = c(15, 20)
+#' )
+#' lPortfolio_custom <- SimulatePortfolio(lRaw, dfConfig = dfConfig, seed = 456)
+#'
+#' @export
+SimulatePortfolio <- function(
+  lRaw,
+  dfConfig = NULL,
+  nStudies = 5,
+  seed = NULL
+) {
+  # Input validation
+  if (!is.list(lRaw) || !"Raw_SUBJ" %in% names(lRaw)) {
+    stop("lRaw must be a list containing at least Raw_SUBJ")
+  }
+  
+  # Generate default config if not provided
+  if (is.null(dfConfig)) {
+    dfConfig <- generate_default_config(lRaw, nStudies, seed)
+  }
+  
+  # Validate dfConfig structure
+  required_cols <- c("studyid", "nSubjects")
+  if (!all(required_cols %in% names(dfConfig))) {
+    stop("dfConfig must contain columns: studyid, nSubjects")
+  }
+  
+  # Check for duplicate study IDs
+  if (any(duplicated(dfConfig$studyid))) {
+    stop("dfConfig contains duplicate study IDs")
+  }
+  
+  # Set seed once at start if provided
+  if (!is.null(seed)) set.seed(seed)
+  
+  # Create list to store resampled studies
+  lStudies <- vector("list", nrow(dfConfig))
+  
+  for (i in seq_len(nrow(dfConfig))) {
+    config_row <- dfConfig[i, ]
+    
+    # Build ResampleStudy arguments
+    resample_args <- list(
+      lRaw = lRaw,
+      strNewStudyID = config_row$studyid,
+      nSubjects = config_row$nSubjects
+    )
+    
+    # Add optional parameters if present
+    if ("TargetSiteCount" %in% names(config_row) && !is.na(config_row$TargetSiteCount)) {
+      resample_args$TargetSiteCount <- config_row$TargetSiteCount
+    }
+    
+    if ("replacement" %in% names(config_row) && !is.na(config_row$replacement)) {
+      resample_args$replacement <- config_row$replacement
+    }
+    
+    if ("strOversamplDomain" %in% names(config_row) && !is.na(config_row$strOversamplDomain)) {
+      resample_args$strOversamplDomain <- config_row$strOversamplDomain
+      
+      # Build quantile range
+      qmin <- if ("vOversamplQuantileRange_min" %in% names(config_row) && !is.na(config_row$vOversamplQuantileRange_min)) {
+        config_row$vOversamplQuantileRange_min
+      } else {
+        0
+      }
+      qmax <- if ("vOversamplQuantileRange_max" %in% names(config_row) && !is.na(config_row$vOversamplQuantileRange_max)) {
+        config_row$vOversamplQuantileRange_max
+      } else {
+        1
+      }
+      resample_args$vOversamplQuantileRange <- c(qmin, qmax)
+    }
+    
+    # Call ResampleStudy
+    lStudies[[i]] <- do.call(ResampleStudy, resample_args)
+  }
+  
+  # Combine all studies domain by domain
+  domain_names <- names(lStudies[[1]])
+  lPortfolio <- vector("list", length(domain_names))
+  names(lPortfolio) <- domain_names
+  
+  for (domain_name in domain_names) {
+    # Extract domain from each study
+    domain_list <- lapply(lStudies, function(study) study[[domain_name]])
+    
+    # Row-bind all studies for this domain
+    lPortfolio[[domain_name]] <- do.call(rbind, domain_list)
+  }
+  
+  return(lPortfolio)
+}
+
