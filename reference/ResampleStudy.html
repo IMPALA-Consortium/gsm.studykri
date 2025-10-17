@@ -47,6 +47,7 @@ protocol deviations) and randomizes site assignments.</p>
 <span>  <span class="va">lRaw</span>,</span>
 <span>  <span class="va">strNewStudyID</span>,</span>
 <span>  nSubjects <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  TargetSiteCount <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  replacement <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  strOversamplDomain <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  vOversamplQuantileRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>,</span>
@@ -69,6 +70,14 @@ protocol deviations) and randomizes site assignments.</p>
 <dt id="arg-nsubjects">nSubjects<a class="anchor" aria-label="anchor" href="#arg-nsubjects"></a></dt>
 <dd><p>Integer number of subjects to sample. NULL (default) samples same
 number as enrolled subjects in original data</p></dd>
+
+
+<dt id="arg-targetsitecount">TargetSiteCount<a class="anchor" aria-label="anchor" href="#arg-targetsitecount"></a></dt>
+<dd><p>Numeric. Approximate target number of sites in the resampled study.
+If NULL (default), uses sites from sampled subjects naturally.
+If specified, generates approximately N sites with weighted patient distributions.
+Note: Final site count may vary as sites with zero patients are excluded.
+Must be a positive integer.</p></dd>
 
 
 <dt id="arg-replacement">replacement<a class="anchor" aria-label="anchor" href="#arg-replacement"></a></dt>
@@ -97,10 +106,14 @@ oversampling. Default c(0, 1) includes all subjects</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>This function performs the following steps:</p><ol><li><p>Optionally filters subjects by their activity level in a specified domain</p></li>
 <li><p>Samples subjects with or without replacement</p></li>
-<li><p>Randomizes site assignments by shuffling invid values</p></li>
+<li><p>Randomizes site assignments by shuffling invid values (or generates new sites if TargetSiteCount specified)</p></li>
 <li><p>Updates all subject, study, and site IDs across all domains</p></li>
 <li><p>Maintains referential integrity across domains</p></li>
-</ol><p>The function handles multiple subject ID formats:</p><ul><li><p>subjid: Simple ID (e.g., "0496")</p></li>
+</ol><p>When <code>TargetSiteCount</code> is specified:</p><ul><li><p>Generates TargetSiteCount site IDs with metadata sampled from original sites</p></li>
+<li><p>Samples patient counts per site from the distribution observed in sampled subjects</p></li>
+<li><p>Creates weighted site assignment: subjects are assigned to sites proportionally to sampled patient counts</p></li>
+<li><p>Final site count may be less than target if some sites receive no patients through sampling</p></li>
+</ul><p>The function handles multiple subject ID formats:</p><ul><li><p>subjid: Simple ID (e.g., "0496")</p></li>
 <li><p>subjectid: Composite ID (e.g., "X1670496-113XXX")</p></li>
 <li><p>subject_nsv: NSV format (e.g., "0496-113XXX")</p></li>
 </ul></div>
@@ -128,6 +141,15 @@ oversampling. Default c(0, 1) includes all subjects</p></dd>
 <span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">456</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Filtered to 309 subjects with Raw_AE records in 0.75-1.00 quantile range (6-31 records)</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Generate study with target of ~30 sites</span></span></span>
+<span class="r-in"><span><span class="va">lStudy3</span> <span class="op">&lt;-</span> <span class="fu">ResampleStudy</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">lRaw</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"STUDY003"</span>,</span></span>
+<span class="r-in"><span>  nSubjects <span class="op">=</span> <span class="fl">200</span>,</span></span>
+<span class="r-in"><span>  TargetSiteCount <span class="op">=</span> <span class="fl">30</span>,</span></span>
+<span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">789</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
