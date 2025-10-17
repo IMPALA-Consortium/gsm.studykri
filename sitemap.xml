@@ -1,7 +1,17 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/404.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/LICENSE-text.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/LICENSE.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/authors.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/index.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/ResampleStudy.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/gsm.studykri-package.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/has_column.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/index.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/process_derived_domain.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/process_site_domain.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/process_study_domain.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/process_subject_domain.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/update_composite_id.html</loc></url>
 </urlset>
 
