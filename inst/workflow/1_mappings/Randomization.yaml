@@ -11,7 +11,7 @@ spec:
       type: character
     subjid:
       type: character
-    rgmn_dt:
+    rand_dt:
       type: Date
     status:
       type: character
@@ -22,5 +22,5 @@ steps:
     output: Mapped_Randomization
     params:
       df: Raw_Randomization
-      strQuery: "SELECT  studyid, invid, subjid, rgmn_dt, status, country FROM df
+      strQuery: "SELECT  studyid, invid, subjid, rand_dt, status, country FROM df
                 WHERE subjid IS NOT NULL AND (status != 'Screen Failed' OR status IS NULL)"

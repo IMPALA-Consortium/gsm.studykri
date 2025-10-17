@@ -24,6 +24,8 @@ Rules:
 - after producing an output or fix, perform a self-review for redundancy and remove unnecessary text or code
 - when implementing multi-step workflows, never complete more than one major function or file edit before pausing for review
 - always make examples for the roxygen documentation executable, do not use \dontrun{}
+- use rlang::.data and rlang::.env to capture non standard evaluation of dplyr variables
+- for dplyr::select and dplyr::rename use tidy_select functions instead of rlang::.data and rlang::.env
 
 
 
@@ -73,8 +75,8 @@ Goal:
 - We need to provide a report template with the following sections
   - Overview of reference studies and their overall KRI values + number of sites and patients
   - One section for each KRI showing Visualize_StudyKRI() output
-- clindata package will provide sample data
-- portfolio sample data with multiple studies will be created by resampling patients from clindata data set
+- clindata or gsm.core::lSource package will provide test data
+- portfolio sample data with multiple studies will be created by resampling patients from test data set
 - pkgdown will be used for project documentation
 - pkgdown ci/cd needs to create a sample reports that is added to the site
 
