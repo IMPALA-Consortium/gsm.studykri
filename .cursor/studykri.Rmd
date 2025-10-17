@@ -1,0 +1,335 @@
+---
+title: "studykri"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+# Study KRI
+
+The goal is to compare KRI from one ongoing study to the KRI of similar studies. For this we need to transform site-level KRI into study-level KRI and then compute confidence intervals for the ongoing study and a group of studies. \*\*Non-overlapping confidence intervals mean that there is a difference between both groups with the confidence of the intervals or higher.\*\*
+
+## Libraries
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(glue)
+library(readr)
+```
+
+## Data
+
+```{r}
+df <- readr::read_csv("sample_data.csv", show_col_types = FALSE)
+```
+
+The sample data contains monthly **site-level KRI ratios** for `r unique(df$NAME)` for `r n_distinct(df$STUDY)` studies of `r unique(df$THEME_MOLECULE)` and `r unique(df$STUDY_PHASE)`
+
+```{r}
+df %>%
+    filter(dense_rank(YYYYMM) <= 5, .by = c(STUDY, SITE_NUMBER)) %>%
+    arrange(STUDY, SITE_NUMBER, YYYYMM) %>%
+    head(15) %>%
+    select(STUDY, SITE_NUMBER, YYYYMM, NAME, VALUE_CUM, N_RECORDS_CUM, RATIO_CUM)
+```
+
+## Calculate Study-Level KRI
+
+```{r}
+
+get_study_kri <- function(df, by) {
+    df %>%
+      rename(any_of(c(STUDY_MONTH_SITE = "STUDY_MONTH"))) %>%
+      mutate(
+        STUDY_MONTH_STUDY = dense_rank(YYYYMM),
+        .by = {{by}}
+      ) %>%
+      summarize(
+        VALUE_CUM = sum(VALUE_CUM),
+        N_RECORDS_CUM = sum(N_RECORDS_CUM),
+        N_SITES = n_distinct(SITE_NUMBER),
+        .by = c({{by}}, STUDY_MONTH_STUDY)
+      ) %>%
+      # we correct for early date entry error
+      filter(N_RECORDS_CUM > 25) %>%
+      mutate(
+        STUDY_MONTH_STUDY = dense_rank(STUDY_MONTH_STUDY),
+        .by = {{by}}
+      ) %>%
+      mutate(
+          RATIO_CUM = VALUE_CUM / N_RECORDS_CUM
+      )
+}
+
+
+df_kri <- get_study_kri(df, STUDY)
+
+df_kri %>%
+    arrange(STUDY, STUDY_MONTH_STUDY)
+```
+
+```{r}
+df_kri %>%
+    ggplot(aes(STUDY_MONTH_STUDY, VALUE_CUM / N_RECORDS_CUM, group = STUDY)) +
+    geom_line() +
+    ggplot2::scale_x_continuous(lim = c(1, 36)) +
+    facet_wrap(~ STUDY)
+```
+
+## Calculate Study-KRI Confidence Intervalls
+
+We will calculate confidence intervals by bootstrapping, **resampling sites with replacement** and then calculate a combined median ratio with confidence intervals.
+
+```{r}
+
+get_boot <- function(df, n_sites = NULL) {
+
+    df_r <- tibble(
+        r = seq(1, 1000) 
+    )    
+    
+    df_sim_prep_data <- df %>%
+        select(STUDY, SITE_NUMBER, YYYYMM, VALUE_CUM, N_RECORDS_CUM) %>%
+        mutate(
+            # each site gets a sequential number
+            rnd = dense_rank(SITE_NUMBER),
+            .by = STUDY
+        )
+    
+    df_sim_prep_boot <- df %>%
+        distinct(STUDY, SITE_NUMBER) %>%
+        cross_join(df_r) %>%
+        mutate(
+            # for each repitition we generate a random number between 1 
+            # and the max number of sites, this approach is dbplyr compatible
+            # usually gets translated to RANDOM() in sql, will not work on snowflake
+            rnd = runif(n()),
+            n_sites = ifelse(is.null(.env$n_sites), n(), .env$n_sites),
+            rnd = floor(rnd * n_sites) + 1,
+            .by = c(STUDY, r)
+        ) %>%
+        # this results in a bootstrap backbone in which each repitition 
+        # has as many random numbers as there are sites in the study
+        select(STUDY, r, rnd)
+    
+    # now we are joining the data to the bootstrap backbone
+    df_sim <- df_sim_prep_boot %>%
+        left_join(
+            df_sim_prep_data,
+            by = c("STUDY", "rnd"),
+            relationship = "many-to-many"
+        )
+
+}
+
+df_sim <- get_boot(df)
+
+df_sim
+```
+
+```{r}
+
+# for each repitition we calculate the study kri
+df_sim_study_kri <- get_study_kri(df_sim, by = c(STUDY, r))
+
+df_sim_study_kri
+```
+
+```{r}
+
+# calculate confidence intervals as percentiles
+get_ci <- function(df, conf = 0.05) {
+    df %>%
+        summarize(
+            MED_RATIO_CUM = median(RATIO_CUM),
+            CI95_UPR = quantile(RATIO_CUM, 1 - .env$conf),
+            CI95_LWR = quantile(RATIO_CUM, conf),
+            N = n(),
+            .by = any_of(c("STUDY", "STUDY_MONTH_STUDY"))
+        )        
+}
+
+
+df_study_kri_ci <- get_ci(df_sim_study_kri)
+```
+
+```{r}
+
+df_kri %>%
+    left_join(
+        df_study_kri_ci,
+        by = c("STUDY", "STUDY_MONTH_STUDY")
+    ) %>%
+    ggplot(aes(STUDY_MONTH_STUDY, RATIO_CUM, group = STUDY)) +
+    geom_ribbon(aes(ymin = CI95_LWR, ymax = CI95_UPR), fill = "lightblue") +
+    geom_line(aes(y = MED_RATIO_CUM), linetype = 2) +
+    geom_line() +
+    scale_x_continuous(lim = c(1, 36)) +
+    facet_wrap(~ STUDY, scales = "free")
+
+```
+
+## Calculate Study Group Confidence Intervalls
+
+We will calculate confidence intervals by bootstrapping, **resampling with replacement from each study as many sites as determined by the study with the fewest sites** and then calculate a combined median ratio with confidence intervals.
+
+This ensures equal weighting of each study in the group.
+
+```{r}
+
+
+get_group_ci <- function(df, studies, conf = 0.05) {
+
+    df_filt <- df %>%
+        filter(STUDY %in% .env$studies)
+
+    min_sites <- df_filt %>%
+        summarize(
+            n_sites = n_distinct(SITE_NUMBER),
+            .by = STUDY
+        ) %>%
+        pull(n_sites) %>%
+        min()
+
+    df_sim <- get_boot(df_filt, n_sites = min_sites)
+
+    # here we only group by replicate to combine data from selected studies
+    df_sim_study_kri <- get_study_kri(df_sim, by = c(r))
+
+    df_sim_study_kri_ci <- get_ci(df_sim_study_kri, conf = conf)
+    
+}
+
+df_group_ci <- get_group_ci(df, studies = c("MO29872", "MO39193", "MO39196", "WO29522", "WO29637"))
+
+df_group_ci %>%
+    arrange(STUDY_MONTH_STUDY)
+```
+
+```{r}
+
+df_filt_ci <- df_study_kri_ci %>%
+    filter(STUDY == "WO39392")
+
+df_filt_kri <- df_kri %>%
+    filter(STUDY == "WO39392")
+
+df_group_ci %>%
+    ggplot(aes(STUDY_MONTH_STUDY)) +
+    geom_ribbon(aes(ymin = CI95_LWR, ymax = CI95_UPR), fill = "lightblue") +
+    geom_line(aes(y = MED_RATIO_CUM), linetype = 2) +
+    geom_ribbon(data = df_filt_ci, aes(ymin = CI95_LWR, ymax = CI95_UPR), fill = "orange", alpha = 0.5) +
+    geom_line(data = df_filt_kri, aes(y = RATIO_CUM)) +
+    scale_x_continuous(lim = c(1, 36))
+```
+
+## Bringing it Together
+
+```{r}
+compare_study_kri <- function(df, study, studies, conf = 0.05) {
+    df_filt <- df %>%
+        filter(STUDY == .env$study)
+
+    df_kri <- get_study_kri(df_filt, by = STUDY)
+    df_sim <- get_boot(df_filt)
+    df_kri_sim <- get_study_kri(df_sim, by = c(STUDY, r))
+    df_kri_ci <- get_ci(df_kri_sim, conf = conf)
+
+    df_group_ci <- get_group_ci(df, studies, conf = conf)
+
+    return(structure(list(
+        df_kri = df_kri,
+        df_kri_ci = df_kri_ci,
+        df_group_ci = df_group_ci,
+        study = study,
+        studies = studies,
+        conf = conf
+    ), class = "cmp"))
+}
+
+plot.cmp <- function(cmp, max = 36) {
+
+        df_group_ci <- cmp$df_group_ci %>%
+            filter(STUDY_MONTH_STUDY <= .env$max)
+
+        df_kri_ci <- cmp$df_kri_ci %>%
+            filter(STUDY_MONTH_STUDY <= .env$max)
+
+        df_kri <- cmp$df_kri %>%
+            filter(STUDY_MONTH_STUDY <= .env$max)
+
+        p <- df_group_ci %>%
+            ggplot(aes(STUDY_MONTH_STUDY)) +
+            geom_ribbon(
+                aes(ymin = CI95_LWR, ymax = CI95_UPR),
+                fill = "lightblue"
+            ) +
+            geom_line(
+                aes(y = MED_RATIO_CUM),
+                linetype = 2
+            ) +
+            geom_ribbon(
+                data = df_kri_ci,
+                aes(ymin = CI95_LWR, ymax = CI95_UPR),
+                fill = "orange", alpha = 0.5
+            ) +
+            geom_line(
+                data = df_kri,
+                aes(y = RATIO_CUM)
+            ) +
+            labs(
+                title = glue("{cmp$study} Cumulative AE per Visit Ratio"),
+                subtitle = glue("Comparison Studies in Blue: {paste(cmp$studies, collapse = ', ')}"),
+                y = glue("AE per Visit + CI{floor((1 - cmp$conf) * 100)}"),
+                x = "Study Month"
+            )
+    return(p)
+}
+
+```
+
+### 1 vs 5 Studies
+
+```{r}
+
+studies <- c("MO29872", "MO39193", "MO39196", "WO29522", "WO29637")
+
+cmp <- compare_study_kri(df, study = "WO39392", studies = studies, conf = 0.05)
+plot.cmp(cmp)
+```
+
+### 1 vs 5 Studies 99% confidence
+
+```{r}
+cmp <- compare_study_kri(df, study = "WO39392", studies = studies, conf = 0.01)
+plot.cmp(cmp)
+```
+
+### 1 vs 3 Studies
+
+```{r}
+cmp <- compare_study_kri(df, study = "WO39392", studies = studies[1:3], conf = 0.05)
+plot.cmp(cmp)
+```
+
+### 1 vs 1 Study
+
+```{r}
+cmp <- compare_study_kri(df, study = "WO39392", studies = studies[1], conf = 0.05)
+plot.cmp(cmp)
+```
+
+### 1 vs self Study
+
+```{r}
+cmp <- compare_study_kri(df, study = "WO39392", studies = "WO39392", conf = 0.05)
+plot.cmp(cmp)
+```
+
+## Conclusion
+
+Bootstrapping can be used to calculate valid confidence intervals for any number of studies and adequately compare study KR from one study against any number of studies.
+
+The same principle can be applied to non-count based KRI such as average data entry time, this requires the adaptation of the \`get_study_kri()\` function. To calculate a study KRI based on site-level data.

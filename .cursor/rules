@@ -1,0 +1,159 @@
+
+Rules:
+- never include any study, site, patient identifiers that are accidently provided by the user in the chat window
+- always evaluate each chunk in qmd or Rmd files, never set eval = FALSE
+- do not accept errors when rendering Rmd files, never set error = TRUE
+- always process all files and data domains unless intructed differently
+- when data cannot be processed explain and ask for instructions
+- always include all files in R/ folder and inst/workflows/ in the context
+- do not write any non-standard documentation as *.md files
+- when attempting to fix something do not do more than 2 iterations w/o asking for instructions
+- when writing vignettes as Rmd files keep it short and precise, never hallucinate any code output
+- do not add summaries or checks to vignettes
+- we are sticking to the gsm.core framework this does not include any S3 objects
+- break down any multi-step implementation into small, verifiable substeps; after each substep, wait for confirmation before continuing
+- prefer minimal, self-explanatory code over verbose or commented code; only comment non-obvious logic
+- use concise variable names that remain descriptive within the gsm.core and gsm.kri conventions
+- avoid generating long narrative explanations; respond in short bullet points or numbered lists when reasoning
+- when generating documentation, prefer short declarative sentences; avoid restating code logic
+- when writing R code, limit functions to ≤ 50 lines unless explicitly instructed otherwise
+- when refactoring, focus on compactness and modularity rather than adding abstraction layers
+- never rewrite working code entirely if a targeted edit or patch suffices
+- prefer base R and gsm.core conventions over tidyverse syntactic sugar unless explicitly requested
+- do not repeat boilerplate imports or library calls if already part of the context
+- after producing an output or fix, perform a self-review for redundancy and remove unnecessary text or code
+- when implementing multi-step workflows, never complete more than one major function or file edit before pausing for review
+- always make examples for the roxygen documentation executable, do not use \dontrun{}
+
+
+
+Verbosity Control:
+- keep each reasoning step ≤ 5 lines of explanation
+- when asked to “fix” or “add” code, provide only the minimal diff or patch unless a full rewrite is required
+- when showing multiple code blocks, output them sequentially in labeled chunks (“Step 1”, “Step 2”, …)
+- summarize progress only when explicitly prompted (“summarize progress so far”)
+
+Documentation Style:
+- documentation in R files should use concise roxygen2 syntax without redundant examples
+- limit descriptions to ≤ 2 sentences per function unless clarification is essential
+- avoid repeating text already present in gsm.core or gsm.kri help topics
+- pkgdown pages should focus on purpose and usage, not implementation details
+
+Modes:
+- default to COMPACT mode unless user explicitly switches to EXPLAIN mode
+- in COMPACT mode: minimize comments, avoid long reasoning, and prefer small composable functions
+- in EXPLAIN mode: include step-by-step reasoning and justifications
+
+
+Goal:
+- build study level html reports that provide study level KRI over time
+- include all KRI included in gsm.kri and gsm.core:
+    Adverse Event Reporting Rate
+    Serious Adverse Event Reporting Rate
+    Non-important Protocol Deviation Rate
+    Important Protocol Deviation Rate
+    Grade 3+ Lab Abnormality Rate
+    Study Discontinuation Rate
+    Treatment Discontinuation Rate
+    Query Rate
+    Outstanding Query Rate
+    Outstanding Data Entry Rate
+    Data Change Rate
+    Screen Failure Rate
+- provide confidence intervals for each KRI and compare against combined KRI with reference studies
+- method for CI calculation is outlined in studykri.Rmd
+- functions to be used in KRI calculation:
+  - gsm.core::Input_Rate()
+  - gsm.core::Transform_Rate()
+  - Analyze_StudyKRI(dfAnalysisTransformed, dfStudyGroups, Studies)
+  - Visualize_StudyKRI(dfAnalysis_Analyzed)
+- kri code needs to be provided as yaml in `inst/workflows/2_metrics`
+- dfStudyGroups has two columns with studyIDs indicating that they can be used as reference studies
+- there needs to by StudyGroups yaml mappings file
+- We need to provide a report template with the following sections
+  - Overview of reference studies and their overall KRI values + number of sites and patients
+  - One section for each KRI showing Visualize_StudyKRI() output
+- clindata package will provide sample data
+- portfolio sample data with multiple studies will be created by resampling patients from clindata data set
+- pkgdown will be used for project documentation
+- pkgdown ci/cd needs to create a sample reports that is added to the site
+
+Process
+- Implement mappings on test data
+- Create Sample Data from test data
+- Implement Mapping on simulated data
+- Implement KRI Functions
+- Implement Report
+
+Pipeline Code Draft
+
+lRaw <- list(
+    protdev = ctms_protdev,
+    site = ctms_site,
+    study = ctms_study,
+    data_pages = edc_data_pages,
+    data_points = edc_data_points,
+    queries = edc_queries,
+    ae = rawplus_ae,
+    consent = rawplus_consent,
+    dm = rawplus_dm,
+    enroll = rawplus_enroll,
+    ex = rawplus_ex,
+    ie = rawplus_ie,
+    ixrsrand = rawplus_ixrsrand,
+    lb = rawplus_lb,
+    sdrgcomp = rawplus_sdrgcomp,
+    studcomp = rawplus_studcomp,
+    visdt = rawplus_visdt
+)
+
+lPortfolio <- SimulatePortfolio(lRaw)
+
+
+mapping_wf <- gsm.core::MakeWorkflowList(
+  strNames = NULL,
+  strPath = system.file("workflow/1_mappings", package = "gsm.studykri"),
+  strPackage = NULL
+)
+
+lIngest <- gsm.mapping::Ingest(lPortfolio, gsm.mapping::CombineSpecs(mapping_wf))
+
+lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
+
+metrics_wf <- gsm.core::MakeWorkflowList(
+  strNames = NULL,
+  strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
+  strPackage = NULL
+)
+
+lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
+
+reporting_wf <- gsm.core::MakeWorkflowList(
+  strNames = NULL,
+  strPath = system.file("workflow/3_reporting", package = "gsm.studykri"),
+  strPackage = NULL
+)
+
+
+lReport <- gsm.core::RunWorkflows(
+  lWorkflows = reporting_wf, 
+  lData = c(
+    lMapped,
+    list(
+      lAnalyzed = lAnalyzed,
+      lWorkflows = metrics_wf
+    )
+  )
+)
+
+module_wf_gsm <- gsm.core::MakeWorkflowList(
+  strNames = NULL,
+  strPath = system.file("workflow/4_modules", package = "gsm.studykri"),
+  strPackage = NULL
+)
+
+report_path <- system.file("report", "Report_StudyKRI.Rmd", package = "gsm.studykri")
+n_steps <- length(module_wf_gsm$report_kri_site$steps)
+module_wf_gsm$report_kri_site$steps[[n_steps]]$params$strInputPath <- report_path
+
+lModule <- gsm.core::RunWorkflows(module_wf_gsm, lReport)
