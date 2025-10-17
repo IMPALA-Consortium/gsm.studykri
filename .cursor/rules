@@ -79,6 +79,8 @@ Goal:
 - portfolio sample data with multiple studies will be created by resampling patients from test data set
 - pkgdown will be used for project documentation
 - pkgdown ci/cd needs to create a sample reports that is added to the site
+- when running devtools::check we do not accept errors, warnings or note except for a not about the system time
+- use the usethis package to add package and function imports
 
 Process
 - Implement mappings on test data

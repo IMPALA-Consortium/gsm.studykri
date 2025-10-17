@@ -17,10 +17,9 @@ test_that("mapping workflows execute successfully on clindata", {
   )
 
   # Load mapping workflows
-  # Use test_path() to find inst directory relative to tests/testthat
   mapping_wf <- gsm.core::MakeWorkflowList(
     strNames = NULL,
-    strPath = test_path("../../inst/workflow/1_mappings"),
+    strPath = system.file("workflow/1_mappings", package = "gsm.studykri"),
     strPackage = NULL
   )
 
