@@ -87,7 +87,7 @@ Goal:
   - Analyze_StudyKRI(dfTransformed, dfStudyGroups, Studies) # get_boot in example
   - Analyze_StudyKRI_PredictBounds # called get_ci in example
   - Analyze_StudyKRI_PredictBoundsGroup # called get_group_ci in example
-  - Visualize_StudyKRI(dfAnalysis_Analyzed)
+  - Visualize_StudyKRI(dfAnalysis_Analyzed) # called plot.cmp in example
 
 - kri code needs to be provided as yaml in `inst/workflows/2_metrics`
 - dfStudyGroups has two columns with studyIDs indicating that they can be used as reference studies

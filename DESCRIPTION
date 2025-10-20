@@ -25,6 +25,7 @@ Remotes:
 Config/testthat/edition: 3
 Imports: 
     dplyr,
+    ggplot2,
+    lubridate,
     rlang,
-    stats,
-    lubridate
+    stats
