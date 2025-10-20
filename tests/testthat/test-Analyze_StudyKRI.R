@@ -405,7 +405,7 @@ test_that("Analyze_StudyKRI output works with Transform_CumCount", {
   expect_true(nrow(dfTransformed) > 0)
   expect_true("BootstrapRep" %in% names(dfTransformed))
   expect_true("StudyID" %in% names(dfTransformed))
-  expect_true("CumulativeMetric" %in% names(dfTransformed))
+  expect_true("Metric" %in% names(dfTransformed))
 })
 
 test_that("Analyze_StudyKRI maintains correct row multiplier", {

@@ -17,8 +17,8 @@ test_that("Transform_CumCount returns correct structure", {
   )
   
   expect_s3_class(result, "data.frame")
-  expect_true(all(c("StudyID", "MonthYYYYMM", "StudyMonth", "CumulativeNumerator", 
-                    "CumulativeDenominator", "CumulativeMetric", "GroupCount") %in% names(result)))
+  expect_true(all(c("StudyID", "MonthYYYYMM", "StudyMonth", "Numerator", 
+                    "Denominator", "Metric", "GroupCount") %in% names(result)))
 })
 
 test_that("Transform_CumCount aggregates across sites correctly", {
@@ -40,12 +40,12 @@ test_that("Transform_CumCount aggregates across sites correctly", {
   
   # Should sum numerators across sites for each month
   # Month 202301: 5 + 3 = 8, Month 202302: 10 + 8 = 18, Month 202303: 15 + 12 = 27
-  expect_equal(result$CumulativeNumerator[result$MonthYYYYMM == 202302], 18)
-  expect_equal(result$CumulativeNumerator[result$MonthYYYYMM == 202303], 27)
+  expect_equal(result$Numerator[result$MonthYYYYMM == 202302], 18)
+  expect_equal(result$Numerator[result$MonthYYYYMM == 202303], 27)
   
   # Should sum denominators across sites
-  expect_equal(result$CumulativeDenominator[result$MonthYYYYMM == 202302], 40)
-  expect_equal(result$CumulativeDenominator[result$MonthYYYYMM == 202303], 60)
+  expect_equal(result$Denominator[result$MonthYYYYMM == 202302], 40)
+  expect_equal(result$Denominator[result$MonthYYYYMM == 202303], 60)
   
   # Should count sites
   expect_equal(result$GroupCount[1], 2)
@@ -102,7 +102,7 @@ test_that("Transform_CumCount applies minimum denominator filter", {
   expect_equal(nrow(result), 2)
 })
 
-test_that("Transform_CumCount calculates CumulativeMetric correctly", {
+test_that("Transform_CumCount calculates Metric correctly", {
   dfInput <- data.frame(
     StudyID = rep("STUDY001", 6),
     GroupID = rep(c("SITE01", "SITE02"), each = 3),
@@ -122,8 +122,8 @@ test_that("Transform_CumCount calculates CumulativeMetric correctly", {
   # Month 202302: (10 + 8) / (20 + 20) = 18/40 = 0.45
   # Month 202303: (15 + 12) / (30 + 30) = 27/60 = 0.45
   
-  expect_equal(result$CumulativeMetric[result$MonthYYYYMM == 202302], 18/40)
-  expect_equal(result$CumulativeMetric[result$MonthYYYYMM == 202303], 27/60)
+  expect_equal(result$Metric[result$MonthYYYYMM == 202302], 18/40)
+  expect_equal(result$Metric[result$MonthYYYYMM == 202303], 27/60)
 })
 
 test_that("Transform_CumCount handles multiple grouping columns", {
@@ -196,7 +196,7 @@ test_that("Transform_CumCount handles zero denominators", {
   
   # Month with zero total denominator should have NA metric (though filtered by > threshold)
   # This tests the if_else logic for zero denominators
-  expect_type(result$CumulativeMetric, "double")
+  expect_type(result$Metric, "double")
 })
 
 test_that("Transform_CumCount validates dfInput parameter", {
@@ -348,8 +348,8 @@ test_that("Transform_CumCount works with actual Input_CumCountSiteByMonth output
   
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
-  expect_true(all(c("StudyID", "MonthYYYYMM", "StudyMonth", "CumulativeNumerator",
-                    "CumulativeDenominator", "CumulativeMetric", "GroupCount") %in% names(result)))
+  expect_true(all(c("StudyID", "MonthYYYYMM", "StudyMonth", "Numerator",
+                    "Denominator", "Metric", "GroupCount") %in% names(result)))
   
   # StudyMonth should be sequential starting from 1 within each study
   for (study in unique(result$StudyID)) {
@@ -360,12 +360,12 @@ test_that("Transform_CumCount works with actual Input_CumCountSiteByMonth output
   }
   
   # All denominators should be > 25
-  expect_true(all(result$CumulativeDenominator > 25))
+  expect_true(all(result$Denominator > 25))
   
-  # CumulativeMetric should match manual calculation
+  # Metric should match manual calculation
   expect_equal(
-    result$CumulativeMetric,
-    result$CumulativeNumerator / result$CumulativeDenominator
+    result$Metric,
+    result$Numerator / result$Denominator
   )
 })
 

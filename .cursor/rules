@@ -84,6 +84,7 @@ Goal:
   - Transform_CumCount(dfInput, vBy) #called get_study_kri in example
   - Analyze_StudyKRI(dfTransformed, dfStudyGroups, Studies) # get_boot in example
   - Analyze_StudyKRI_PredictBounds # called get_ci in example
+  - Analyze_StudyKRI_PredictBoundsGroup # called get_group_ci in example
   - Visualize_StudyKRI(dfAnalysis_Analyzed)
 
 - kri code needs to be provided as yaml in `inst/workflows/2_metrics`

@@ -15,8 +15,10 @@
 #' @param nMinDenominator numeric. Minimum cumulative denominator threshold for
 #'   filtering early/sparse data (default: 25).
 #'
-#' @return data.frame with columns: grouping columns from vBy, MonthYYYYMM,
-#'   StudyMonth, CumulativeNumerator, CumulativeDenominator, CumulativeMetric, GroupCount.
+#' @return A data.frame with study-level aggregated cumulative counts and ratios.
+#'   Output columns: `vBy` columns, `MonthYYYYMM`, `StudyMonth`, `Numerator`,
+#'   `Denominator`, `Metric`, `GroupCount`.
+#'   Note: `Numerator` and `Denominator` are cumulative sums. `Metric` is the ratio.
 #'
 #' @examples
 #' # Generate input data
@@ -89,8 +91,8 @@ Transform_CumCount <- function(
     warning("All rows have NA MonthYYYYMM, returning empty data frame")
     return(data.frame(
       stringsAsFactors = FALSE
-    )[0, c(vBy, "MonthYYYYMM", "StudyMonth", "CumulativeNumerator", 
-           "CumulativeDenominator", "CumulativeMetric", "GroupCount")]
+    )[0, c(vBy, "MonthYYYYMM", "StudyMonth", "Numerator", 
+           "Denominator", "Metric", "GroupCount")]
     )
   }
   
@@ -105,15 +107,15 @@ Transform_CumCount <- function(
   dfAggregated <- dfWithStudyMonth %>%
     dplyr::summarise(
       MonthYYYYMM = min(.data$MonthYYYYMM),  # Keep the calendar month
-      CumulativeNumerator = sum(.data$Numerator, na.rm = TRUE),
-      CumulativeDenominator = sum(.data$Denominator, na.rm = TRUE),
+      Numerator = sum(.data$Numerator, na.rm = TRUE),
+      Denominator = sum(.data$Denominator, na.rm = TRUE),
       GroupCount = dplyr::n_distinct(.data$GroupID),
       .by = c(dplyr::all_of(.env$vBy), "StudyMonth")
     )
   
   # Apply minimum denominator filter
   dfFiltered <- dfAggregated %>%
-    dplyr::filter(.data$CumulativeDenominator > .env$nMinDenominator)
+    dplyr::filter(.data$Denominator > .env$nMinDenominator)
   
   # Re-rank StudyMonth after filtering to ensure sequential numbering
   dfReranked <- dfFiltered %>%
@@ -122,20 +124,20 @@ Transform_CumCount <- function(
       .by = dplyr::all_of(.env$vBy)
     )
   
-  # Calculate cumulative metric
+  # Calculate metric
   dfResult <- dfReranked %>%
     dplyr::mutate(
-      CumulativeMetric = dplyr::if_else(
-        .data$CumulativeDenominator > 0,
-        .data$CumulativeNumerator / .data$CumulativeDenominator,
+      Metric = dplyr::if_else(
+        .data$Denominator > 0,
+        .data$Numerator / .data$Denominator,
         NA_real_
       )
     ) %>%
     dplyr::arrange(dplyr::across(dplyr::all_of(.env$vBy)), .data$StudyMonth)
   
   # Select final columns in desired order
-  final_cols <- c(vBy, "MonthYYYYMM", "StudyMonth", "CumulativeNumerator", 
-                  "CumulativeDenominator", "CumulativeMetric", "GroupCount")
+  final_cols <- c(vBy, "MonthYYYYMM", "StudyMonth", "Numerator", 
+                  "Denominator", "Metric", "GroupCount")
   
   dfFinal <- dfResult %>%
     dplyr::select(dplyr::all_of(.env$final_cols))

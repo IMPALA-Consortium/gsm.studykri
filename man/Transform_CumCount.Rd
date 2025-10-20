@@ -17,8 +17,10 @@ c("StudyID", "BootstrapRep")).}
 filtering early/sparse data (default: 25).}
 }
 \value{
-data.frame with columns: grouping columns from vBy, MonthYYYYMM,
-StudyMonth, CumulativeNumerator, CumulativeDenominator, CumulativeMetric, GroupCount.
+A data.frame with study-level aggregated cumulative counts and ratios.
+Output columns: \code{vBy} columns, \code{MonthYYYYMM}, \code{StudyMonth}, \code{Numerator},
+\code{Denominator}, \code{Metric}, \code{GroupCount}.
+Note: \code{Numerator} and \code{Denominator} are cumulative sums. \code{Metric} is the ratio.
 }
 \description{
 Transforms site-level cumulative counts into study-level metrics by aggregating

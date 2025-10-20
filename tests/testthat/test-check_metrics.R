@@ -107,17 +107,17 @@ test_that("kri0001 workflow executes successfully", {
   expect_true(nrow(dfTransformed) > 0)
   
   # Check expected columns
-  expected_cols_transformed <- c("StudyID", "MonthYYYYMM", "StudyMonth", "CumulativeNumerator", 
-                                  "CumulativeDenominator", "CumulativeMetric", "GroupCount")
+  expected_cols_transformed <- c("StudyID", "MonthYYYYMM", "StudyMonth", "Numerator", 
+                                  "Denominator", "Metric", "GroupCount")
   expect_true(all(expected_cols_transformed %in% names(dfTransformed)))
   
   # Check column types
   expect_type(dfTransformed$StudyID, "character")
   expect_type(dfTransformed$MonthYYYYMM, "double")
   expect_type(dfTransformed$StudyMonth, "integer")
-  expect_type(dfTransformed$CumulativeNumerator, "integer")
-  expect_type(dfTransformed$CumulativeDenominator, "integer")
-  expect_type(dfTransformed$CumulativeMetric, "double")
+  expect_type(dfTransformed$Numerator, "integer")
+  expect_type(dfTransformed$Denominator, "integer")
+  expect_type(dfTransformed$Metric, "double")
   expect_type(dfTransformed$GroupCount, "integer")
   
   # Verify this is study-level (fewer rows than site-level)
@@ -130,12 +130,12 @@ test_that("kri0001 workflow executes successfully", {
   }
   
   # Verify minimum denominator filter was applied
-  expect_true(all(dfTransformed$CumulativeDenominator > 25))
+  expect_true(all(dfTransformed$Denominator > 25))
   
-  # Verify CumulativeMetric calculation
+  # Verify Metric calculation
   expect_equal(
-    dfTransformed$CumulativeMetric,
-    dfTransformed$CumulativeNumerator / dfTransformed$CumulativeDenominator,
+    dfTransformed$Metric,
+    dfTransformed$Numerator / dfTransformed$Denominator,
     tolerance = 1e-10
   )
   
@@ -159,10 +159,12 @@ test_that("kri0001 workflow executes successfully", {
   expect_true(nrow(dfBootstrappedStudy) > 0)
   
   expected_cols_bootstrap <- c("StudyID", "BootstrapRep", "MonthYYYYMM", "StudyMonth",
-                                "CumulativeNumerator", "CumulativeDenominator", 
-                                "CumulativeMetric", "GroupCount")
+                                "Numerator", "Denominator", "Metric", "GroupCount")
   expect_true(all(expected_cols_bootstrap %in% names(dfBootstrappedStudy)))
   
+  expect_type(dfBootstrappedStudy$Numerator, "integer")
+  expect_type(dfBootstrappedStudy$Denominator, "integer")
+  expect_type(dfBootstrappedStudy$Metric, "double")
   expect_type(dfBootstrappedStudy$BootstrapRep, "integer")
   expect_equal(length(unique(dfBootstrappedStudy$BootstrapRep)), 1000)
   
@@ -180,7 +182,7 @@ test_that("kri0001 workflow executes successfully", {
   }
   
   # Verify minimum denominator filter was applied
-  expect_true(all(dfBootstrappedStudy$CumulativeDenominator > 25))
+  expect_true(all(dfBootstrappedStudy$Denominator > 25))
 })
 
 test_that("kri0001 workflow validates required mapped data", {
