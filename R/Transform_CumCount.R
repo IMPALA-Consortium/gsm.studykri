@@ -4,11 +4,12 @@
 #' Transforms site-level cumulative counts into study-level metrics by aggregating
 #' across groups (sites/countries) by calendar month. Creates sequential study months,
 #' applies minimum denominator filtering, and calculates cumulative metrics.
+#' Supports both in-memory data frames and dbplyr lazy tables.
 #'
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data .env
 #'
-#' @param dfInput data.frame. Output from Input_CumCountSiteByMonth with columns:
+#' @param dfInput data.frame or tbl. Output from Input_CumCountSiteByMonth with columns:
 #'   GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.
 #' @param vBy character. Vector of column names for grouping (e.g., "StudyID" or
 #'   c("StudyID", "BootstrapRep")).
@@ -49,13 +50,13 @@ Transform_CumCount <- function(
   vBy,
   nMinDenominator = 25
 ) {
-  # Input validation
-  if (!is.data.frame(dfInput)) {
-    stop("dfInput must be a data frame")
+  # Input validation - accept data.frame or tbl (including tbl_lazy)
+  if (!inherits(dfInput, c("data.frame", "tbl"))) {
+    stop("dfInput must be a data frame or tbl object")
   }
   
   required_cols <- c("GroupID", "Numerator", "Denominator", "MonthYYYYMM")
-  missing_cols <- setdiff(required_cols, names(dfInput))
+  missing_cols <- setdiff(required_cols, colnames(dfInput))
   if (length(missing_cols) > 0) {
     stop(sprintf(
       "dfInput missing required columns: %s",
@@ -67,7 +68,7 @@ Transform_CumCount <- function(
     stop("vBy must be a non-empty character vector")
   }
   
-  missing_by <- setdiff(vBy, names(dfInput))
+  missing_by <- setdiff(vBy, colnames(dfInput))
   if (length(missing_by) > 0) {
     stop(sprintf(
       "vBy columns not found in dfInput: %s",
@@ -79,7 +80,14 @@ Transform_CumCount <- function(
     stop("nMinDenominator must be a single non-negative numeric value")
   }
   
-  if (nrow(dfInput) == 0) {
+  # Helper to detect lazy tables
+  is_lazy_table <- function(x) {
+    inherits(x, "tbl_lazy")
+  }
+  
+  # For in-memory data frames, check for empty results
+  # For lazy tables, skip this check as it would force evaluation
+  if (is.data.frame(dfInput) && nrow(dfInput) == 0) {
     stop("dfInput has no rows")
   }
   
@@ -87,7 +95,9 @@ Transform_CumCount <- function(
   dfFiltered_input <- dfInput %>%
     dplyr::filter(!is.na(.data$MonthYYYYMM))
   
-  if (nrow(dfFiltered_input) == 0) {
+  # For in-memory data frames, check if filtered data is empty
+  # For lazy tables, skip this check as it would force evaluation
+  if (is.data.frame(dfFiltered_input) && nrow(dfFiltered_input) == 0) {
     warning("All rows have NA MonthYYYYMM, returning empty data frame")
     return(data.frame(
       stringsAsFactors = FALSE
@@ -97,11 +107,21 @@ Transform_CumCount <- function(
   }
   
   # Create initial StudyMonth by ranking calendar months within groups
-  dfWithStudyMonth <- dfFiltered_input %>%
-    dplyr::mutate(
-      StudyMonth = dplyr::dense_rank(.data$MonthYYYYMM),
-      .by = dplyr::all_of(.env$vBy)
-    )
+  if (is_lazy_table(dfFiltered_input)) {
+    dfWithStudyMonth <- dfFiltered_input %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(.env$vBy))) %>%
+      dbplyr::window_order(.data$MonthYYYYMM) %>%
+      dplyr::mutate(
+        StudyMonth = dplyr::dense_rank(.data$MonthYYYYMM)
+      ) %>%
+      dplyr::ungroup()
+  } else {
+    dfWithStudyMonth <- dfFiltered_input %>%
+      dplyr::mutate(
+        StudyMonth = dplyr::dense_rank(.data$MonthYYYYMM),
+        .by = dplyr::all_of(.env$vBy)
+      )
+  }
   
   # Aggregate to study level by grouping columns and StudyMonth
   dfAggregated <- dfWithStudyMonth %>%
@@ -118,11 +138,21 @@ Transform_CumCount <- function(
     dplyr::filter(.data$Denominator > .env$nMinDenominator)
   
   # Re-rank StudyMonth after filtering to ensure sequential numbering
-  dfReranked <- dfFiltered %>%
-    dplyr::mutate(
-      StudyMonth = dplyr::dense_rank(.data$StudyMonth),
-      .by = dplyr::all_of(.env$vBy)
-    )
+  if (is_lazy_table(dfFiltered)) {
+    dfReranked <- dfFiltered %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(.env$vBy))) %>%
+      dbplyr::window_order(.data$StudyMonth) %>%
+      dplyr::mutate(
+        StudyMonth = dplyr::dense_rank(.data$StudyMonth)
+      ) %>%
+      dplyr::ungroup()
+  } else {
+    dfReranked <- dfFiltered %>%
+      dplyr::mutate(
+        StudyMonth = dplyr::dense_rank(.data$StudyMonth),
+        .by = dplyr::all_of(.env$vBy)
+      )
+  }
   
   # Calculate metric
   dfResult <- dfReranked %>%
@@ -142,6 +172,11 @@ Transform_CumCount <- function(
   dfFinal <- dfResult %>%
     dplyr::select(dplyr::all_of(.env$final_cols))
   
-  return(as.data.frame(dfFinal))
+  # Return lazy table if input was lazy, data.frame otherwise
+  if (inherits(dfInput, "tbl_lazy")) {
+    return(dfFinal)
+  } else {
+    return(as.data.frame(dfFinal))
+  }
 }
 

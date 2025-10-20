@@ -7,48 +7,47 @@
 Analyze_StudyKRI(
   dfInput,
   nBootstrapReps = 1000,
-  nSites = NULL,
+  nGroups = NULL,
   strStudyCol = "StudyID",
   strGroupCol = "GroupID",
   seed = NULL
 )
 }
 \arguments{
-\item{dfInput}{data.frame. Site-level data from \code{Input_CumCountSiteByMonth}.
+\item{dfInput}{data.frame or tbl_lazy. Group-level data from \code{Input_CumCountSiteByMonth}.
 Expected columns: GroupID, GroupLevel, Numerator, Denominator, Metric,
 StudyID, MonthYYYYMM (or custom column names specified in parameters).}
 
 \item{nBootstrapReps}{integer. Number of bootstrap replicates to generate.
 Defaults to 1000.}
 
-\item{nSites}{integer or NULL. Number of sites to resample per replicate.
-If NULL (default), uses the actual number of sites per study. If specified,
+\item{nGroups}{integer or NULL. Number of groups to resample per replicate.
+If NULL (default), uses the actual number of groups per study. If specified,
 can be used to upsample (larger than actual) or downsample (smaller than actual).}
 
 \item{strStudyCol}{character. Column name for study identifier. Defaults to "StudyID".}
 
-\item{strGroupCol}{character. Column name for group/site identifier. Defaults to "GroupID".}
+\item{strGroupCol}{character. Column name for group identifier. Defaults to "GroupID".}
 
 \item{seed}{integer or NULL. Random seed for reproducibility. If NULL (default),
-no seed is set and results will vary between runs.}
+no seed is set. Note: seed only affects in-memory data frames, not SQL queries.}
 }
 \value{
-A data.frame with all original columns plus:
+A data.frame (or tbl_lazy if input was lazy) with all original columns plus:
 \itemize{
 \item \code{BootstrapRep}: integer, bootstrap replicate number (1 to nBootstrapReps)
-\item Original data rows are replicated across bootstrap samples with sites
+\item Original data rows are replicated across bootstrap samples with groups
 resampled with replacement
 }
 }
 \description{
-Generates bootstrap resamples by resampling sites/groups with replacement
-within each study. This enables calculation of confidence intervals for
-study-level KRI metrics through Monte Carlo simulation. Each bootstrap
-replicate randomly selects sites (with replacement) and includes all their
-associated data.
+Generates bootstrap resamples by resampling groups (sites/countries) with
+replacement within each study. Uses dbplyr-compatible approach with runif()
+for random selection. Each bootstrap replicate randomly selects groups and
+includes all their associated data.
 }
 \examples{
-# Generate site-level data
+# Generate group-level data
 dfSubjects <- clindata::rawplus_dm
 dfNumerator <- clindata::rawplus_ae
 dfDenominator <- clindata::rawplus_visdt

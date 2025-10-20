@@ -14,7 +14,10 @@ Suggests:
     clindata,
     gsm.core,
     gsm.mapping,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    dbplyr,
+    duckdb,
+    DBI
 Remotes: 
     Gilead-BioStats/clindata,
     Gilead-BioStats/gsm.core,
@@ -23,4 +26,5 @@ Config/testthat/edition: 3
 Imports: 
     dplyr,
     rlang,
-    stats
+    stats,
+    lubridate

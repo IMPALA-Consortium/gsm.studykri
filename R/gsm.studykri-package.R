@@ -7,3 +7,6 @@
 #' @importFrom stats setNames
 ## usethis namespace: end
 NULL
+
+# Suppress R CMD check NOTE about '.' in magrittr pipe
+utils::globalVariables(".")

@@ -7,7 +7,7 @@
 Transform_CumCount(dfInput, vBy, nMinDenominator = 25)
 }
 \arguments{
-\item{dfInput}{data.frame. Output from Input_CumCountSiteByMonth with columns:
+\item{dfInput}{data.frame or tbl. Output from Input_CumCountSiteByMonth with columns:
 GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.}
 
 \item{vBy}{character. Vector of column names for grouping (e.g., "StudyID" or
@@ -26,6 +26,7 @@ Note: \code{Numerator} and \code{Denominator} are cumulative sums. \code{Metric}
 Transforms site-level cumulative counts into study-level metrics by aggregating
 across groups (sites/countries) by calendar month. Creates sequential study months,
 applies minimum denominator filtering, and calculates cumulative metrics.
+Supports both in-memory data frames and dbplyr lazy tables.
 }
 \examples{
 # Generate input data

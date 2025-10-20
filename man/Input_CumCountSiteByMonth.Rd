@@ -19,11 +19,11 @@ Input_CumCountSiteByMonth(
 )
 }
 \arguments{
-\item{dfSubjects}{data.frame. Subject-level data with enrolled subjects.}
+\item{dfSubjects}{data.frame or tbl. Subject-level data with enrolled subjects.}
 
-\item{dfNumerator}{data.frame. Event data for numerator (e.g., adverse events).}
+\item{dfNumerator}{data.frame or tbl. Event data for numerator (e.g., adverse events).}
 
-\item{dfDenominator}{data.frame. Event data for denominator (e.g., visits).}
+\item{dfDenominator}{data.frame or tbl. Event data for denominator (e.g., visits).}
 
 \item{strStudyCol}{character. Column name for study identifier (default: "studyid").}
 
@@ -47,6 +47,7 @@ data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, St
 \description{
 Calculates cumulative event counts and ratios by site and month for KRI analysis.
 Joins subject, numerator, and denominator data to create monthly cumulative metrics.
+Supports both in-memory data frames and dbplyr lazy tables.
 }
 \examples{
 dfSubjects <- clindata::rawplus_dm

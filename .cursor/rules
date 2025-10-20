@@ -26,6 +26,8 @@ Rules:
 - always make examples for the roxygen documentation executable, do not use \dontrun{}
 - use rlang::.data and rlang::.env to capture non standard evaluation of dplyr variables
 - for dplyr::select and dplyr::rename use tidy_select functions instead of rlang::.data and rlang::.env
+- we want to write dbplyr compatible code for all metric functions, only use dbplyr functions that are dbplyr compatible
+
 
 here is an example for the correct usage of .data and .env
 

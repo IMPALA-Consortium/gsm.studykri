@@ -116,7 +116,7 @@ test_that("Analyze_StudyKRI handles multiple studies independently", {
   expect_true(all(study2_results$GroupID %in% study2_sites))
 })
 
-test_that("Analyze_StudyKRI nSites parameter works for downsampling", {
+test_that("Analyze_StudyKRI nGroups parameter works for downsampling", {
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB", "SiteC", "SiteD"),
     StudyID = c("Study1", "Study1", "Study1", "Study1"),
@@ -125,7 +125,7 @@ test_that("Analyze_StudyKRI nSites parameter works for downsampling", {
     MonthYYYYMM = c(202301, 202301, 202301, 202301)
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nSites = 2, seed = 222)
+  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nGroups = 2, seed = 222)
 
   # Each replicate should have exactly 2 sites worth of data
   site_counts <- result %>%
@@ -135,7 +135,7 @@ test_that("Analyze_StudyKRI nSites parameter works for downsampling", {
   expect_true(all(site_counts$UniqueSites <= 2))
 })
 
-test_that("Analyze_StudyKRI nSites parameter works for upsampling", {
+test_that("Analyze_StudyKRI nGroups parameter works for upsampling", {
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB"),
     StudyID = c("Study1", "Study1"),
@@ -144,7 +144,7 @@ test_that("Analyze_StudyKRI nSites parameter works for upsampling", {
     MonthYYYYMM = c(202301, 202301)
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nSites = 5, seed = 333)
+  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nGroups = 5, seed = 333)
 
   # Each replicate should have 5 site selections (some will be duplicates)
   row_counts <- result %>%
@@ -315,7 +315,7 @@ test_that("Analyze_StudyKRI errors on invalid nBootstrapReps", {
   )
 })
 
-test_that("Analyze_StudyKRI errors on invalid nSites", {
+test_that("Analyze_StudyKRI errors on invalid nGroups", {
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB"),
     StudyID = c("Study1", "Study1"),
@@ -323,18 +323,18 @@ test_that("Analyze_StudyKRI errors on invalid nSites", {
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nSites = -1),
-    "nSites must be NULL or a single positive integer"
+    Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nGroups = -1),
+    "nGroups must be NULL or a single positive integer"
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nSites = 0),
-    "nSites must be NULL or a single positive integer"
+    Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nGroups = 0),
+    "nGroups must be NULL or a single positive integer"
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nSites = c(2, 3)),
-    "nSites must be NULL or a single positive integer"
+    Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nGroups = c(2, 3)),
+    "nGroups must be NULL or a single positive integer"
   )
 })
 
