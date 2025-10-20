@@ -43,8 +43,16 @@ steps:
       strSubjectCol: subjid
       strNumeratorDateCol: aest_dt
       strDenominatorDateCol: visit_dt
+  - output: Analysis_Transformed
+    name: gsm.studykri::Transform_CumCount
+    params:
+      dfInput: Analysis_Input
+      vBy: 
+        - StudyID
+      nMinDenominator: 25
   - output: lAnalysis
     name: list
     params:
       ID: ID
       Analysis_Input: Analysis_Input
+      Analysis_Transformed: Analysis_Transformed

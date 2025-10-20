@@ -55,6 +55,7 @@ test_that("kri0001 workflow executes successfully", {
   expect_type(lResult, "list")
   expect_true("ID" %in% names(lResult))
   expect_true("Analysis_Input" %in% names(lResult))
+  expect_true("Analysis_Transformed" %in% names(lResult))
   expect_equal(lResult$ID, "kri0001")
   
   # Extract Analysis_Input for detailed validation
@@ -97,6 +98,46 @@ test_that("kri0001 workflow executes successfully", {
   rows_with_denom <- dfInput$Denominator > 0
   calculated_metric <- dfInput$Numerator[rows_with_denom] / dfInput$Denominator[rows_with_denom]
   expect_equal(dfInput$Metric[rows_with_denom], calculated_metric, tolerance = 1e-10)
+  
+  # Extract Analysis_Transformed for detailed validation
+  dfTransformed <- lResult$Analysis_Transformed
+  
+  # Validate structure
+  expect_s3_class(dfTransformed, "data.frame")
+  expect_true(nrow(dfTransformed) > 0)
+  
+  # Check expected columns
+  expected_cols_transformed <- c("StudyID", "MonthYYYYMM", "StudyMonth", "CumulativeNumerator", 
+                                  "CumulativeDenominator", "CumulativeMetric", "GroupCount")
+  expect_true(all(expected_cols_transformed %in% names(dfTransformed)))
+  
+  # Check column types
+  expect_type(dfTransformed$StudyID, "character")
+  expect_type(dfTransformed$MonthYYYYMM, "double")
+  expect_type(dfTransformed$StudyMonth, "integer")
+  expect_type(dfTransformed$CumulativeNumerator, "integer")
+  expect_type(dfTransformed$CumulativeDenominator, "integer")
+  expect_type(dfTransformed$CumulativeMetric, "double")
+  expect_type(dfTransformed$GroupCount, "integer")
+  
+  # Verify this is study-level (fewer rows than site-level)
+  expect_true(nrow(dfTransformed) < nrow(dfInput))
+  
+  # Verify StudyMonth is sequential within each study
+  for (study in unique(dfTransformed$StudyID)) {
+    study_data <- dfTransformed[dfTransformed$StudyID == study, ]
+    expect_equal(study_data$StudyMonth, seq_len(nrow(study_data)))
+  }
+  
+  # Verify minimum denominator filter was applied
+  expect_true(all(dfTransformed$CumulativeDenominator > 25))
+  
+  # Verify CumulativeMetric calculation
+  expect_equal(
+    dfTransformed$CumulativeMetric,
+    dfTransformed$CumulativeNumerator / dfTransformed$CumulativeDenominator,
+    tolerance = 1e-10
+  )
 })
 
 test_that("kri0001 workflow validates required mapped data", {
