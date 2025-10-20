@@ -50,9 +50,25 @@ steps:
       vBy: 
         - StudyID
       nMinDenominator: 25
+  - output: Analysis_Bootstrapped
+    name: gsm.studykri::Analyze_StudyKRI
+    params:
+      dfInput: Analysis_Input
+      nBootstrapReps: 1000
+      seed: 42
+  - output: Analysis_BootstrappedStudy
+    name: gsm.studykri::Transform_CumCount
+    params:
+      dfInput: Analysis_Bootstrapped
+      vBy:
+        - StudyID
+        - BootstrapRep
+      nMinDenominator: 25
   - output: lAnalysis
     name: list
     params:
       ID: ID
       Analysis_Input: Analysis_Input
       Analysis_Transformed: Analysis_Transformed
+      Analysis_Bootstrapped: Analysis_Bootstrapped
+      Analysis_BootstrappedStudy: Analysis_BootstrappedStudy

@@ -138,6 +138,49 @@ test_that("kri0001 workflow executes successfully", {
     dfTransformed$CumulativeNumerator / dfTransformed$CumulativeDenominator,
     tolerance = 1e-10
   )
+  
+  # Extract Analysis_Bootstrapped for validation
+  dfBootstrapped <- lResult$Analysis_Bootstrapped
+  
+  expect_s3_class(dfBootstrapped, "data.frame")
+  expect_true(nrow(dfBootstrapped) > 0)
+  expect_true("BootstrapRep" %in% names(dfBootstrapped))
+  expect_true(all(c("GroupID", "Numerator", "Denominator", "StudyID") %in% names(dfBootstrapped)))
+  
+  # Should have approximately nBootstrapReps × site-level row count
+  # With replacement sampling, exact count varies
+  expect_true(nrow(dfBootstrapped) > nrow(dfInput) * 100)  # At least 100x for 1000 reps
+  expect_equal(length(unique(dfBootstrapped$BootstrapRep)), 1000)
+  
+  # Extract Analysis_BootstrappedStudy for validation
+  dfBootstrappedStudy <- lResult$Analysis_BootstrappedStudy
+  
+  expect_s3_class(dfBootstrappedStudy, "data.frame")
+  expect_true(nrow(dfBootstrappedStudy) > 0)
+  
+  expected_cols_bootstrap <- c("StudyID", "BootstrapRep", "MonthYYYYMM", "StudyMonth",
+                                "CumulativeNumerator", "CumulativeDenominator", 
+                                "CumulativeMetric", "GroupCount")
+  expect_true(all(expected_cols_bootstrap %in% names(dfBootstrappedStudy)))
+  
+  expect_type(dfBootstrappedStudy$BootstrapRep, "integer")
+  expect_equal(length(unique(dfBootstrappedStudy$BootstrapRep)), 1000)
+  
+  # Verify it's study-level (fewer rows than site-level bootstrap)
+  expect_true(nrow(dfBootstrappedStudy) < nrow(dfBootstrapped))
+  
+  # Verify StudyMonth is sequential within each study × bootstrap replicate
+  for (study in unique(dfBootstrappedStudy$StudyID)) {
+    for (rep in sample(unique(dfBootstrappedStudy$BootstrapRep), min(10, length(unique(dfBootstrappedStudy$BootstrapRep))))) {
+      rep_data <- dfBootstrappedStudy[dfBootstrappedStudy$StudyID == study & dfBootstrappedStudy$BootstrapRep == rep, ]
+      if (nrow(rep_data) > 0) {
+        expect_equal(rep_data$StudyMonth, seq_len(nrow(rep_data)))
+      }
+    }
+  }
+  
+  # Verify minimum denominator filter was applied
+  expect_true(all(dfBootstrappedStudy$CumulativeDenominator > 25))
 })
 
 test_that("kri0001 workflow validates required mapped data", {
