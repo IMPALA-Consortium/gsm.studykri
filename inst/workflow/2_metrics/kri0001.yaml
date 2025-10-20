@@ -64,6 +64,13 @@ steps:
         - StudyID
         - BootstrapRep
       nMinDenominator: 25
+  - output: Analysis_Bounds
+    name: gsm.studykri::Analyze_StudyKRI_PredictBounds
+    params:
+      dfInput: Analysis_BootstrappedStudy
+      vBy:
+        - StudyID
+      nConfLevel: 0.95
   - output: lAnalysis
     name: list
     params:
@@ -72,3 +79,4 @@ steps:
       Analysis_Transformed: Analysis_Transformed
       Analysis_Bootstrapped: Analysis_Bootstrapped
       Analysis_BootstrappedStudy: Analysis_BootstrappedStudy
+      Analysis_Bounds: Analysis_Bounds

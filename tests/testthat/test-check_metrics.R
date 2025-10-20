@@ -183,6 +183,37 @@ test_that("kri0001 workflow executes successfully", {
   
   # Verify minimum denominator filter was applied
   expect_true(all(dfBootstrappedStudy$Denominator > 25))
+  
+  # Extract Analysis_Bounds for validation
+  dfBounds <- lResult$Analysis_Bounds
+  
+  expect_s3_class(dfBounds, "data.frame")
+  expect_true(nrow(dfBounds) > 0)
+  
+  expected_cols_bounds <- c("StudyID", "StudyMonth", "MedianMetric", "LowerBound", 
+                             "UpperBound", "BootstrapCount")
+  expect_true(all(expected_cols_bounds %in% names(dfBounds)))
+  
+  expect_type(dfBounds$StudyID, "character")
+  expect_type(dfBounds$StudyMonth, "integer")
+  expect_type(dfBounds$MedianMetric, "double")
+  expect_type(dfBounds$LowerBound, "double")
+  expect_type(dfBounds$UpperBound, "double")
+  expect_type(dfBounds$BootstrapCount, "integer")
+  
+  # Verify confidence intervals are sensible
+  expect_true(all(dfBounds$LowerBound <= dfBounds$MedianMetric))
+  expect_true(all(dfBounds$MedianMetric <= dfBounds$UpperBound))
+  
+  # Verify StudyMonth is sequential
+  for (study in unique(dfBounds$StudyID)) {
+    study_data <- dfBounds[dfBounds$StudyID == study, ]
+    expect_equal(study_data$StudyMonth, seq_len(nrow(study_data)))
+  }
+  
+  # Verify bootstrap count is reasonable (should be close to 1000 per time point)
+  expect_true(all(dfBounds$BootstrapCount > 0))
+  expect_true(all(dfBounds$BootstrapCount <= 1000))
 })
 
 test_that("kri0001 workflow validates required mapped data", {
