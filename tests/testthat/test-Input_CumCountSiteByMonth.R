@@ -18,7 +18,7 @@ test_that("Input_CumCountSiteByMonth returns correct structure", {
   expect_true(nrow(result) > 0)
   
   # Check expected columns
-  expected_cols <- c("GroupID", "GroupLevel", "Numerator", "Denominator", "Metric", "StudyID", "Month")
+  expected_cols <- c("GroupID", "GroupLevel", "Numerator", "Denominator", "Metric", "StudyID", "MonthYYYYMM")
   expect_true(all(expected_cols %in% names(result)))
   
   # Check column types
@@ -28,7 +28,7 @@ test_that("Input_CumCountSiteByMonth returns correct structure", {
   expect_type(result$Denominator, "integer")
   expect_type(result$Metric, "double")
   expect_type(result$StudyID, "character")
-  expect_type(result$Month, "double")
+  expect_type(result$MonthYYYYMM, "double")
   
   # Check GroupLevel is constant
   expect_true(all(result$GroupLevel == "Site"))
@@ -50,7 +50,7 @@ test_that("Input_CumCountSiteByMonth calculates cumulative counts correctly", {
   )
   
   # Check cumulative property: values should be non-decreasing within each site
-  result_ordered <- result[order(result$GroupID, result$Month), ]
+  result_ordered <- result[order(result$GroupID, result$MonthYYYYMM), ]
   
   for (site in unique(result_ordered$GroupID)) {
     site_data <- result_ordered[result_ordered$GroupID == site, ]
@@ -235,7 +235,7 @@ test_that("Input_CumCountSiteByMonth filters to enrolled subjects", {
   expect_true(length(numerator_subjects) > 0)
 })
 
-test_that("Input_CumCountSiteByMonth handles Month formatting correctly", {
+test_that("Input_CumCountSiteByMonth handles MonthYYYYMM formatting correctly", {
   # Setup test data
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
@@ -250,12 +250,12 @@ test_that("Input_CumCountSiteByMonth handles Month formatting correctly", {
     strDenominatorDateCol = "visit_dt"
   )
   
-  # Check Month format (should be YYYYMM as numeric)
+  # Check MonthYYYYMM format (should be YYYYMM as numeric)
   # Filter out NA values for validation
-  valid_months <- result$Month[!is.na(result$Month)]
+  valid_months <- result$MonthYYYYMM[!is.na(result$MonthYYYYMM)]
   expect_true(all(valid_months >= 190001 & valid_months <= 209912))
   
-  # Check that Month values are plausible (6 digits, YYYYMM format)
+  # Check that MonthYYYYMM values are plausible (6 digits, YYYYMM format)
   month_strings <- as.character(valid_months)
   expect_true(all(nchar(month_strings) == 6))
 })

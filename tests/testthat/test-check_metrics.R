@@ -65,7 +65,7 @@ test_that("kri0001 workflow executes successfully", {
   expect_true(nrow(dfInput) > 0)
   
   # Check expected columns
-  expected_cols <- c("GroupID", "GroupLevel", "Numerator", "Denominator", "Metric", "StudyID", "Month")
+  expected_cols <- c("GroupID", "GroupLevel", "Numerator", "Denominator", "Metric", "StudyID", "MonthYYYYMM")
   expect_true(all(expected_cols %in% names(dfInput)))
   
   # Check column types
@@ -75,13 +75,13 @@ test_that("kri0001 workflow executes successfully", {
   expect_type(dfInput$Denominator, "integer")
   expect_type(dfInput$Metric, "double")
   expect_type(dfInput$StudyID, "character")
-  expect_type(dfInput$Month, "double")
+  expect_type(dfInput$MonthYYYYMM, "double")
   
   # Check GroupLevel is "Site"
   expect_true(all(dfInput$GroupLevel == "Site"))
   
   # Validate cumulative property: values should be non-decreasing within each site
-  dfInput_ordered <- dfInput[order(dfInput$GroupID, dfInput$Month), ]
+  dfInput_ordered <- dfInput[order(dfInput$GroupID, dfInput$MonthYYYYMM), ]
   
   for (site in unique(dfInput_ordered$GroupID)) {
     site_data <- dfInput_ordered[dfInput_ordered$GroupID == site, ]

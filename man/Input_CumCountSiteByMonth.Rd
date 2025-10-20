@@ -42,7 +42,7 @@ Input_CumCountSiteByMonth(
 \item{strDenominatorDateCol}{character. Date column name in denominator data.}
 }
 \value{
-data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, Month
+data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM
 }
 \description{
 Calculates cumulative event counts and ratios by site and month for KRI analysis.

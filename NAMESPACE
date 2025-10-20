@@ -3,6 +3,7 @@
 export(Input_CumCountSiteByMonth)
 export(ResampleStudy)
 export(SimulatePortfolio)
+export(Transform_CumCount)
 importFrom(dplyr,"%>%")
 importFrom(rlang,.data)
 importFrom(rlang,.env)

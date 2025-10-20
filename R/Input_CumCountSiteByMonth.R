@@ -19,7 +19,7 @@
 #' @param strNumeratorDateCol character. Date column name in numerator data.
 #' @param strDenominatorDateCol character. Date column name in denominator data.
 #'
-#' @return data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, Month
+#' @return data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM
 #'
 #' @examples
 #' dfSubjects <- clindata::rawplus_dm
@@ -206,7 +206,7 @@ Input_CumCountSiteByMonth <- function(
       "Denominator",
       "Metric",
       StudyID = dplyr::all_of(.env$strStudyCol),
-      "Month"
+      MonthYYYYMM = "Month"
     )
   
   return(as.data.frame(dfResult))
