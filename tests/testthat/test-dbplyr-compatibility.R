@@ -135,3 +135,49 @@ test_that("Analyze_StudyKRI returns lazy table with lazy input", {
   DBI::dbDisconnect(lazy_tables$con)
 })
 
+# Test 4: Analyze_StudyKRI_PredictBounds Returns Lazy Table
+test_that("Analyze_StudyKRI_PredictBounds returns lazy table with lazy input", {
+  # Setup
+  test_data <- create_minimal_test_data()
+  lazy_tables <- create_lazy_tables(test_data)
+  
+  # Build full pipeline to get bootstrap data
+  dfInput <- Input_CumCountSiteByMonth(
+    dfSubjects = lazy_tables$dfSubjects,
+    dfNumerator = lazy_tables$dfNumerator,
+    dfDenominator = lazy_tables$dfDenominator,
+    strStudyCol = "studyid",
+    strGroupCol = "invid",
+    strSubjectCol = "subjid",
+    strNumeratorDateCol = "aest_dt",
+    strDenominatorDateCol = "visit_dt"
+  )
+  
+  dfBootstrap <- Analyze_StudyKRI(
+    dfInput = dfInput,
+    nBootstrapReps = 5,  # Very small number for speed
+    strStudyCol = "StudyID",
+    strGroupCol = "GroupID",
+    seed = 123
+  )
+  
+  dfBootstrapStudy <- Transform_CumCount(
+    dfInput = dfBootstrap,
+    vBy = c("StudyID", "BootstrapRep"),
+    nMinDenominator = 1
+  )
+  
+  # Execute Analyze_StudyKRI_PredictBounds
+  result <- Analyze_StudyKRI_PredictBounds(
+    dfInput = dfBootstrapStudy,
+    vBy = "StudyID",
+    nConfLevel = 0.95
+  )
+  
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+  
+  # Cleanup
+  DBI::dbDisconnect(lazy_tables$con)
+})
+
