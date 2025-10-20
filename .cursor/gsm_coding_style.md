@@ -68,40 +68,44 @@ Common parameters across functions:
 
 ## 3. Column Naming Conventions
 
-### Standard Output Columns
+### Raw/Mapped Domain Columns
 
-Use **UPPERCASE** for standard data model columns:
+Use **lowercase with underscores** for raw and mapped domain columns:
 
-**Study/Site Identifiers:**
-- `STUDY`, `SITE_NUMBER`, `SITEID`, `SUBJID`
+**Study/Site/Subject Identifiers:**
+- `studyid`, `invid`, `subjid`, `subjectid`, `subject_nsv`
+- `site_num`, `country`
+
+**Event Data:**
+- `aeser`, `aest_dt`, `aeen_dt` (adverse events)
+- `querystatus`, `queryage` (queries)
+- `enrollyn`, `timeonstudy` (enrollment)
 
 **Temporal:**
-- `YYYYMM` - Year-month format for monthly aggregations
+- `firstparticipantdate`, `firstdosedate`
 
-**Metrics:**
-- `NAME` - KRI/metric name
-- `VALUE` - Primary metric value
-- `VALUE_CUM` - Cumulative numerator
-- `N_RECORDS_CUM` - Cumulative denominator
-- `RATIO_CUM` - Cumulative ratio
+### Derived/Aggregate Columns  
 
-**Confidence Intervals:**
-- `LOWER_CI`, `UPPER_CI` - Confidence interval bounds
+Use **PascalCase** for derived, aggregate, or metadata columns:
 
-**Comparison Metrics:**
-- `PORTFOLIO_LOWER`, `PORTFOLIO_UPPER`, `PORTFOLIO_MEDIAN`
-- `ONGOING_VALUE`, `ONGOING_LOWER`, `ONGOING_UPPER`
+**Group Identifiers:**
+- `GroupID` - Universal group identifier (study, site, or country)
+- `GroupLevel` - Indicates grouping level ("Study", "Site", "Country")
 
-**Flags:**
-- `FLAG` - Boolean flag for out-of-range values
-- `DEVIATION` - Categorical deviation status
+**Counts:**
+- `ParticipantCount`, `SiteCount`
+- `Numerator`, `Denominator`
+- `Count`, `Total`
 
-### Internal/Temporary Columns
+**Targets:**
+- `SiteTarget`, `ParticipantTarget`
+- `PercentSitesActivated`, `PercentParticipantsEnrolled`
 
-Use **lowercase** for internal processing columns:
+**KRI Metrics:**
+- `Metric`, `Score`, `Flag`
+- `Threshold`, `ThresholdDiff`
 
-- `original_id`, `new_id`, `site_number`
-- `ae_count`, `pd_count`, `visit_count`
+**Note:** UPPERCASE column names (e.g., `STUDY`, `YYYYMM`, `VALUE_CUM`) may appear in examples using Snowflake or other SQL backends but are not the standard for gsm.core R package outputs.
 
 ## 4. File and Directory Structure
 

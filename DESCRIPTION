@@ -12,9 +12,15 @@ RoxygenNote: 7.3.2
 URL: https://impala-consortium.github.io/gsm.studykri/
 Suggests: 
     clindata,
+    gsm.core,
+    gsm.mapping,
     testthat (>= 3.0.0)
 Remotes: 
-    Gilead-BioStats/clindata
+    Gilead-BioStats/clindata,
+    Gilead-BioStats/gsm.core,
+    Gilead-BioStats/gsm.mapping
 Config/testthat/edition: 3
 Imports: 
+    dplyr,
+    rlang,
     stats

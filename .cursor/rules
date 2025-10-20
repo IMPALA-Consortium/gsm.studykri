@@ -27,7 +27,21 @@ Rules:
 - use rlang::.data and rlang::.env to capture non standard evaluation of dplyr variables
 - for dplyr::select and dplyr::rename use tidy_select functions instead of rlang::.data and rlang::.env
 
+here is an example for the correct usage of .data and .env
 
+library(rlang)
+library(dplyr)
+
+filter_value <- 1
+filter_col <- "am"
+sum_col = "sum_wt"
+
+mtcars %>%
+  select(c("am", "wt")) %>%
+  filter(.data[[filter_col]] == .env$filter_value) %>%
+  summarise("{{sum_col}}" := sum(wt))
+
+- for any errors related to the non-standard evaluation of dplyr check https://dplyr.tidyverse.org/articles/programming.html for fixes
 
 Verbosity Control:
 - keep each reasoning step ≤ 5 lines of explanation
@@ -64,11 +78,14 @@ Goal:
     Screen Failure Rate
 - provide confidence intervals for each KRI and compare against combined KRI with reference studies
 - method for CI calculation is outlined in studykri.Rmd
+
 - functions to be used in KRI calculation:
-  - gsm.core::Input_Rate()
-  - gsm.core::Transform_Rate()
-  - Analyze_StudyKRI(dfAnalysisTransformed, dfStudyGroups, Studies)
+  - Input_CumCountSitebyMonth(dfSubjects, dfNumerator, dfDenominator, strStudyCol, strGroupCol, strGroupLevel, strSubjectCol, strNumeratorCol, strDenominatorCol, strNumeratorDateCol, strDenominatorDateCol)
+  - Transform_CumCount(dfInput, vBy) #called get_study_kri in example
+  - Analyze_StudyKRI(dfTransformed, dfStudyGroups, Studies) # get_boot in example
+  - Analyze_StudyKRI_PredictBounds # called get_ci in example
   - Visualize_StudyKRI(dfAnalysis_Analyzed)
+
 - kri code needs to be provided as yaml in `inst/workflows/2_metrics`
 - dfStudyGroups has two columns with studyIDs indicating that they can be used as reference studies
 - there needs to by StudyGroups yaml mappings file
