@@ -181,3 +181,60 @@ test_that("Analyze_StudyKRI_PredictBounds returns lazy table with lazy input", {
   DBI::dbDisconnect(lazy_tables$con)
 })
 
+# Test 5: Analyze_StudyKRI_PredictBoundsGroup Returns Lazy Table
+test_that("Analyze_StudyKRI_PredictBoundsGroup returns lazy table with lazy input", {
+  # Setup with multiple studies
+  test_data_multi <- list(
+    dfSubjects = data.frame(
+      subjid = c("S1", "S2", "S3", "S4", "S5", "S6"),
+      studyid = rep(c("STUDY1", "STUDY2"), each = 3),
+      invid = c("SITE1", "SITE1", "SITE2", "SITE3", "SITE3", "SITE4"),
+      stringsAsFactors = FALSE
+    ),
+    dfNumerator = data.frame(
+      subjid = c("S1", "S2", "S3", "S4", "S5", "S6"),
+      aest_dt = as.Date(c("2024-01-15", "2024-01-20", "2024-02-10",
+                          "2024-01-18", "2024-01-25", "2024-02-12")),
+      stringsAsFactors = FALSE
+    ),
+    dfDenominator = data.frame(
+      subjid = c("S1", "S2", "S3", "S4", "S5", "S6"),
+      visit_dt = as.Date(c("2024-01-10", "2024-01-12", "2024-02-05",
+                           "2024-01-11", "2024-01-15", "2024-02-08")),
+      stringsAsFactors = FALSE
+    )
+  )
+  
+  lazy_tables <- create_lazy_tables(test_data_multi)
+  
+  # Build full pipeline to get site-level data
+  dfInput <- Input_CumCountSiteByMonth(
+    dfSubjects = lazy_tables$dfSubjects,
+    dfNumerator = lazy_tables$dfNumerator,
+    dfDenominator = lazy_tables$dfDenominator,
+    strStudyCol = "studyid",
+    strGroupCol = "invid",
+    strSubjectCol = "subjid",
+    strNumeratorDateCol = "aest_dt",
+    strDenominatorDateCol = "visit_dt"
+  )
+  
+  # Execute Analyze_StudyKRI_PredictBoundsGroup
+  suppressMessages({
+    result <- Analyze_StudyKRI_PredictBoundsGroup(
+      dfInput = dfInput,
+      vStudyFilter = c("STUDY1", "STUDY2"),
+      nBootstrapReps = 5,  # Very small number for speed
+      nConfLevel = 0.95,
+      nMinDenominator = 1,
+      seed = 123
+    )
+  })
+  
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+  
+  # Cleanup
+  DBI::dbDisconnect(lazy_tables$con)
+})
+
