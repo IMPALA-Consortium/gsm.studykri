@@ -1,6 +1,6 @@
 test_that("kri0001 workflow executes successfully", {
-  # Load test data
-  lRaw <- list(
+  # Generate multi-study portfolio using SimulatePortfolio
+  lRaw_original <- list(
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_AE = clindata::rawplus_ae,
     Raw_VISIT = clindata::rawplus_visdt,
@@ -16,6 +16,17 @@ test_that("kri0001 workflow executes successfully", {
     Raw_STUDCOMP = clindata::rawplus_studcomp
   )
   
+  # Create a portfolio with 3 studies
+  lRaw <- SimulatePortfolio(
+    lRaw = lRaw_original,
+    nStudies = 3,
+    seed = 123
+  )
+  
+  # Verify we have multiple studies
+  study_ids <- unique(lRaw$Raw_SUBJ$studyid)
+  expect_equal(length(study_ids), 3)
+  
   # Run mapping workflows
   mapping_wf <- gsm.core::MakeWorkflowList(
     strNames = NULL,
@@ -25,7 +36,7 @@ test_that("kri0001 workflow executes successfully", {
   
   expect_warning({
     lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
-  }, "Field `visit_dt`: 19 unparsable Date\\(s\\) set to NA")
+  }, "Field `visit_dt`:.*unparsable")
   
   lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
   
@@ -184,11 +195,15 @@ test_that("kri0001 workflow executes successfully", {
   # Verify minimum denominator filter was applied
   expect_true(all(dfBootstrappedStudy$Denominator > 25))
   
-  # Extract Analysis_Bounds for validation
+  # Extract Analysis_Bounds for validation (individual study CIs)
   dfBounds <- lResult$Analysis_Bounds
   
   expect_s3_class(dfBounds, "data.frame")
   expect_true(nrow(dfBounds) > 0)
+  
+  # Should have StudyID column (one CI per study)
+  expect_true("StudyID" %in% names(dfBounds))
+  expect_equal(length(unique(dfBounds$StudyID)), 3)  # 3 studies
   
   expected_cols_bounds <- c("StudyID", "StudyMonth", "MedianMetric", "LowerBound", 
                              "UpperBound", "BootstrapCount")
@@ -214,6 +229,42 @@ test_that("kri0001 workflow executes successfully", {
   # Verify bootstrap count is reasonable (should be close to 1000 per time point)
   expect_true(all(dfBounds$BootstrapCount > 0))
   expect_true(all(dfBounds$BootstrapCount <= 1000))
+  
+  # Extract Analysis_GroupBounds for validation (combined group CIs)
+  dfGroupBounds <- lResult$Analysis_GroupBounds
+  
+  expect_s3_class(dfGroupBounds, "data.frame")
+  expect_true(nrow(dfGroupBounds) > 0)
+  
+  # Should NOT have StudyID column (studies are combined)
+  expect_false("StudyID" %in% names(dfGroupBounds))
+  
+  expected_cols_group <- c("StudyMonth", "MedianMetric", "LowerBound", 
+                            "UpperBound", "BootstrapCount", "GroupCount", "StudyCount")
+  expect_true(all(expected_cols_group %in% names(dfGroupBounds)))
+  
+  expect_type(dfGroupBounds$StudyMonth, "integer")
+  expect_type(dfGroupBounds$MedianMetric, "double")
+  expect_type(dfGroupBounds$LowerBound, "double")
+  expect_type(dfGroupBounds$UpperBound, "double")
+  expect_type(dfGroupBounds$BootstrapCount, "integer")
+  expect_type(dfGroupBounds$GroupCount, "integer")
+  expect_type(dfGroupBounds$StudyCount, "integer")
+  
+  # Verify metadata
+  expect_equal(unique(dfGroupBounds$StudyCount), 3)  # All 3 studies combined
+  expect_true(all(dfGroupBounds$GroupCount > 0))
+  
+  # Verify confidence intervals are sensible
+  expect_true(all(dfGroupBounds$LowerBound <= dfGroupBounds$MedianMetric, na.rm = TRUE))
+  expect_true(all(dfGroupBounds$MedianMetric <= dfGroupBounds$UpperBound, na.rm = TRUE))
+  
+  # Verify StudyMonth is sequential
+  expect_equal(dfGroupBounds$StudyMonth, seq_len(nrow(dfGroupBounds)))
+  
+  # Verify bootstrap count is reasonable (should be close to 1000 per time point)
+  expect_true(all(dfGroupBounds$BootstrapCount > 0))
+  expect_true(all(dfGroupBounds$BootstrapCount <= 1000))
 })
 
 test_that("kri0001 workflow validates required mapped data", {
@@ -241,5 +292,124 @@ test_that("kri0001 workflow validates required mapped data", {
   expect_error(
     gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped_incomplete)
   )
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsGroup works with multi-study portfolio", {
+  # Generate multi-study portfolio using SimulatePortfolio
+  lRaw_original <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_VISIT = clindata::rawplus_visdt,
+    Raw_SITE = clindata::ctms_site,
+    Raw_STUDY = clindata::ctms_study,
+    Raw_PD = clindata::ctms_protdev,
+    Raw_DATAENT = clindata::edc_data_pages,
+    Raw_QUERY = clindata::edc_queries,
+    Raw_ENROLL = clindata::rawplus_enroll,
+    Raw_Randomization = clindata::rawplus_ixrsrand,
+    Raw_LB = clindata::rawplus_lb,
+    Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
+    Raw_STUDCOMP = clindata::rawplus_studcomp
+  )
+  
+  # Create a portfolio with 3 studies
+  lRaw_portfolio <- SimulatePortfolio(
+    lRaw = lRaw_original,
+    nStudies = 3,
+    seed = 789
+  )
+  
+  # Verify we have multiple studies
+  study_ids <- unique(lRaw_portfolio$Raw_SUBJ$studyid)
+  expect_equal(length(study_ids), 3)
+  
+  # Run mapping workflows on portfolio data
+  mapping_wf <- gsm.core::MakeWorkflowList(
+    strNames = NULL,
+    strPath = system.file("workflow/1_mappings", package = "gsm.studykri"),
+    strPackage = NULL
+  )
+  
+  expect_warning({
+    lIngest <- gsm.mapping::Ingest(lRaw_portfolio, gsm.mapping::CombineSpecs(mapping_wf))
+  }, "Field `visit_dt`:.*unparsable")
+  
+  lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
+  
+  # Get Input_CumCountSiteByMonth data
+  dfSiteLevel <- Input_CumCountSiteByMonth(
+    dfSubjects = lMapped$Mapped_SUBJ,
+    dfNumerator = lMapped$Mapped_AE,
+    dfDenominator = lMapped$Mapped_Visit,
+    strStudyCol = "studyid",
+    strGroupCol = "invid",
+    strSubjectCol = "subjid",
+    strNumeratorDateCol = "aest_dt",
+    strDenominatorDateCol = "visit_dt"
+  )
+  
+  # Verify site-level data has multiple studies
+  expect_equal(length(unique(dfSiteLevel$StudyID)), 3)
+  
+  # Test Analyze_StudyKRI_PredictBoundsGroup with vStudyFilter = NULL (use all studies)
+  suppressMessages({
+    dfGroupBounds_all <- Analyze_StudyKRI_PredictBoundsGroup(
+      dfInput = dfSiteLevel,
+      vStudyFilter = NULL,  # Test default behavior - use all studies
+      nBootstrapReps = 50,  # Small for speed
+      nConfLevel = 0.95,
+      nMinDenominator = 10,  # Lower threshold for simulated data
+      seed = 789
+    )
+  })
+  
+  # Validate output structure
+  expect_s3_class(dfGroupBounds_all, "data.frame")
+  expect_true(nrow(dfGroupBounds_all) > 0)
+  
+  expected_cols <- c("StudyMonth", "MedianMetric", "LowerBound", 
+                     "UpperBound", "BootstrapCount", "GroupCount", "StudyCount")
+  expect_true(all(expected_cols %in% names(dfGroupBounds_all)))
+  
+  # Verify no StudyID column (studies are combined)
+  expect_false("StudyID" %in% names(dfGroupBounds_all))
+  
+  # Verify metadata
+  expect_equal(unique(dfGroupBounds_all$StudyCount), 3)
+  expect_true(all(dfGroupBounds_all$GroupCount > 0))
+  
+  # Verify confidence intervals are sensible
+  expect_true(all(dfGroupBounds_all$LowerBound <= dfGroupBounds_all$MedianMetric, na.rm = TRUE))
+  expect_true(all(dfGroupBounds_all$MedianMetric <= dfGroupBounds_all$UpperBound, na.rm = TRUE))
+  
+  # Verify StudyMonth is sequential
+  expect_equal(dfGroupBounds_all$StudyMonth, seq_len(nrow(dfGroupBounds_all)))
+  
+  # Test with subset of studies (2 out of 3)
+  suppressMessages({
+    dfGroupBounds_subset <- Analyze_StudyKRI_PredictBoundsGroup(
+      dfInput = dfSiteLevel,
+      vStudyFilter = study_ids[1:2],
+      nBootstrapReps = 50,
+      nConfLevel = 0.95,
+      nMinDenominator = 10,
+      seed = 789
+    )
+  })
+  
+  expect_equal(unique(dfGroupBounds_subset$StudyCount), 2)
+  expect_true(nrow(dfGroupBounds_subset) > 0)
+  
+  # Verify bounds from subset are different from all studies
+  # (different study combinations should yield different bounds)
+  common_months <- intersect(dfGroupBounds_all$StudyMonth, dfGroupBounds_subset$StudyMonth)
+  if (length(common_months) > 0) {
+    # At least some bounds should differ
+    all_medians <- dfGroupBounds_all$MedianMetric[dfGroupBounds_all$StudyMonth %in% common_months]
+    subset_medians <- dfGroupBounds_subset$MedianMetric[dfGroupBounds_subset$StudyMonth %in% common_months]
+    
+    # Allow for some similarity but expect at least some difference
+    expect_true(!all(abs(all_medians - subset_medians) < 1e-10))
+  }
 })
 

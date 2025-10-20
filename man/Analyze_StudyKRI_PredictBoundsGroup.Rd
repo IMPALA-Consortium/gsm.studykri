@@ -6,7 +6,7 @@
 \usage{
 Analyze_StudyKRI_PredictBoundsGroup(
   dfInput,
-  vStudyFilter,
+  vStudyFilter = NULL,
   nBootstrapReps = 1000,
   nConfLevel = 0.95,
   strStudyCol = "StudyID",
@@ -21,8 +21,9 @@ Analyze_StudyKRI_PredictBoundsGroup(
 \item{dfInput}{data.frame or tbl_lazy. Site-level data from \code{Input_CumCountSiteByMonth}.
 Must contain columns: \code{StudyID}, \code{GroupID}, \code{Numerator}, \code{Denominator}, \code{MonthYYYYMM}.}
 
-\item{vStudyFilter}{character. Study IDs to include in comparison group
-(e.g., \code{c("STUDY1", "STUDY2", "STUDY3")}).}
+\item{vStudyFilter}{character or NULL. Study IDs to include in comparison group.
+If NULL (default), uses all studies found in dfInput.
+Example: \code{c("STUDY1", "STUDY2", "STUDY3")}.}
 
 \item{nBootstrapReps}{integer. Number of bootstrap replicates (default: 1000).}
 

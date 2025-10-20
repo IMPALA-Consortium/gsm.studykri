@@ -18,8 +18,9 @@
 #'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
 #'   Must contain columns: `StudyID`, `GroupID`, `Numerator`, `Denominator`, `MonthYYYYMM`.
-#' @param vStudyFilter character. Study IDs to include in comparison group
-#'   (e.g., `c("STUDY1", "STUDY2", "STUDY3")`).
+#' @param vStudyFilter character or NULL. Study IDs to include in comparison group.
+#'   If NULL (default), uses all studies found in dfInput.
+#'   Example: `c("STUDY1", "STUDY2", "STUDY3")`.
 #' @param nBootstrapReps integer. Number of bootstrap replicates (default: 1000).
 #' @param nConfLevel numeric. Confidence level for the bounds, between 0 and 1
 #'   (default: 0.95 for 95% CI).
@@ -64,7 +65,7 @@
 #' @export
 Analyze_StudyKRI_PredictBoundsGroup <- function(
   dfInput,
-  vStudyFilter,
+  vStudyFilter = NULL,
   nBootstrapReps = 1000,
   nConfLevel = 0.95,
   strStudyCol = "StudyID",
@@ -89,6 +90,25 @@ Analyze_StudyKRI_PredictBoundsGroup <- function(
     ))
   }
 
+  # Helper to detect lazy tables
+  is_lazy_table <- function(x) {
+    inherits(x, "tbl_lazy")
+  }
+
+  # Handle vStudyFilter - extract all studies if NULL
+  if (is.null(vStudyFilter)) {
+    # Extract all unique study IDs from input
+    if (is_lazy_table(dfInput)) {
+      vStudyFilter <- dfInput %>%
+        dplyr::distinct(.data[[strStudyCol]]) %>%
+        dplyr::collect() %>%
+        dplyr::pull(.data[[strStudyCol]])
+    } else {
+      vStudyFilter <- unique(dfInput[[strStudyCol]])
+    }
+    message(sprintf("No vStudyFilter specified. Using all %d studies.", length(vStudyFilter)))
+  }
+
   # Validate vStudyFilter
   if (!is.character(vStudyFilter) || length(vStudyFilter) == 0) {
     stop("vStudyFilter must be a non-empty character vector")
@@ -106,11 +126,6 @@ Analyze_StudyKRI_PredictBoundsGroup <- function(
 
   if (!is.numeric(nMinDenominator) || length(nMinDenominator) != 1 || nMinDenominator < 0) {
     stop("nMinDenominator must be a single non-negative numeric value")
-  }
-
-  # Helper to detect lazy tables
-  is_lazy_table <- function(x) {
-    inherits(x, "tbl_lazy")
   }
 
   # Filter to specified studies
