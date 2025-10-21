@@ -10,7 +10,8 @@ Analyze_StudyKRI(
   nGroups = NULL,
   strStudyCol = "StudyID",
   strGroupCol = "GroupID",
-  seed = NULL
+  seed = NULL,
+  tblBootstrapReps = NULL
 )
 }
 \arguments{
@@ -31,6 +32,11 @@ can be used to upsample (larger than actual) or downsample (smaller than actual)
 
 \item{seed}{integer or NULL. Random seed for reproducibility. If NULL (default),
 no seed is set. Note: seed only affects in-memory data frames, not SQL queries.}
+
+\item{tblBootstrapReps}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
+Optional pre-generated bootstrap replicate indices. Must have 'BootstrapRep'
+column with values 1 to nBootstrapReps. If NULL, attempts to create temp table
+(requires write privileges).}
 }
 \value{
 A data.frame (or tbl_lazy if input was lazy) with all original columns plus:
@@ -52,7 +58,7 @@ dfSubjects <- clindata::rawplus_dm
 dfNumerator <- clindata::rawplus_ae
 dfDenominator <- clindata::rawplus_visdt
 
-dfInput <- Input_CumCountSiteByMonth(
+dfInput <- Input_CountSiteByMonth(
   dfSubjects = dfSubjects,
   dfNumerator = dfNumerator,
   dfDenominator = dfDenominator,

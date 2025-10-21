@@ -28,4 +28,5 @@ Imports:
     ggplot2,
     lubridate,
     rlang,
-    stats
+    stats,
+    tidyr

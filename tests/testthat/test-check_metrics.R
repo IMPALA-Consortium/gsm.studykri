@@ -1,4 +1,4 @@
-test_that("hand written test - minimal workflow example") {
+test_that("hand written test - minimal workflow example", {
   # Generate multi-study portfolio using SimulatePortfolio
   lRaw_original <- list(
     Raw_SUBJ = clindata::rawplus_dm,
@@ -55,7 +55,7 @@ test_that("hand written test - minimal workflow example") {
   
   expect_s3_class(p, "ggplot")
 
-}
+})
 
 test_that("kri0001 workflow executes successfully", {
   # Generate multi-study portfolio using SimulatePortfolio
@@ -154,15 +154,9 @@ test_that("kri0001 workflow executes successfully", {
   # Validate cumulative property: values should be non-decreasing within each site
   dfInput_ordered <- dfInput[order(dfInput$GroupID, dfInput$MonthYYYYMM), ]
   
-  for (site in unique(dfInput_ordered$GroupID)) {
-    site_data <- dfInput_ordered[dfInput_ordered$GroupID == site, ]
-    
-    # Numerator should be non-decreasing
-    expect_true(all(diff(site_data$Numerator) >= 0))
-    
-    # Denominator should be non-decreasing
-    expect_true(all(diff(site_data$Denominator) >= 0))
-  }
+  # Note: Input_CountSiteByMonth now returns MONTHLY counts (not cumulative)
+  # Cumulative calculation happens at study level in Transform_CumCount
+  # So we no longer test for monotonically increasing counts at site level
   
   # Validate Metric calculation
   rows_with_denom <- dfInput$Denominator > 0
@@ -437,8 +431,8 @@ test_that("Analyze_StudyKRI_PredictBoundsGroup works with multi-study portfolio"
   
   lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
   
-  # Get Input_CumCountSiteByMonth data
-  dfSiteLevel <- Input_CumCountSiteByMonth(
+  # Get Input_CountSiteByMonth data
+  dfSiteLevel <- Input_CountSiteByMonth(
     dfSubjects = lMapped$Mapped_SUBJ,
     dfNumerator = lMapped$Mapped_AE,
     dfDenominator = lMapped$Mapped_Visit,

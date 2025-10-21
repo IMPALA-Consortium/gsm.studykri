@@ -376,13 +376,13 @@ test_that("Transform_CumCount works with actual Input_CountSiteByMonth output", 
   )
 })
 
-test_that("Transform_CumCount handles non-consecutive calendar months", {
-  # Test with gaps in calendar months (e.g., 202301, 202303, skipping 202302)
+test_that("Transform_CumCount fills gaps in calendar months with zeros", {
+  # Test with gaps in calendar months (e.g., 202301, 202303, 202305 skipping Feb and Apr)
   dfInput <- data.frame(
     StudyID = rep("STUDY001", 6),
     GroupID = rep(c("SITE01", "SITE02"), each = 3),
     GroupLevel = "Site",
-    MonthYYYYMM = rep(c(202301, 202303, 202305), 2),  # Non-consecutive
+    MonthYYYYMM = rep(c(202301, 202303, 202305), 2),  # Non-consecutive (missing Feb and Apr)
     Numerator = c(5, 10, 15, 3, 8, 12),
     Denominator = c(10, 20, 30, 10, 20, 30),
     Metric = c(0.5, 0.5, 0.5, 0.3, 0.4, 0.4)
@@ -391,14 +391,26 @@ test_that("Transform_CumCount handles non-consecutive calendar months", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
+    nMinDenominator = 0  # Don't filter to see all months including filled gaps
   )
   
-  # StudyMonth should still be sequential 1, 2, 3... despite gaps in calendar months
-  expect_equal(result$StudyMonth, seq_len(nrow(result)))
+  # Should have all months from Jan to May: 202301, 202302, 202303, 202304, 202305
+  expect_equal(nrow(result), 5)
+  expect_true(all(c(202301, 202302, 202303, 202304, 202305) %in% result$MonthYYYYMM))
   
-  # MonthYYYYMM should preserve the original calendar months
-  expect_true(all(result$MonthYYYYMM %in% c(202301, 202303, 202305)))
+  # StudyMonth should be 1, 2, 3, 4, 5 (not compressed to 1, 2, 3)
+  expect_equal(result$StudyMonth, 1:5)
+  
+  # Months with original data should have aggregated counts
+  expect_equal(result$Numerator[result$MonthYYYYMM == 202301], 8)  # 5 + 3
+  expect_equal(result$Numerator[result$MonthYYYYMM == 202303], 8 + 18)  # cumsum(8, 0, 18)
+  
+  # Gap months (202302, 202304) should have cumulative values maintained
+  expect_equal(result$Numerator[result$MonthYYYYMM == 202302], 8)  # Same as 202301 (no new data)
+  expect_equal(result$Numerator[result$MonthYYYYMM == 202304], 8 + 18)  # Same as 202303 (no new data)
+  
+  # Final month should have all cumulative data
+  expect_equal(result$Numerator[result$MonthYYYYMM == 202305], 8 + 18 + 27)
 })
 
 test_that("Cumulative counts are monotonically increasing within each study", {

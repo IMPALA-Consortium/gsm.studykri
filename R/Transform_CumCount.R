@@ -8,6 +8,7 @@
 #'
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data .env
+#' @importFrom tidyr unnest
 #'
 #' @param dfInput data.frame or tbl. Output from Input_CountSiteByMonth with columns:
 #'   GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.
@@ -17,6 +18,10 @@
 #'   c("StudyID", "BootstrapRep")).
 #' @param nMinDenominator numeric. Minimum cumulative denominator threshold for
 #'   filtering early/sparse data (default: 25).
+#' @param tblMonthSequence tbl_lazy, data.frame, or NULL. For lazy table inputs:
+#'   Optional pre-generated complete month sequences. Must contain columns matching
+#'   vBy and MonthYYYYMM with NO gaps. If NULL, attempts to create temp table
+#'   (requires write privileges). If data.frame provided, will be written to temp table.
 #'
 #' @return A data.frame with study-level aggregated cumulative counts and ratios.
 #'   Output columns: `vBy` columns, `MonthYYYYMM`, `StudyMonth`, `Numerator`,
@@ -50,7 +55,8 @@
 Transform_CumCount <- function(
   dfInput,
   vBy,
-  nMinDenominator = 25
+  nMinDenominator = 25,
+  tblMonthSequence = NULL
 ) {
   # Input validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfInput, c("data.frame", "tbl"))) {
@@ -134,6 +140,156 @@ Transform_CumCount <- function(
       GroupCount = dplyr::n_distinct(.data$GroupID),
       .by = c(dplyr::all_of(.env$vBy), "StudyMonth")
     )
+  
+  # Fill gaps in calendar months with zeros to maintain timeline continuity
+  # This ensures StudyMonth represents actual elapsed time, not compressed time
+  if (!is_lazy_table(dfAggregated)) {
+    # For in-memory data frames, fill gaps in MonthYYYYMM
+    # Generate complete month sequences for each group
+    dfMonthRanges <- dfAggregated %>%
+      dplyr::summarise(
+        min_month = min(.data$MonthYYYYMM),
+        max_month = max(.data$MonthYYYYMM),
+        .by = dplyr::all_of(.env$vBy)
+      )
+    
+    # Helper function to generate complete YYYYMM sequence
+    generate_month_seq <- function(start_yyyymm, end_yyyymm) {
+      start_year <- floor(start_yyyymm / 100)
+      start_month <- start_yyyymm %% 100
+      end_year <- floor(end_yyyymm / 100)
+      end_month <- end_yyyymm %% 100
+      
+      dates <- seq(
+        as.Date(paste0(start_year, "-", sprintf("%02d", start_month), "-01")),
+        as.Date(paste0(end_year, "-", sprintf("%02d", end_month), "-01")),
+        by = "month"
+      )
+      
+      as.numeric(format(dates, "%Y%m"))
+    }
+    
+    # Create complete month grid for each group
+    dfCompleteMonths <- dfMonthRanges %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(
+        MonthYYYYMM = list(generate_month_seq(.data$min_month, .data$max_month))
+      ) %>%
+      dplyr::select(-"min_month", -"max_month") %>%
+      tidyr::unnest("MonthYYYYMM")
+    
+    # Left join to fill gaps with zeros
+    dfAggregated <- dfCompleteMonths %>%
+      dplyr::left_join(
+        dfAggregated %>% dplyr::select(-"StudyMonth"),
+        by = c(vBy, "MonthYYYYMM")
+      ) %>%
+      dplyr::mutate(
+        Numerator = dplyr::coalesce(.data$Numerator, 0L),
+        Denominator = dplyr::coalesce(.data$Denominator, 0L),
+        GroupCount = dplyr::coalesce(.data$GroupCount, 0L)
+      ) %>%
+      # Recalculate StudyMonth as sequential numbering
+      dplyr::mutate(
+        StudyMonth = dplyr::dense_rank(.data$MonthYYYYMM),
+        .by = dplyr::all_of(.env$vBy)
+      )
+  } else {
+    # Lazy table: Use helper function for gap filling
+    
+    # Get actual date ranges (collect small summary)
+    dfMonthRanges <- dfAggregated %>% 
+      dplyr::summarise(
+        min_month = min(.data$MonthYYYYMM),
+        max_month = max(.data$MonthYYYYMM),
+        .by = dplyr::all_of(.env$vBy)
+      ) %>%
+      dplyr::collect()
+    
+    if (!is.null(tblMonthSequence)) {
+      # User provided - validate first
+      validate_month_sequence(tblMonthSequence, vBy)
+      
+      # Filter to actual study date ranges
+      # For each study, filter month sequence to its actual range
+      dfCompleteMonths <- tblMonthSequence
+      
+      # Build a filter for each study's date range
+      for (i in seq_len(nrow(dfMonthRanges))) {
+        study_row <- dfMonthRanges[i, , drop = FALSE]
+        min_m <- study_row$min_month
+        max_m <- study_row$max_month
+        
+        # Build filter condition for this study
+        study_filter <- TRUE
+        for (col in vBy) {
+          if (i == 1) {
+            # First iteration - start fresh
+            dfCompleteMonths <- tblMonthSequence %>%
+              dplyr::filter(
+                .data[[col]] %in% dfMonthRanges[[col]] &
+                .data$MonthYYYYMM >= min_m & 
+                .data$MonthYYYYMM <= max_m
+              )
+            break
+          }
+        }
+      }
+    } else {
+      # Auto-generate month sequences
+      # Helper function to generate complete YYYYMM sequence
+      generate_month_seq <- function(start_yyyymm, end_yyyymm) {
+        start_year <- floor(start_yyyymm / 100)
+        start_month <- start_yyyymm %% 100
+        end_year <- floor(end_yyyymm / 100)
+        end_month <- end_yyyymm %% 100
+        
+        dates <- seq(
+          as.Date(paste0(start_year, "-", sprintf("%02d", start_month), "-01")),
+          as.Date(paste0(end_year, "-", sprintf("%02d", end_month), "-01")),
+          by = "month"
+        )
+        
+        as.numeric(format(dates, "%Y%m"))
+      }
+      
+      dfCompleteMonths_mem <- dfMonthRanges %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate(
+          MonthYYYYMM = list(generate_month_seq(.data$min_month, .data$max_month))
+        ) %>%
+        dplyr::select(-"min_month", -"max_month") %>%
+        tidyr::unnest("MonthYYYYMM")
+      
+      # Use helper to write or error
+      dfCompleteMonths <- expand_lazy_table(
+        tblInput = dfAggregated,
+        tblExpansion = NULL,
+        dfExpansion_mem = dfCompleteMonths_mem,
+        strTempTableName = "month_sequences",
+        strExpansionType = "complete month sequences"
+      )
+    }
+    
+    # Left join to fill gaps (same as in-memory logic)
+    dfAggregated <- dfCompleteMonths %>%
+      dplyr::left_join(
+        dfAggregated %>% dplyr::select(-"StudyMonth"),
+        by = c(vBy, "MonthYYYYMM")
+      ) %>%
+      dplyr::mutate(
+        Numerator = dplyr::coalesce(.data$Numerator, 0L),
+        Denominator = dplyr::coalesce(.data$Denominator, 0L),
+        GroupCount = dplyr::coalesce(.data$GroupCount, 0L)
+      ) %>%
+      # Recalculate StudyMonth as sequential numbering
+      dplyr::group_by(dplyr::across(dplyr::all_of(.env$vBy))) %>%
+      dbplyr::window_order(.data$MonthYYYYMM) %>%
+      dplyr::mutate(
+        StudyMonth = dplyr::dense_rank(.data$MonthYYYYMM)
+      ) %>%
+      dplyr::ungroup()
+  }
   
   # Calculate cumulative sums at study level
   # This ensures that when sites drop out, their cumulative contributions persist

@@ -4,7 +4,7 @@
 \alias{Transform_CumCount}
 \title{Transform Cumulative Counts to Study Level}
 \usage{
-Transform_CumCount(dfInput, vBy, nMinDenominator = 25)
+Transform_CumCount(dfInput, vBy, nMinDenominator = 25, tblMonthSequence = NULL)
 }
 \arguments{
 \item{dfInput}{data.frame or tbl. Output from Input_CountSiteByMonth with columns:
@@ -17,6 +17,11 @@ c("StudyID", "BootstrapRep")).}
 
 \item{nMinDenominator}{numeric. Minimum cumulative denominator threshold for
 filtering early/sparse data (default: 25).}
+
+\item{tblMonthSequence}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
+Optional pre-generated complete month sequences. Must contain columns matching
+vBy and MonthYYYYMM with NO gaps. If NULL, attempts to create temp table
+(requires write privileges). If data.frame provided, will be written to temp table.}
 }
 \value{
 A data.frame with study-level aggregated cumulative counts and ratios.
