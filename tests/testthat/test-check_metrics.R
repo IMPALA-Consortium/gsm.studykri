@@ -1,3 +1,62 @@
+test_that("hand written test - minimal workflow example") {
+  # Generate multi-study portfolio using SimulatePortfolio
+  lRaw_original <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_VISIT = clindata::rawplus_visdt,
+    Raw_SITE = clindata::ctms_site,
+    Raw_STUDY = clindata::ctms_study,
+    Raw_PD = clindata::ctms_protdev,
+    Raw_DATAENT = clindata::edc_data_pages,
+    Raw_QUERY = clindata::edc_queries,
+    Raw_ENROLL = clindata::rawplus_enroll,
+    Raw_Randomization = clindata::rawplus_ixrsrand,
+    Raw_LB = clindata::rawplus_lb,
+    Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
+    Raw_STUDCOMP = clindata::rawplus_studcomp
+  )
+  
+  # Create a portfolio with 3 studies
+  lRaw <- SimulatePortfolio(
+    lRaw = lRaw_original,
+    nStudies = 3,
+    seed = 123
+  )
+  # Run mapping workflows
+  mapping_wf <- gsm.core::MakeWorkflowList(
+    strNames = NULL,
+    strPath = system.file("workflow/1_mappings", package = "gsm.studykri"),
+    strPackage = NULL
+  )
+  
+  expect_warning({
+    lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
+  }, "Field `visit_dt`:.*unparsable")
+  
+  lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)  
+  
+  # Run KRI workflow
+  metrics_wf <- gsm.core::MakeWorkflowList(
+    strNames = NULL,
+    strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
+    strPackage = NULL
+  )
+  
+  # Combine lMapped with metrics workflows for comprehensive result
+  lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
+
+  p <- Visualize_StudyKRI(
+    dfStudyKRI = lAnalyzed$Analysis_kri0001$Analysis_Transformed,
+    dfGroupBounds = lAnalyzed$Analysis_kri0001$Analysis_GroupBounds,
+    dfStudyBounds = lAnalyzed$Analysis_kri0001$Analysis_Bounds,
+    strStudyID = "PORTFOLIO001",
+    strYlab = "Cumulative AE Rate per Visit"
+  )
+  
+  expect_s3_class(p, "ggplot")
+
+}
+
 test_that("kri0001 workflow executes successfully", {
   # Generate multi-study portfolio using SimulatePortfolio
   lRaw_original <- list(
@@ -265,6 +324,48 @@ test_that("kri0001 workflow executes successfully", {
   # Verify bootstrap count is reasonable (should be close to 1000 per time point)
   expect_true(all(dfGroupBounds$BootstrapCount > 0))
   expect_true(all(dfGroupBounds$BootstrapCount <= 1000))
+  
+  # Test Visualize_StudyKRI with workflow output
+  # Extract data for the first study
+  target_study <- study_ids[1]
+  
+  dfStudyKRI <- dfTransformed[dfTransformed$StudyID == target_study, ]
+  dfStudyBounds <- dfBounds[dfBounds$StudyID == target_study, ]
+  
+  # Verify we have data for visualization
+  expect_true(nrow(dfStudyKRI) > 0)
+  expect_true(nrow(dfStudyBounds) > 0)
+  expect_true(nrow(dfGroupBounds) > 0)
+  
+  # Create visualization with all components
+  p1 <- Visualize_StudyKRI(
+    dfStudyKRI = dfStudyKRI,
+    dfGroupBounds = dfGroupBounds,
+    dfStudyBounds = dfStudyBounds,
+    strStudyID = target_study,
+    strYlab = "Cumulative AE Rate per Visit"
+  )
+  
+  # Verify plot was created
+  expect_s3_class(p1, "ggplot")
+  expect_true(length(p1$layers) > 0)
+  
+  # Verify plot labels contain study ID
+  expect_true(grepl(target_study, p1$labels$title))
+  expect_equal(p1$labels$y, "Cumulative AE Rate per Visit")
+  
+  # Test visualization without individual study bounds
+  p2 <- Visualize_StudyKRI(
+    dfStudyKRI = dfStudyKRI,
+    dfGroupBounds = dfGroupBounds,
+    dfStudyBounds = NULL,
+    strStudyID = target_study,
+    nMaxMonth = 12  # Limit to first 12 months
+  )
+  
+  # Verify plot was created
+  expect_s3_class(p2, "ggplot")
+  expect_true(length(p2$layers) > 0)
 })
 
 test_that("kri0001 workflow validates required mapped data", {

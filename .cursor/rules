@@ -27,7 +27,7 @@ Rules:
 - use rlang::.data and rlang::.env to capture non standard evaluation of dplyr variables
 - for dplyr::select and dplyr::rename use tidy_select functions instead of rlang::.data and rlang::.env
 - we want to write dbplyr compatible code for all metric functions, only use dbplyr functions that are dbplyr compatible
-
+- never edit unit tests that have the prefix "hand written test -"
 
 here is an example for the correct usage of .data and .env
 
