@@ -1,8 +1,10 @@
-#' Calculate Cumulative Count by Site and Month
+#' Calculate Monthly Count by Site and Month
 #'
 #' @description
-#' Calculates cumulative event counts and ratios by site and month for KRI analysis.
-#' Joins subject, numerator, and denominator data to create monthly cumulative metrics.
+#' Calculates monthly event counts and ratios by site and month for KRI analysis.
+#' Joins subject, numerator, and denominator data to create monthly metrics.
+#' Note: This function returns monthly counts, not cumulative. Cumulative aggregation
+#' is performed at the study level in Transform_CumCount.
 #' Supports both in-memory data frames and dbplyr lazy tables.
 #'
 #' @importFrom dplyr %>%
@@ -28,7 +30,7 @@
 #' dfNumerator <- clindata::rawplus_ae
 #' dfDenominator <- clindata::rawplus_visdt
 #'
-#' result <- Input_CumCountSiteByMonth(
+#' result <- Input_CountSiteByMonth(
 #'   dfSubjects = dfSubjects,
 #'   dfNumerator = dfNumerator,
 #'   dfDenominator = dfDenominator,
@@ -37,7 +39,7 @@
 #' )
 #'
 #' @export
-Input_CumCountSiteByMonth <- function(
+Input_CountSiteByMonth <- function(
   dfSubjects,
   dfNumerator,
   dfDenominator,
@@ -211,38 +213,17 @@ Input_CumCountSiteByMonth <- function(
       Denominator = dplyr::coalesce(.data$Denominator, 0L)
     )
   
-  # Calculate cumulative counts by site with conditional window_order
-  if (is_lazy_table(dfCombined)) {
-    dfResult <- dfCombined %>%
-      dplyr::group_by(.data[[strStudyCol]], .data[[strGroupCol]]) %>%
-      dbplyr::window_order(.data$MonthYYYYMM) %>%
-      dplyr::mutate(
-        Numerator = cumsum(.data$Numerator),
-        Denominator = cumsum(.data$Denominator),
-        Metric = dplyr::if_else(
-          .data$Denominator > 0,
-          .data$Numerator / .data$Denominator,
-          NA_real_
-        ),
-        GroupLevel = .env$strGroupLevel
-      ) %>%
-      dplyr::ungroup()
-  } else {
-    dfResult <- dfCombined %>%
-      dplyr::arrange(.data[[strStudyCol]], .data[[strGroupCol]], .data$MonthYYYYMM) %>%
-      dplyr::group_by(.data[[strStudyCol]], .data[[strGroupCol]]) %>%
-      dplyr::mutate(
-        Numerator = cumsum(.data$Numerator),
-        Denominator = cumsum(.data$Denominator),
-        Metric = dplyr::if_else(
-          .data$Denominator > 0,
-          .data$Numerator / .data$Denominator,
-          NA_real_
-        ),
-        GroupLevel = .env$strGroupLevel
-      ) %>%
-      dplyr::ungroup()
-  }
+  # Return monthly counts (NOT cumulative)
+  # Cumulative sums will be calculated at study level in Transform_CumCount
+  dfResult <- dfCombined %>%
+    dplyr::mutate(
+      Metric = dplyr::if_else(
+        .data$Denominator > 0,
+        .data$Numerator / .data$Denominator,
+        NA_real_
+      ),
+      GroupLevel = .env$strGroupLevel
+    )
   
   # Select and rename columns
   dfFinal <- dfResult %>%

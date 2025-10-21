@@ -351,14 +351,14 @@ test_that("Analyze_StudyKRI errors on invalid seed", {
   )
 })
 
-test_that("Analyze_StudyKRI integrates with Input_CumCountSiteByMonth output", {
+test_that("Analyze_StudyKRI integrates with Input_CountSiteByMonth output", {
   skip_if_not_installed("clindata")
 
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
   dfDenominator <- clindata::rawplus_visdt
 
-  dfInput <- Input_CumCountSiteByMonth(
+  dfInput <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,
@@ -384,7 +384,7 @@ test_that("Analyze_StudyKRI output works with Transform_CumCount", {
   dfNumerator <- clindata::rawplus_ae
   dfDenominator <- clindata::rawplus_visdt
 
-  dfInput <- Input_CumCountSiteByMonth(
+  dfInput <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,

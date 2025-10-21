@@ -32,7 +32,7 @@ spec:
       type: Date
 steps:
   - output: Analysis_Input
-    name: gsm.studykri::Input_CumCountSiteByMonth
+    name: gsm.studykri::Input_CountSiteByMonth
     params:
       dfSubjects: Mapped_SUBJ
       dfNumerator: Mapped_AE

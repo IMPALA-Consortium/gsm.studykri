@@ -292,7 +292,7 @@ test_that("Analyze_StudyKRI_PredictBoundsGroup integration with full workflow", 
   )
 
   # Run Input function
-  dfSiteLevel <- Input_CumCountSiteByMonth(
+  dfSiteLevel <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,

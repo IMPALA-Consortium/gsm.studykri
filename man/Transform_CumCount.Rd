@@ -7,8 +7,10 @@
 Transform_CumCount(dfInput, vBy, nMinDenominator = 25)
 }
 \arguments{
-\item{dfInput}{data.frame or tbl. Output from Input_CumCountSiteByMonth with columns:
-GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.}
+\item{dfInput}{data.frame or tbl. Output from Input_CountSiteByMonth with columns:
+GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.
+Note: Input should contain monthly (not cumulative) counts. This function
+calculates cumulative sums at the study level.}
 
 \item{vBy}{character. Vector of column names for grouping (e.g., "StudyID" or
 c("StudyID", "BootstrapRep")).}
@@ -34,7 +36,7 @@ dfSubjects <- clindata::rawplus_dm
 dfNumerator <- clindata::rawplus_ae
 dfDenominator <- clindata::rawplus_visdt
 
-dfInput <- Input_CumCountSiteByMonth(
+dfInput <- Input_CountSiteByMonth(
   dfSubjects = dfSubjects,
   dfNumerator = dfNumerator,
   dfDenominator = dfDenominator,

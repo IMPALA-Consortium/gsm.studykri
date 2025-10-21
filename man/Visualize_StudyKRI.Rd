@@ -19,19 +19,20 @@ Visualize_StudyKRI(
 )
 }
 \arguments{
-\item{dfStudyKRI}{data.frame. Actual study-level metric data from \code{Transform_CumCount}
-(filtered to target study). Must contain columns specified by \code{strStudyMonthCol}
-and \code{strMetricCol}.}
+\item{dfStudyKRI}{data.frame. Actual study-level metric data from \code{Transform_CumCount}.
+Must contain columns specified by \code{strStudyMonthCol} and \code{strMetricCol}.
+If a \code{StudyID} column exists, data will be automatically filtered to \code{strStudyID}.}
 
 \item{dfGroupBounds}{data.frame. Portfolio/comparison group confidence intervals
 from \code{Analyze_StudyKRI_PredictBoundsGroup}. Must contain: \code{StudyMonth},
 \code{MedianMetric}, \code{LowerBound}, \code{UpperBound}.}
 
 \item{dfStudyBounds}{data.frame or NULL. Individual study confidence intervals
-from \code{Analyze_StudyKRI_PredictBounds} (optional, filtered to target study).
-If provided, must contain: \code{StudyMonth}, \code{MedianMetric}, \code{LowerBound}, \code{UpperBound}.}
+from \code{Analyze_StudyKRI_PredictBounds} (optional). If a \code{StudyID} column exists,
+data will be automatically filtered to \code{strStudyID}. If provided, must contain:
+\code{StudyMonth}, \code{MedianMetric}, \code{LowerBound}, \code{UpperBound}.}
 
-\item{strStudyID}{character. Study ID to display in title/subtitle.}
+\item{strStudyID}{character. Study ID to filter data and display in title/subtitle.}
 
 \item{strStudyMonthCol}{character. Column name for study month (default: "StudyMonth").}
 
@@ -69,21 +70,27 @@ expected portfolio norms.
 # Assuming workflow has been run
 lAnalysis <- lAnalyzed$Analysis_kri0001
 
-# Extract data for target study
+# Define target study
 target_study <- "STUDY1"
 
+# Option 1: Pass full datasets - function will filter automatically
+p <- Visualize_StudyKRI(
+  dfStudyKRI = lAnalysis$Analysis_Transformed,
+  dfGroupBounds = lAnalysis$Analysis_GroupBounds,
+  dfStudyBounds = lAnalysis$Analysis_Bounds,
+  strStudyID = target_study,
+  strYlab = "Cumulative AE Rate per Visit"
+)
+
+# Option 2: Pre-filter data manually (equivalent to above)
 dfStudyKRI <- lAnalysis$Analysis_Transformed[
   lAnalysis$Analysis_Transformed$StudyID == target_study, ]
-
 dfStudyBounds <- lAnalysis$Analysis_Bounds[
   lAnalysis$Analysis_Bounds$StudyID == target_study, ]
 
-dfGroupBounds <- lAnalysis$Analysis_GroupBounds
-
-# Create visualization
 p <- Visualize_StudyKRI(
   dfStudyKRI = dfStudyKRI,
-  dfGroupBounds = dfGroupBounds,
+  dfGroupBounds = lAnalysis$Analysis_GroupBounds,
   dfStudyBounds = dfStudyBounds,
   strStudyID = target_study,
   strYlab = "Cumulative AE Rate per Visit"

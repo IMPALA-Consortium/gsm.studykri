@@ -9,8 +9,10 @@
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data .env
 #'
-#' @param dfInput data.frame or tbl. Output from Input_CumCountSiteByMonth with columns:
+#' @param dfInput data.frame or tbl. Output from Input_CountSiteByMonth with columns:
 #'   GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.
+#'   Note: Input should contain monthly (not cumulative) counts. This function
+#'   calculates cumulative sums at the study level.
 #' @param vBy character. Vector of column names for grouping (e.g., "StudyID" or
 #'   c("StudyID", "BootstrapRep")).
 #' @param nMinDenominator numeric. Minimum cumulative denominator threshold for
@@ -27,7 +29,7 @@
 #' dfNumerator <- clindata::rawplus_ae
 #' dfDenominator <- clindata::rawplus_visdt
 #'
-#' dfInput <- Input_CumCountSiteByMonth(
+#' dfInput <- Input_CountSiteByMonth(
 #'   dfSubjects = dfSubjects,
 #'   dfNumerator = dfNumerator,
 #'   dfDenominator = dfDenominator,
@@ -133,8 +135,30 @@ Transform_CumCount <- function(
       .by = c(dplyr::all_of(.env$vBy), "StudyMonth")
     )
   
+  # Calculate cumulative sums at study level
+  # This ensures that when sites drop out, their cumulative contributions persist
+  if (is_lazy_table(dfAggregated)) {
+    dfCumulative <- dfAggregated %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(.env$vBy))) %>%
+      dbplyr::window_order(.data$StudyMonth) %>%
+      dplyr::mutate(
+        Numerator = cumsum(.data$Numerator),
+        Denominator = cumsum(.data$Denominator)
+      ) %>%
+      dplyr::ungroup()
+  } else {
+    dfCumulative <- dfAggregated %>%
+      dplyr::arrange(dplyr::across(dplyr::all_of(.env$vBy)), .data$StudyMonth) %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(.env$vBy))) %>%
+      dplyr::mutate(
+        Numerator = cumsum(.data$Numerator),
+        Denominator = cumsum(.data$Denominator)
+      ) %>%
+      dplyr::ungroup()
+  }
+  
   # Apply minimum denominator filter
-  dfFiltered <- dfAggregated %>%
+  dfFiltered <- dfCumulative %>%
     dplyr::filter(.data$Denominator > .env$nMinDenominator)
   
   # Re-rank StudyMonth after filtering to ensure sequential numbering

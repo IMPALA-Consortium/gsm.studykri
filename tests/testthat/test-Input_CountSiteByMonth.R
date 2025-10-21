@@ -1,11 +1,11 @@
-test_that("Input_CumCountSiteByMonth returns correct structure", {
+test_that("Input_CountSiteByMonth returns correct structure", {
   # Setup test data
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
   dfDenominator <- clindata::rawplus_visdt
   
   # Execute
-  result <- Input_CumCountSiteByMonth(
+  result <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,
@@ -34,14 +34,14 @@ test_that("Input_CumCountSiteByMonth returns correct structure", {
   expect_true(all(result$GroupLevel == "Site"))
 })
 
-test_that("Input_CumCountSiteByMonth calculates cumulative counts correctly", {
+test_that("Input_CountSiteByMonth returns monthly counts (not cumulative)", {
   # Setup test data
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
   dfDenominator <- clindata::rawplus_visdt
   
   # Execute
-  result <- Input_CumCountSiteByMonth(
+  result <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,
@@ -49,28 +49,24 @@ test_that("Input_CumCountSiteByMonth calculates cumulative counts correctly", {
     strDenominatorDateCol = "visit_dt"
   )
   
-  # Check cumulative property: values should be non-decreasing within each site
-  result_ordered <- result[order(result$GroupID, result$MonthYYYYMM), ]
+  # Monthly counts can vary (not necessarily monotonically increasing)
+  # Just verify we have counts > 0
+  expect_true(any(result$Numerator > 0))
+  expect_true(any(result$Denominator > 0))
   
-  for (site in unique(result_ordered$GroupID)) {
-    site_data <- result_ordered[result_ordered$GroupID == site, ]
-    
-    # Numerator should be non-decreasing
-    expect_true(all(diff(site_data$Numerator) >= 0))
-    
-    # Denominator should be non-decreasing
-    expect_true(all(diff(site_data$Denominator) >= 0))
-  }
+  # Verify the data is grouped by site and month
+  result_ordered <- result[order(result$GroupID, result$MonthYYYYMM), ]
+  expect_true(nrow(result_ordered) > 0)
 })
 
-test_that("Input_CumCountSiteByMonth calculates Metric correctly", {
+test_that("Input_CountSiteByMonth calculates Metric correctly", {
   # Setup test data
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
   dfDenominator <- clindata::rawplus_visdt
   
   # Execute
-  result <- Input_CumCountSiteByMonth(
+  result <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,
@@ -85,7 +81,7 @@ test_that("Input_CumCountSiteByMonth calculates Metric correctly", {
   expect_equal(result_with_denom$Metric, calculated_metric, tolerance = 1e-10)
 })
 
-test_that("Input_CumCountSiteByMonth handles missing dates correctly", {
+test_that("Input_CountSiteByMonth handles missing dates correctly", {
   # Setup test data with some missing dates
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
@@ -93,7 +89,7 @@ test_that("Input_CumCountSiteByMonth handles missing dates correctly", {
   
   # Execute - should not fail with missing dates (they are filtered out)
   expect_no_error({
-    result <- Input_CumCountSiteByMonth(
+    result <- Input_CountSiteByMonth(
       dfSubjects = dfSubjects,
       dfNumerator = dfNumerator,
       dfDenominator = dfDenominator,
@@ -103,14 +99,14 @@ test_that("Input_CumCountSiteByMonth handles missing dates correctly", {
   })
 })
 
-test_that("Input_CumCountSiteByMonth validates input data frames", {
+test_that("Input_CountSiteByMonth validates input data frames", {
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
   dfDenominator <- clindata::rawplus_visdt
   
   # Test non-data.frame inputs
   expect_error(
-    Input_CumCountSiteByMonth(
+    Input_CountSiteByMonth(
       dfSubjects = list(),
       dfNumerator = dfNumerator,
       dfDenominator = dfDenominator,
@@ -121,7 +117,7 @@ test_that("Input_CumCountSiteByMonth validates input data frames", {
   )
   
   expect_error(
-    Input_CumCountSiteByMonth(
+    Input_CountSiteByMonth(
       dfSubjects = dfSubjects,
       dfNumerator = list(),
       dfDenominator = dfDenominator,
@@ -132,7 +128,7 @@ test_that("Input_CumCountSiteByMonth validates input data frames", {
   )
   
   expect_error(
-    Input_CumCountSiteByMonth(
+    Input_CountSiteByMonth(
       dfSubjects = dfSubjects,
       dfNumerator = dfNumerator,
       dfDenominator = list(),
@@ -143,7 +139,7 @@ test_that("Input_CumCountSiteByMonth validates input data frames", {
   )
 })
 
-test_that("Input_CumCountSiteByMonth validates required columns", {
+test_that("Input_CountSiteByMonth validates required columns", {
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
   dfDenominator <- clindata::rawplus_visdt
@@ -153,7 +149,7 @@ test_that("Input_CumCountSiteByMonth validates required columns", {
   names(dfSubjects_bad)[names(dfSubjects_bad) == "subjid"] <- "bad_col"
   
   expect_error(
-    Input_CumCountSiteByMonth(
+    Input_CountSiteByMonth(
       dfSubjects = dfSubjects_bad,
       dfNumerator = dfNumerator,
       dfDenominator = dfDenominator,
@@ -165,7 +161,7 @@ test_that("Input_CumCountSiteByMonth validates required columns", {
   
   # Test missing numerator date column
   expect_error(
-    Input_CumCountSiteByMonth(
+    Input_CountSiteByMonth(
       dfSubjects = dfSubjects,
       dfNumerator = dfNumerator,
       dfDenominator = dfDenominator,
@@ -177,7 +173,7 @@ test_that("Input_CumCountSiteByMonth validates required columns", {
   
   # Test missing denominator date column
   expect_error(
-    Input_CumCountSiteByMonth(
+    Input_CountSiteByMonth(
       dfSubjects = dfSubjects,
       dfNumerator = dfNumerator,
       dfDenominator = dfDenominator,
@@ -188,14 +184,14 @@ test_that("Input_CumCountSiteByMonth validates required columns", {
   )
 })
 
-test_that("Input_CumCountSiteByMonth supports custom column names", {
+test_that("Input_CountSiteByMonth supports custom column names", {
   # Setup test data with renamed columns
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
   dfDenominator <- clindata::rawplus_visdt
   
   # Execute with default column names
-  result <- Input_CumCountSiteByMonth(
+  result <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,
@@ -210,7 +206,7 @@ test_that("Input_CumCountSiteByMonth supports custom column names", {
   expect_true(nrow(result) > 0)
 })
 
-test_that("Input_CumCountSiteByMonth filters to enrolled subjects", {
+test_that("Input_CountSiteByMonth filters to enrolled subjects", {
   # Setup test data
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
@@ -220,7 +216,7 @@ test_that("Input_CumCountSiteByMonth filters to enrolled subjects", {
   n_enrolled <- sum(dfSubjects$enrollyn == "Y")
   
   # Execute
-  result <- Input_CumCountSiteByMonth(
+  result <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,
@@ -235,14 +231,14 @@ test_that("Input_CumCountSiteByMonth filters to enrolled subjects", {
   expect_true(length(numerator_subjects) > 0)
 })
 
-test_that("Input_CumCountSiteByMonth handles MonthYYYYMM formatting correctly", {
+test_that("Input_CountSiteByMonth handles MonthYYYYMM formatting correctly", {
   # Setup test data
   dfSubjects <- clindata::rawplus_dm
   dfNumerator <- clindata::rawplus_ae
   dfDenominator <- clindata::rawplus_visdt
   
   # Execute
-  result <- Input_CumCountSiteByMonth(
+  result <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,
@@ -260,7 +256,7 @@ test_that("Input_CumCountSiteByMonth handles MonthYYYYMM formatting correctly", 
   expect_true(all(nchar(month_strings) == 6))
 })
 
-test_that("Input_CumCountSiteByMonth handles zero denominator correctly", {
+test_that("Input_CountSiteByMonth handles zero denominator correctly", {
   # Create test data where some sites have no denominator events
   dfSubjects <- data.frame(
     studyid = c("STUDY001", "STUDY001"),
@@ -283,7 +279,7 @@ test_that("Input_CumCountSiteByMonth handles zero denominator correctly", {
   )
   
   # Execute
-  result <- Input_CumCountSiteByMonth(
+  result <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,

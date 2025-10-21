@@ -44,14 +44,14 @@ create_lazy_tables <- function(data_list) {
   )
 }
 
-# Test 1: Input_CumCountSiteByMonth Returns Lazy Table
-test_that("Input_CumCountSiteByMonth returns lazy table with lazy inputs", {
+# Test 1: Input_CountSiteByMonth Returns Lazy Table
+test_that("Input_CountSiteByMonth returns lazy table with lazy inputs", {
   # Setup
   test_data <- create_minimal_test_data()
   lazy_tables <- create_lazy_tables(test_data)
   
   # Execute function
-  result <- Input_CumCountSiteByMonth(
+  result <- Input_CountSiteByMonth(
     dfSubjects = lazy_tables$dfSubjects,
     dfNumerator = lazy_tables$dfNumerator,
     dfDenominator = lazy_tables$dfDenominator,
@@ -76,7 +76,7 @@ test_that("Transform_CumCount returns lazy table with lazy input", {
   lazy_tables <- create_lazy_tables(test_data)
   
   # First get Input result as lazy table
-  dfInput <- Input_CumCountSiteByMonth(
+  dfInput <- Input_CountSiteByMonth(
     dfSubjects = lazy_tables$dfSubjects,
     dfNumerator = lazy_tables$dfNumerator,
     dfDenominator = lazy_tables$dfDenominator,
@@ -108,7 +108,7 @@ test_that("Analyze_StudyKRI returns lazy table with lazy input", {
   lazy_tables <- create_lazy_tables(test_data)
   
   # First get Input result as lazy table
-  dfInput <- Input_CumCountSiteByMonth(
+  dfInput <- Input_CountSiteByMonth(
     dfSubjects = lazy_tables$dfSubjects,
     dfNumerator = lazy_tables$dfNumerator,
     dfDenominator = lazy_tables$dfDenominator,
@@ -142,7 +142,7 @@ test_that("Analyze_StudyKRI_PredictBounds returns lazy table with lazy input", {
   lazy_tables <- create_lazy_tables(test_data)
   
   # Build full pipeline to get bootstrap data
-  dfInput <- Input_CumCountSiteByMonth(
+  dfInput <- Input_CountSiteByMonth(
     dfSubjects = lazy_tables$dfSubjects,
     dfNumerator = lazy_tables$dfNumerator,
     dfDenominator = lazy_tables$dfDenominator,
@@ -208,7 +208,7 @@ test_that("Analyze_StudyKRI_PredictBoundsGroup returns lazy table with lazy inpu
   lazy_tables <- create_lazy_tables(test_data_multi)
   
   # Build full pipeline to get site-level data
-  dfInput <- Input_CumCountSiteByMonth(
+  dfInput <- Input_CountSiteByMonth(
     dfSubjects = lazy_tables$dfSubjects,
     dfNumerator = lazy_tables$dfNumerator,
     dfDenominator = lazy_tables$dfDenominator,

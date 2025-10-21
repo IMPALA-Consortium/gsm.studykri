@@ -297,7 +297,7 @@ test_that("Analyze_StudyKRI_PredictBounds integration with full workflow", {
   )
   
   # Run full workflow
-  dfInput <- Input_CumCountSiteByMonth(
+  dfInput <- Input_CountSiteByMonth(
     dfSubjects = dfSubjects,
     dfNumerator = dfNumerator,
     dfDenominator = dfDenominator,
