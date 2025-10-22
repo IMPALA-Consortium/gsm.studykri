@@ -4,10 +4,10 @@
 #' Generates ggplot2 charts comparing study-level KRIs against comparison groups.
 #' Similar to gsm.kri::MakeCharts but uses Visualize_StudyKRI for study comparisons.
 #'
-#' @param dfResults data.frame. Stacked study-level results (from BindResults$dfResults).
-#' @param dfBounds data.frame. Stacked study bounds (from BindResults$dfBounds).
-#' @param dfGroups data.frame. Stacked group bounds (from BindResults$dfGroups).
-#' @param dfMetrics data.frame. Metric metadata (from BindResults$dfMetadata).
+#' @param dfResults data.frame. Stacked study-level results (from BindResults).
+#' @param dfBounds data.frame. Stacked study-specific bounds (from BindResults).
+#' @param dfBoundsRef data.frame. Stacked reference/comparison group bounds (from BindResults).
+#' @param dfMetrics data.frame. Metric metadata (from MakeMetric).
 #' @param nMaxMonth integer. Maximum study month to display (NULL = all).
 #'
 #' @return list. Named list of ggplot objects, one per study-metric combination.
@@ -19,7 +19,7 @@
 MakeCharts_StudyKRI <- function(
   dfResults,
   dfBounds,
-  dfGroups,
+  dfBoundsRef,
   dfMetrics,
   nMaxMonth = NULL
 ) {
@@ -53,7 +53,7 @@ MakeCharts_StudyKRI <- function(
     df_study_bounds <- dfBounds %>%
       dplyr::filter(.data$StudyID == study_id, .data$MetricID == metric_id)
     
-    df_group_bounds <- dfGroups %>%
+    df_boundsref <- dfBoundsRef %>%
       dplyr::filter(.data$MetricID == metric_id)
     
     # Get metric name for y-axis label
@@ -70,7 +70,7 @@ MakeCharts_StudyKRI <- function(
     tryCatch({
       lCharts[[chart_name]] <- Visualize_StudyKRI(
         dfStudyKRI = df_study_kri,
-        dfGroupBounds = df_group_bounds,
+        dfGroupBounds = df_boundsref,
         dfStudyBounds = df_study_bounds,
         strStudyID = study_id,
         strYlab = metric_name,

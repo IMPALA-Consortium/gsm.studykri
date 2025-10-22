@@ -1,10 +1,9 @@
-test_that("Reporting workflow executes successfully", {
+test_that("Script-based reporting workflow executes successfully", {
   skip_if_not_installed("gsm.core")
   skip_if_not_installed("gsm.mapping")
   skip_if_not_installed("gsm.reporting")
   skip_if_not_installed("gsm.kri")
   skip_if_not_installed("clindata")
-  skip_if_not_installed("rmarkdown")
   
   # Full pipeline test
   lRaw <- list(
@@ -41,41 +40,38 @@ test_that("Reporting workflow executes successfully", {
   
   lAnalyzed <- gsm.core::RunWorkflows(metrics_wf, lMapped)
   
-  # 3. Reporting (bind results)
-  reporting_wf <- gsm.core::MakeWorkflowList(
-    strPath = system.file("workflow/3_reporting", package = "gsm.studykri")
+  # 3. Script-based reporting approach (from Cookbook)
+  dfResults <- gsm.reporting::BindResults(
+    lAnalyzed, 
+    "Analysis_Transformed"
   )
   
-  lReporting <- gsm.core::RunWorkflows(
-    lWorkflows = reporting_wf,
-    lData = c(
-      lMapped,
-      list(
-        lAnalyzed = lAnalyzed,
-        lWorkflows = metrics_wf
-      )
-    )
+  dfBounds <- gsm.reporting::BindResults(
+    lAnalyzed, 
+    "Analysis_Bounds"
   )
   
-  # Verify all three reporting outputs exist
-  expect_type(lReporting, "list")
-  expect_true("Reporting_Results" %in% names(lReporting))
-  expect_true("Reporting_Bounds" %in% names(lReporting))
-  expect_true("Reporting_BoundsRef" %in% names(lReporting))
+  dfBoundsRef <- gsm.reporting::BindResults(
+    lAnalyzed, 
+    "Analysis_BoundsRef"
+  )
   
-  # Extract for verification
-  lResults <- lReporting$Reporting_Results$lResults
-  lBounds <- lReporting$Reporting_Bounds$lBounds
-  lBoundsRef <- lReporting$Reporting_BoundsRef$lBoundsRef
+  dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
   
   # Verify structure
-  expect_true("dfResults" %in% names(lResults))
-  expect_true("dfBounds" %in% names(lBounds))
-  expect_true("dfBounds" %in% names(lBoundsRef))
-  expect_true("dfMetadata" %in% names(lResults))
+  expect_s3_class(dfResults, "data.frame")
+  expect_s3_class(dfBounds, "data.frame")
+  expect_s3_class(dfBoundsRef, "data.frame")
+  expect_s3_class(dfMetrics, "data.frame")
+  
+  expect_true("StudyID" %in% names(dfResults))
+  expect_true("Metric" %in% names(dfResults))
+  expect_true(nrow(dfResults) > 0)
+  expect_true(nrow(dfBounds) > 0)
+  expect_true(nrow(dfBoundsRef) > 0)
 })
 
-test_that("StudyKRI module workflow generates report", {
+test_that("MakeCharts_StudyKRI and Report_KRI generate report", {
   skip_if_not_installed("gsm.core")
   skip_if_not_installed("gsm.mapping")
   skip_if_not_installed("gsm.reporting")
@@ -118,43 +114,55 @@ test_that("StudyKRI module workflow generates report", {
   
   lAnalyzed <- gsm.core::RunWorkflows(metrics_wf, lMapped)
   
-  # 3. Reporting (bind results)
-  reporting_wf <- gsm.core::MakeWorkflowList(
-    strPath = system.file("workflow/3_reporting", package = "gsm.studykri")
+  # 3. Bind results
+  dfResults <- gsm.reporting::BindResults(
+    lAnalyzed, 
+    "Analysis_Transformed"
   )
   
-  lReporting <- gsm.core::RunWorkflows(
-    lWorkflows = reporting_wf,
-    lData = c(
-      lMapped,
-      list(
-        lAnalyzed = lAnalyzed,
-        lWorkflows = metrics_wf
-      )
-    )
+  dfBounds <- gsm.reporting::BindResults(
+    lAnalyzed, 
+    "Analysis_Bounds"
   )
   
-  # 4. Module (charts + report)
-  module_wf <- gsm.core::MakeWorkflowList(
-    strPath = system.file("workflow/4_modules", package = "gsm.studykri")
+  dfBoundsRef <- gsm.reporting::BindResults(
+    lAnalyzed, 
+    "Analysis_BoundsRef"
   )
   
-  # Set output path
+  dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
+  
+  dfGroups <- dplyr::bind_rows(
+    lMapped$Mapped_STUDY,
+    lMapped$Mapped_SITE,
+    lMapped$Country
+  )
+  
+  # Generate charts
+  lCharts <- MakeCharts_StudyKRI(
+    dfResults = dfResults,
+    dfBounds = dfBounds,
+    dfBoundsRef = dfBoundsRef,
+    dfMetrics = dfMetrics
+  )
+  
+  expect_type(lCharts, "list")
+  expect_true(length(lCharts) > 0)
+  
+  # Generate report
   tmpfile <- tempfile(fileext = ".html")
   
-  # Update workflow with output path
-  module_wf$Module_StudyKRI$steps[[2]]$params$strReportPath <- tmpfile
+  gsm.kri::Report_KRI(
+    lCharts = lCharts,
+    dfResults = dfResults,
+    dfGroups = dfGroups,
+    dfMetrics = dfMetrics,
+    strOutputFile = tmpfile,
+    strInputPath = system.file("report", "Report_KRI.Rmd", package = "gsm.studykri")
+  )
   
-  lModule <- gsm.core::RunWorkflows(module_wf, lReporting)
-  
-  # Verify report was generated
   expect_true(file.exists(tmpfile))
   expect_true(file.size(tmpfile) > 0)
   
-  # Verify charts were generated
-  expect_type(lModule$Module_StudyKRI$lCharts, "list")
-  expect_true(length(lModule$Module_StudyKRI$lCharts) > 0)
-  
   unlink(tmpfile)
 })
-

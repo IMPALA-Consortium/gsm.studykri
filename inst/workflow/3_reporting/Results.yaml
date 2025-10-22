@@ -7,7 +7,6 @@ steps:
   - output: lResults
     name: gsm.reporting::BindResults
     params:
-      lResults: lAnalyzed
+      lAnalysis: lAnalyzed
       strName: "Analysis_Transformed"
-      strStudyID: "PORTFOLIO001"
 

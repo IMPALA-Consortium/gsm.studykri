@@ -4,16 +4,22 @@
 \alias{MakeCharts_StudyKRI}
 \title{Create Study KRI Comparison Charts}
 \usage{
-MakeCharts_StudyKRI(dfResults, dfBounds, dfGroups, dfMetrics, nMaxMonth = NULL)
+MakeCharts_StudyKRI(
+  dfResults,
+  dfBounds,
+  dfBoundsRef,
+  dfMetrics,
+  nMaxMonth = NULL
+)
 }
 \arguments{
-\item{dfResults}{data.frame. Stacked study-level results (from BindResults$dfResults).}
+\item{dfResults}{data.frame. Stacked study-level results (from BindResults).}
 
-\item{dfBounds}{data.frame. Stacked study bounds (from BindResults$dfBounds).}
+\item{dfBounds}{data.frame. Stacked study-specific bounds (from BindResults).}
 
-\item{dfGroups}{data.frame. Stacked group bounds (from BindResults$dfGroups).}
+\item{dfBoundsRef}{data.frame. Stacked reference/comparison group bounds (from BindResults).}
 
-\item{dfMetrics}{data.frame. Metric metadata (from BindResults$dfMetadata).}
+\item{dfMetrics}{data.frame. Metric metadata (from MakeMetric).}
 
 \item{nMaxMonth}{integer. Maximum study month to display (NULL = all).}
 }

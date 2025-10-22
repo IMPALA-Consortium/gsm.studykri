@@ -1,0 +1,124 @@
+---
+title: "Cookbook"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Cookbook}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r cook1 , include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Installation
+
+```{r cook2, eval=FALSE}
+install.packages("pak")
+pak::pak("Gilead-BioStats/clindata")
+pak::pak("Gilead-BioStats/gsm.core")
+pak::pak("Gilead-BioStats/gsm.mapping")
+pak::pak("Gilead-BioStats/gsm.kri")
+pak::pak("Gilead-BioStats/gsm.reporting")
+pak::pak("IMPALA-Consortium/gsm.simaerep")
+```
+
+## Load
+
+```{r cook3}
+suppressPackageStartupMessages(library(dplyr))
+library(gsm.core)
+library(gsm.mapping)
+library(gsm.kri)
+library(gsm.reporting)
+library(gsm.simaerep)
+```
+
+
+## Calculate KRI using yaml workflows
+
+```{r cook4}
+# Generate multi-study portfolio using SimulatePortfolio
+lRaw_original <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_VISIT = clindata::rawplus_visdt,
+    Raw_SITE = clindata::ctms_site,
+    Raw_STUDY = clindata::ctms_study,
+    Raw_PD = clindata::ctms_protdev,
+    Raw_DATAENT = clindata::edc_data_pages,
+    Raw_QUERY = clindata::edc_queries,
+    Raw_ENROLL = clindata::rawplus_enroll,
+    Raw_Randomization = clindata::rawplus_ixrsrand,
+    Raw_LB = clindata::rawplus_lb,
+    Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
+    Raw_STUDCOMP = clindata::rawplus_studcomp
+)
+
+# Create a portfolio with 3 studies
+lRaw <- SimulatePortfolio(
+    lRaw = lRaw_original,
+    nStudies = 3,
+    seed = 123
+)
+
+# Run mapping workflows
+mapping_wf <- gsm.core::MakeWorkflowList(
+    strNames = NULL,
+    strPath = system.file("workflow/1_mappings", package = "gsm.studykri"),
+    strPackage = NULL
+)
+
+lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
+
+
+lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
+
+
+# Run KRI workflow
+metrics_wf <- gsm.core::MakeWorkflowList(
+    strNames = NULL,
+    strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
+    strPackage = NULL
+)
+
+# Combine lMapped with metrics workflows for comprehensive result
+lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
+
+```
+
+## Generate KRI report using scripts
+
+```{r cook5}
+
+dfResults <- gsm.reporting::BindResults(lAnalyzed, "Analysis_Transformed")
+
+dfBounds <- gsm.reporting::BindResults(lAnalyzed, "Analysis_Bounds")
+
+dfBoundsRef <- gsm.reporting::BindResults(lAnalyzed, "Analysis_BoundsRef")
+
+dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
+
+dfGroups <- dplyr::bind_rows(
+  lMapped$Mapped_STUDY,
+  lMapped$Mapped_SITE,
+  lMapped$Country
+)
+
+lCharts <- MakeCharts_StudyKRI(dfResults, dfBounds, dfBoundsRef, dfMetrics)
+
+gsm.kri::Report_KRI(
+  lCharts = lCharts,
+  dfResults = dfResults,
+  dfGroups = dfGroups,
+  dfMetrics = dfMetrics,
+  strOutputFile = "report_kri_site.html",
+  strInputPath = system.file("report", "Report_KRI.Rmd", package = "gsm.studykri")
+)
+
+```

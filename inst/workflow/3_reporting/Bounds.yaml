@@ -7,7 +7,6 @@ steps:
   - output: lBounds
     name: gsm.reporting::BindResults
     params:
-      lResults: lAnalyzed
+      lAnalysis: lAnalyzed
       strName: "Analysis_Bounds"
-      strStudyID: "PORTFOLIO001"
 

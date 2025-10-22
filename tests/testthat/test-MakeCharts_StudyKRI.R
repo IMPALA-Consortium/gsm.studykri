@@ -20,7 +20,7 @@ test_that("MakeCharts_StudyKRI generates charts", {
     MedianMetric = 0.20
   )
   
-  dfGroups <- data.frame(
+  dfBoundsRef <- data.frame(
     MetricID = "kri0001",
     StudyMonth = 1:3,
     LowerBound = 0.08,
@@ -39,7 +39,7 @@ test_that("MakeCharts_StudyKRI generates charts", {
   lCharts <- MakeCharts_StudyKRI(
     dfResults = dfResults,
     dfBounds = dfBounds,
-    dfGroups = dfGroups,
+    dfBoundsRef = dfBoundsRef,
     dfMetrics = dfMetrics
   )
   
@@ -62,7 +62,7 @@ test_that("MakeCharts_StudyKRI handles empty data gracefully", {
     MakeCharts_StudyKRI(
       dfResults = dfResults,
       dfBounds = data.frame(),
-      dfGroups = data.frame(),
+      dfBoundsRef = data.frame(),
       dfMetrics = data.frame()
     ),
     "non-empty"
