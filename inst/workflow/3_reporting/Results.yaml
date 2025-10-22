@@ -1,0 +1,13 @@
+meta:
+  Type: Reporting
+  ID: Results
+  Description: Bind results from all KRI analyses
+
+steps:
+  - output: lResults
+    name: gsm.reporting::BindResults
+    params:
+      lResults: lAnalyzed
+      strName: "Analysis_Transformed"
+      strStudyID: "PORTFOLIO001"
+

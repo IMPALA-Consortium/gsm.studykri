@@ -71,7 +71,7 @@ steps:
       vBy:
         - StudyID
       nConfLevel: 0.95
-  - output: Analysis_GroupBounds
+  - output: Analysis_BoundsRef
     name: gsm.studykri::Analyze_StudyKRI_PredictBoundsGroup
     params:
       dfInput: Analysis_Input
@@ -89,4 +89,4 @@ steps:
       Analysis_Bootstrapped: Analysis_Bootstrapped
       Analysis_BootstrappedStudy: Analysis_BootstrappedStudy
       Analysis_Bounds: Analysis_Bounds
-      Analysis_GroupBounds: Analysis_GroupBounds
+      Analysis_BoundsRef: Analysis_BoundsRef

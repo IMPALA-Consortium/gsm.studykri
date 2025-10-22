@@ -1,0 +1,26 @@
+meta:
+  Type: Module
+  ID: StudyKRI
+  Description: Generate study KRI comparison charts and HTML report
+
+steps:
+  # Step 1: Generate charts using bound results
+  - output: lCharts
+    name: gsm.studykri::MakeCharts_StudyKRI
+    params:
+      dfResults: Reporting_Results$lResults$dfResults
+      dfBounds: Reporting_Bounds$lBounds$dfBounds
+      dfGroups: Reporting_BoundsRef$lBoundsRef$dfBounds
+      dfMetrics: Reporting_Results$lResults$dfMetadata
+      nMaxMonth: null
+      
+  # Step 2: Generate HTML report using gsm.kri
+  - output: strReportPath
+    name: gsm.kri::Report_KRI
+    params:
+      lCharts: lCharts
+      dfResults: Reporting_Results$lResults$dfResults
+      dfGroups: Reporting_BoundsRef$lBoundsRef$dfBounds
+      dfMetrics: Reporting_Results$lResults$dfMetadata
+      strReportPath: "StudyKRI_Report.html"
+

@@ -1,0 +1,13 @@
+meta:
+  Type: Reporting
+  ID: BoundsRef
+  Description: Bind reference/group bounds from all KRI analyses
+
+steps:
+  - output: lBoundsRef
+    name: gsm.reporting::BindResults
+    params:
+      lResults: lAnalyzed
+      strName: "Analysis_BoundsRef"
+      strStudyID: "PORTFOLIO001"
+
