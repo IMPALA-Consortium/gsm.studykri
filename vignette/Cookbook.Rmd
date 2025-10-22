@@ -122,3 +122,27 @@ gsm.kri::Report_KRI(
 )
 
 ```
+
+## Generate KRI report using yaml workflows
+
+```{r cook6}
+
+
+reporting_wf <- gsm.core::MakeWorkflowList(
+    strPath = system.file("workflow/3_reporting", package = "gsm.studykri")
+)
+
+# Pass both lMapped and lAnalyzed, plus workflows
+lReporting <- gsm.core::RunWorkflows(
+    lWorkflows = reporting_wf,
+    lData = c(
+        lMapped,
+        list(
+        lAnalyzed = lAnalyzed,
+        lWorkflows = metrics_wf
+        )
+    )
+)
+
+
+```

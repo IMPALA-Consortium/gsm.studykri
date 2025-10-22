@@ -166,3 +166,89 @@ test_that("MakeCharts_StudyKRI and Report_KRI generate report", {
   
   unlink(tmpfile)
 })
+
+test_that("YAML-based reporting workflow executes successfully", {
+  skip_if_not_installed("gsm.core")
+  skip_if_not_installed("gsm.mapping")
+  skip_if_not_installed("gsm.reporting")
+  skip_if_not_installed("clindata")
+  
+  # Full pipeline test
+  lRaw <- list(
+    Raw_SITE = clindata::ctms_site,
+    Raw_STUDY = clindata::ctms_study,
+    Raw_PD = clindata::ctms_protdev,
+    Raw_DATAENT = clindata::edc_data_pages,
+    Raw_QUERY = clindata::edc_queries,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_ENROLL = clindata::rawplus_enroll,
+    Raw_Randomization = clindata::rawplus_ixrsrand,
+    Raw_LB = clindata::rawplus_lb,
+    Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
+    Raw_STUDCOMP = clindata::rawplus_studcomp,
+    Raw_VISIT = clindata::rawplus_visdt
+  )
+  
+  # 1. Mappings
+  mapping_wf <- gsm.core::MakeWorkflowList(
+    strPath = system.file("workflow/1_mappings", package = "gsm.studykri")
+  )
+  
+  suppressWarnings({
+    lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
+  })
+  
+  lMapped <- gsm.core::RunWorkflows(mapping_wf, lIngest)
+  
+  # 2. Metrics
+  metrics_wf <- gsm.core::MakeWorkflowList(
+    strPath = system.file("workflow/2_metrics", package = "gsm.studykri")
+  )
+  
+  lAnalyzed <- gsm.core::RunWorkflows(metrics_wf, lMapped)
+  
+  # 3. Reporting (YAML workflows)
+  reporting_wf <- gsm.core::MakeWorkflowList(
+    strPath = system.file("workflow/3_reporting", package = "gsm.studykri")
+  )
+  
+  # Pass both lMapped and lAnalyzed, plus workflows
+  lReporting <- gsm.core::RunWorkflows(
+    lWorkflows = reporting_wf,
+    lData = c(
+      lMapped,
+      list(
+        lAnalyzed = lAnalyzed,
+        lWorkflows = metrics_wf
+      )
+    )
+  )
+  
+  # Verify all 5 reporting outputs exist
+  expect_type(lReporting, "list")
+  expect_true("Reporting_Results" %in% names(lReporting))
+  expect_true("Reporting_Bounds" %in% names(lReporting))
+  expect_true("Reporting_BoundsRef" %in% names(lReporting))
+  expect_true("Reporting_Metrics" %in% names(lReporting))
+  expect_true("Reporting_Groups" %in% names(lReporting))
+  
+  # Verify structure - workflows return output directly
+  expect_true("lResults" %in% names(lReporting$Reporting_Results))
+  expect_true("lBounds" %in% names(lReporting$Reporting_Bounds))
+  expect_true("lBoundsRef" %in% names(lReporting$Reporting_BoundsRef))
+  expect_true("dfMetrics" %in% names(lReporting$Reporting_Metrics))
+  expect_true("dfGroups" %in% names(lReporting$Reporting_Groups))
+  
+  # Verify data frames exist - outputs are data frames directly
+  expect_s3_class(lReporting$Reporting_Results$lResults, "data.frame")
+  expect_s3_class(lReporting$Reporting_Bounds$lBounds, "data.frame")
+  expect_s3_class(lReporting$Reporting_BoundsRef$lBoundsRef, "data.frame")
+  expect_s3_class(lReporting$Reporting_Metrics$dfMetrics, "data.frame")
+  expect_s3_class(lReporting$Reporting_Groups$dfGroups, "data.frame")
+  
+  # Verify content
+  expect_true(nrow(lReporting$Reporting_Results$lResults) > 0)
+  expect_true(nrow(lReporting$Reporting_Metrics$dfMetrics) > 0)
+  expect_true(nrow(lReporting$Reporting_Groups$dfGroups) > 0)
+})

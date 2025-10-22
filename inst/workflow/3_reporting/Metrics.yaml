@@ -1,0 +1,11 @@
+meta:
+  Type: Reporting
+  ID: Metrics
+  Description: Create metrics metadata from workflow definitions
+
+steps:
+  - output: dfMetrics
+    name: gsm.reporting::MakeMetric
+    params:
+      lWorkflows: lWorkflows
+

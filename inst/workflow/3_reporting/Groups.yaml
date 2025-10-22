@@ -1,0 +1,14 @@
+meta:
+  Type: Reporting
+  ID: Groups
+  Description: Combine mapped study, site, and country data for reporting
+
+steps:
+  - output: dfGroups
+    name: dplyr::bind_rows
+    params:
+      .list:
+        - Mapped_STUDY
+        - Mapped_SITE
+        - Country
+
