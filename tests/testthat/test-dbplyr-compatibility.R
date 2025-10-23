@@ -181,8 +181,8 @@ test_that("Analyze_StudyKRI_PredictBounds returns lazy table with lazy input", {
   DBI::dbDisconnect(lazy_tables$con)
 })
 
-# Test 5: Analyze_StudyKRI_PredictBoundsGroup Returns Lazy Table
-test_that("Analyze_StudyKRI_PredictBoundsGroup returns lazy table with lazy input", {
+# Test 5: Analyze_StudyKRI_PredictBoundsRef Returns Lazy Table
+test_that("Analyze_StudyKRI_PredictBoundsRef returns lazy table with lazy input", {
   # Setup with multiple studies
   test_data_multi <- list(
     dfSubjects = data.frame(
@@ -219,9 +219,9 @@ test_that("Analyze_StudyKRI_PredictBoundsGroup returns lazy table with lazy inpu
     strDenominatorDateCol = "visit_dt"
   )
   
-  # Execute Analyze_StudyKRI_PredictBoundsGroup
+  # Execute Analyze_StudyKRI_PredictBoundsRef
   suppressMessages({
-    result <- Analyze_StudyKRI_PredictBoundsGroup(
+    result <- Analyze_StudyKRI_PredictBoundsRef(
       dfInput = dfInput,
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 5,  # Very small number for speed

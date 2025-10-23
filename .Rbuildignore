@@ -1,8 +1,8 @@
 ^gsm\.studykri\.Rproj$
-^\.Rproj\.user$
-^_pkgdown\.yml$
-^docs$
-^pkgdown$
-^\.github$
-^\.cursor$
+^.cursor$
+^.github$
 ^LICENSE\.md$
+^_pkgdown\.yml$
+^/[a-zA-Z0-9_-]+\.html$
+
+

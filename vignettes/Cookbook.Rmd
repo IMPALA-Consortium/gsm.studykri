@@ -36,7 +36,7 @@ library(gsm.core)
 library(gsm.mapping)
 library(gsm.kri)
 library(gsm.reporting)
-library(gsm.simaerep)
+library(gsm.studykri)
 ```
 
 
@@ -143,6 +143,21 @@ lReporting <- gsm.core::RunWorkflows(
         )
     )
 )
+
+
+module_wf_gsm <- gsm.core::MakeWorkflowList(
+  strNames = NULL,
+  strPath = system.file("workflow/4_modules", package = "gsm.studykri"),
+  strPackage = NULL
+)
+
+# we cannot set a dynamic link to the report path in the yaml files
+report_path <- system.file("report", "Report_KRI.Rmd", package = "gsm.studykri")
+n_steps <- length(module_wf_gsm$StudyKRI$steps)
+
+module_wf_gsm$StudyKRI$steps[[n_steps]]$params$strInputPath <- report_path
+
+lModule <- gsm.core::RunWorkflows(module_wf_gsm, lReporting)
 
 
 ```

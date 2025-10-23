@@ -55,7 +55,7 @@
 #' dfComparison <- dfBootstrapStudy %>%
 #'   dplyr::filter(StudyID %in% c("STUDY1", "STUDY2", "STUDY3"))
 #'
-#' dfGroupBounds <- Analyze_StudyKRI_PredictBounds(
+#' dfBoundsRef <- Analyze_StudyKRI_PredictBounds(
 #'   dfInput = dfComparison,
 #'   vBy = character(0),  # Combine all studies
 #'   nConfLevel = 0.95

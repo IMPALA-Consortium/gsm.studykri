@@ -6,8 +6,8 @@
 \usage{
 Visualize_StudyKRI(
   dfStudyKRI,
-  dfGroupBounds,
-  dfStudyBounds = NULL,
+  dfBoundsRef,
+  dfBounds = NULL,
   strStudyID,
   strStudyMonthCol = "StudyMonth",
   strMetricCol = "Metric",
@@ -23,11 +23,11 @@ Visualize_StudyKRI(
 Must contain columns specified by \code{strStudyMonthCol} and \code{strMetricCol}.
 If a \code{StudyID} column exists, data will be automatically filtered to \code{strStudyID}.}
 
-\item{dfGroupBounds}{data.frame. Portfolio/comparison group confidence intervals
-from \code{Analyze_StudyKRI_PredictBoundsGroup}. Must contain: \code{StudyMonth},
+\item{dfBoundsRef}{data.frame. Portfolio/comparison group confidence intervals
+from \code{Analyze_StudyKRI_PredictBoundsRef}. Must contain: \code{StudyMonth},
 \code{MedianMetric}, \code{LowerBound}, \code{UpperBound}.}
 
-\item{dfStudyBounds}{data.frame or NULL. Individual study confidence intervals
+\item{dfBounds}{data.frame or NULL. Individual study confidence intervals
 from \code{Analyze_StudyKRI_PredictBounds} (optional). If a \code{StudyID} column exists,
 data will be automatically filtered to \code{strStudyID}. If provided, must contain:
 \code{StudyMonth}, \code{MedianMetric}, \code{LowerBound}, \code{UpperBound}.}
@@ -76,8 +76,8 @@ target_study <- "STUDY1"
 # Option 1: Pass full datasets - function will filter automatically
 p <- Visualize_StudyKRI(
   dfStudyKRI = lAnalysis$Analysis_Transformed,
-  dfGroupBounds = lAnalysis$Analysis_GroupBounds,
-  dfStudyBounds = lAnalysis$Analysis_Bounds,
+  dfBoundsRef = lAnalysis$Analysis_BoundsRef,
+  dfBounds = lAnalysis$Analysis_Bounds,
   strStudyID = target_study,
   strYlab = "Cumulative AE Rate per Visit"
 )
@@ -85,13 +85,13 @@ p <- Visualize_StudyKRI(
 # Option 2: Pre-filter data manually (equivalent to above)
 dfStudyKRI <- lAnalysis$Analysis_Transformed[
   lAnalysis$Analysis_Transformed$StudyID == target_study, ]
-dfStudyBounds <- lAnalysis$Analysis_Bounds[
+dfBounds <- lAnalysis$Analysis_Bounds[
   lAnalysis$Analysis_Bounds$StudyID == target_study, ]
 
 p <- Visualize_StudyKRI(
   dfStudyKRI = dfStudyKRI,
-  dfGroupBounds = lAnalysis$Analysis_GroupBounds,
-  dfStudyBounds = dfStudyBounds,
+  dfBoundsRef = lAnalysis$Analysis_BoundsRef,
+  dfBounds = dfBounds,
   strStudyID = target_study,
   strYlab = "Cumulative AE Rate per Visit"
 )

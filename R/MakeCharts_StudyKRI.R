@@ -70,8 +70,8 @@ MakeCharts_StudyKRI <- function(
     tryCatch({
       lCharts[[chart_name]] <- Visualize_StudyKRI(
         dfStudyKRI = df_study_kri,
-        dfGroupBounds = df_boundsref,
-        dfStudyBounds = df_study_bounds,
+        dfBoundsRef = df_boundsref,
+        dfBounds = df_study_bounds,
         strStudyID = study_id,
         strYlab = metric_name,
         nMaxMonth = nMaxMonth

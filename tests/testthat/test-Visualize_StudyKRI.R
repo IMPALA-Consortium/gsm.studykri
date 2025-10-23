@@ -7,7 +7,7 @@ test_that("Visualize_StudyKRI creates plot with all inputs", {
     stringsAsFactors = FALSE
   )
   
-  dfGroupBounds <- data.frame(
+  dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
     MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
     LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
@@ -16,7 +16,7 @@ test_that("Visualize_StudyKRI creates plot with all inputs", {
     stringsAsFactors = FALSE
   )
   
-  dfStudyBounds <- data.frame(
+  dfBounds <- data.frame(
     StudyMonth = 1:5,
     MedianMetric = c(0.10, 0.12, 0.15, 0.14, 0.13),
     LowerBound = c(0.08, 0.10, 0.12, 0.11, 0.10),
@@ -27,8 +27,8 @@ test_that("Visualize_StudyKRI creates plot with all inputs", {
   # Create plot
   p <- Visualize_StudyKRI(
     dfStudyKRI = dfStudyKRI,
-    dfGroupBounds = dfGroupBounds,
-    dfStudyBounds = dfStudyBounds,
+    dfBoundsRef = dfBoundsRef,
+    dfBounds = dfBounds,
     strStudyID = "STUDY1"
   )
   
@@ -46,7 +46,7 @@ test_that("Visualize_StudyKRI works without individual study bounds", {
     stringsAsFactors = FALSE
   )
   
-  dfGroupBounds <- data.frame(
+  dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
     MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
     LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
@@ -58,8 +58,8 @@ test_that("Visualize_StudyKRI works without individual study bounds", {
   # Create plot without individual study bounds
   p <- Visualize_StudyKRI(
     dfStudyKRI = dfStudyKRI,
-    dfGroupBounds = dfGroupBounds,
-    dfStudyBounds = NULL,
+    dfBoundsRef = dfBoundsRef,
+    dfBounds = NULL,
     strStudyID = "STUDY1"
   )
   
@@ -74,7 +74,7 @@ test_that("Visualize_StudyKRI filters to nMaxMonth correctly", {
     stringsAsFactors = FALSE
   )
   
-  dfGroupBounds <- data.frame(
+  dfBoundsRef <- data.frame(
     StudyMonth = 1:10,
     MedianMetric = seq(0.11, 0.20, length.out = 10),
     LowerBound = seq(0.08, 0.17, length.out = 10),
@@ -85,7 +85,7 @@ test_that("Visualize_StudyKRI filters to nMaxMonth correctly", {
   # Filter to first 5 months
   p <- Visualize_StudyKRI(
     dfStudyKRI = dfStudyKRI,
-    dfGroupBounds = dfGroupBounds,
+    dfBoundsRef = dfBoundsRef,
     strStudyID = "STUDY1",
     nMaxMonth = 5
   )
@@ -105,7 +105,7 @@ test_that("Visualize_StudyKRI validates input types", {
     stringsAsFactors = FALSE
   )
   
-  dfGroupBounds <- data.frame(
+  dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
     MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
     LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
@@ -117,38 +117,38 @@ test_that("Visualize_StudyKRI validates input types", {
   expect_error(
     Visualize_StudyKRI(
       dfStudyKRI = list(a = 1),
-      dfGroupBounds = dfGroupBounds,
+      dfBoundsRef = dfBoundsRef,
       strStudyID = "STUDY1"
     ),
     "dfStudyKRI must be a data.frame"
   )
   
-  # Test wrong type for dfGroupBounds
+  # Test wrong type for dfBoundsRef
   expect_error(
     Visualize_StudyKRI(
       dfStudyKRI = dfStudyKRI,
-      dfGroupBounds = list(a = 1),
+      dfBoundsRef = list(a = 1),
       strStudyID = "STUDY1"
     ),
-    "dfGroupBounds must be a data.frame"
+    "dfBoundsRef must be a data.frame"
   )
   
-  # Test wrong type for dfStudyBounds
+  # Test wrong type for dfBounds
   expect_error(
     Visualize_StudyKRI(
       dfStudyKRI = dfStudyKRI,
-      dfGroupBounds = dfGroupBounds,
-      dfStudyBounds = list(a = 1),
+      dfBoundsRef = dfBoundsRef,
+      dfBounds = list(a = 1),
       strStudyID = "STUDY1"
     ),
-    "dfStudyBounds must be a data.frame or NULL"
+    "dfBounds must be a data.frame or NULL"
   )
   
   # Test invalid strStudyID
   expect_error(
     Visualize_StudyKRI(
       dfStudyKRI = dfStudyKRI,
-      dfGroupBounds = dfGroupBounds,
+      dfBoundsRef = dfBoundsRef,
       strStudyID = c("STUDY1", "STUDY2")
     ),
     "strStudyID must be a single character string"
@@ -158,7 +158,7 @@ test_that("Visualize_StudyKRI validates input types", {
   expect_error(
     Visualize_StudyKRI(
       dfStudyKRI = dfStudyKRI,
-      dfGroupBounds = dfGroupBounds,
+      dfBoundsRef = dfBoundsRef,
       strStudyID = "STUDY1",
       nMaxMonth = -5
     ),
@@ -174,7 +174,7 @@ test_that("Visualize_StudyKRI validates required columns", {
     stringsAsFactors = FALSE
   )
   
-  dfGroupBounds <- data.frame(
+  dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
     MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
     LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
@@ -185,20 +185,20 @@ test_that("Visualize_StudyKRI validates required columns", {
   expect_error(
     Visualize_StudyKRI(
       dfStudyKRI = dfStudyKRI_bad,
-      dfGroupBounds = dfGroupBounds,
+      dfBoundsRef = dfBoundsRef,
       strStudyID = "STUDY1"
     ),
     "dfStudyKRI missing required columns.*Metric"
   )
   
-  # Missing column in dfGroupBounds
+  # Missing column in dfBoundsRef
   dfStudyKRI <- data.frame(
     StudyMonth = 1:5,
     Metric = c(0.10, 0.12, 0.15, 0.14, 0.13),
     stringsAsFactors = FALSE
   )
   
-  dfGroupBounds_bad <- data.frame(
+  dfBoundsRef_bad <- data.frame(
     StudyMonth = 1:5,
     MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
     # Missing LowerBound and UpperBound
@@ -208,10 +208,10 @@ test_that("Visualize_StudyKRI validates required columns", {
   expect_error(
     Visualize_StudyKRI(
       dfStudyKRI = dfStudyKRI,
-      dfGroupBounds = dfGroupBounds_bad,
+      dfBoundsRef = dfBoundsRef_bad,
       strStudyID = "STUDY1"
     ),
-    "dfGroupBounds missing required columns"
+    "dfBoundsRef missing required columns"
   )
 })
 
@@ -222,7 +222,7 @@ test_that("Visualize_StudyKRI handles empty data after filtering", {
     stringsAsFactors = FALSE
   )
   
-  dfGroupBounds <- data.frame(
+  dfBoundsRef <- data.frame(
     StudyMonth = 6:10,
     MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
     LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
@@ -234,7 +234,7 @@ test_that("Visualize_StudyKRI handles empty data after filtering", {
   expect_error(
     Visualize_StudyKRI(
       dfStudyKRI = dfStudyKRI,
-      dfGroupBounds = dfGroupBounds,
+      dfBoundsRef = dfBoundsRef,
       strStudyID = "STUDY1",
       nMaxMonth = 5
     ),
@@ -249,7 +249,7 @@ test_that("Visualize_StudyKRI uses custom labels", {
     stringsAsFactors = FALSE
   )
   
-  dfGroupBounds <- data.frame(
+  dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
     MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
     LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
@@ -264,7 +264,7 @@ test_that("Visualize_StudyKRI uses custom labels", {
   
   p <- Visualize_StudyKRI(
     dfStudyKRI = dfStudyKRI,
-    dfGroupBounds = dfGroupBounds,
+    dfBoundsRef = dfBoundsRef,
     strStudyID = "STUDY1",
     strTitle = custom_title,
     strSubtitle = custom_subtitle,
@@ -288,7 +288,7 @@ test_that("Visualize_StudyKRI works with custom column names", {
     stringsAsFactors = FALSE
   )
   
-  dfGroupBounds <- data.frame(
+  dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
     MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
     LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
@@ -298,7 +298,7 @@ test_that("Visualize_StudyKRI works with custom column names", {
   
   p <- Visualize_StudyKRI(
     dfStudyKRI = dfStudyKRI,
-    dfGroupBounds = dfGroupBounds,
+    dfBoundsRef = dfBoundsRef,
     strStudyID = "STUDY1",
     strStudyMonthCol = "MyMonth",
     strMetricCol = "MyMetric"
@@ -363,16 +363,16 @@ test_that("Visualize_StudyKRI integration test with workflow output", {
   dfStudyKRI <- lAnalysis$Analysis_Transformed[
     lAnalysis$Analysis_Transformed$StudyID == target_study, ]
   
-  dfStudyBounds <- lAnalysis$Analysis_Bounds[
+  dfBounds <- lAnalysis$Analysis_Bounds[
     lAnalysis$Analysis_Bounds$StudyID == target_study, ]
   
-  dfGroupBounds <- lAnalysis$Analysis_GroupBounds
+  dfBoundsRef <- lAnalysis$Analysis_BoundsRef
   
   # Create visualization
   p <- Visualize_StudyKRI(
     dfStudyKRI = dfStudyKRI,
-    dfGroupBounds = dfGroupBounds,
-    dfStudyBounds = dfStudyBounds,
+    dfBoundsRef = dfBoundsRef,
+    dfBounds = dfBounds,
     strStudyID = target_study,
     strYlab = "Cumulative AE Rate per Visit",
     nMaxMonth = 12

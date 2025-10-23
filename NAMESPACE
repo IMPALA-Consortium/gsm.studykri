@@ -2,7 +2,7 @@
 
 export(Analyze_StudyKRI)
 export(Analyze_StudyKRI_PredictBounds)
-export(Analyze_StudyKRI_PredictBoundsGroup)
+export(Analyze_StudyKRI_PredictBoundsRef)
 export(Input_CountSiteByMonth)
 export(MakeCharts_StudyKRI)
 export(ResampleStudy)

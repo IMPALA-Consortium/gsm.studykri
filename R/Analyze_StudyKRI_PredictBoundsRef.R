@@ -52,7 +52,7 @@
 #' )
 #'
 #' # Calculate comparison envelope from 3 studies
-#' dfGroupBounds <- Analyze_StudyKRI_PredictBoundsGroup(
+#' dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRef(
 #'   dfInput = dfSiteLevel,
 #'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
 #'   nBootstrapReps = 100,  # Use small number for example
@@ -63,7 +63,7 @@
 #' print(head(dfGroupBounds))
 #'
 #' @export
-Analyze_StudyKRI_PredictBoundsGroup <- function(
+Analyze_StudyKRI_PredictBoundsRef <- function(
   dfInput,
   vStudyFilter = NULL,
   nBootstrapReps = 1000,

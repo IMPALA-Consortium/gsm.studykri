@@ -22,6 +22,7 @@ Suggests:
     dbplyr,
     duckdb,
     DBI
+VignetteBuilder: knitr
 Remotes: 
     Gilead-BioStats/clindata,
     Gilead-BioStats/gsm.core,
@@ -29,6 +30,7 @@ Remotes:
     Gilead-BioStats/gsm.reporting,
     Gilead-BioStats/gsm.kri
 Config/testthat/edition: 3
+Config/testthat/parallel: true
 Imports: 
     dplyr,
     ggplot2,

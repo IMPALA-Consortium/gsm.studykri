@@ -72,7 +72,7 @@ steps:
         - StudyID
       nConfLevel: 0.95
   - output: Analysis_BoundsRef
-    name: gsm.studykri::Analyze_StudyKRI_PredictBoundsGroup
+    name: gsm.studykri::Analyze_StudyKRI_PredictBoundsRef
     params:
       dfInput: Analysis_Input
       vStudyFilter: null

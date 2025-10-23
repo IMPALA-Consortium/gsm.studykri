@@ -47,8 +47,8 @@ test_that("hand written test - minimal workflow example", {
 
   p <- Visualize_StudyKRI(
     dfStudyKRI = lAnalyzed$Analysis_kri0001$Analysis_Transformed,
-    dfGroupBounds = lAnalyzed$Analysis_kri0001$Analysis_GroupBounds,
-    dfStudyBounds = lAnalyzed$Analysis_kri0001$Analysis_Bounds,
+    dfBoundsRef = lAnalyzed$Analysis_kri0001$Analysis_BoundsRef,
+    dfBounds = lAnalyzed$Analysis_kri0001$Analysis_Bounds,
     strStudyID = "PORTFOLIO001",
     strYlab = "Cumulative AE Rate per Visit"
   )
@@ -283,59 +283,59 @@ test_that("kri0001 workflow executes successfully", {
   expect_true(all(dfBounds$BootstrapCount > 0))
   expect_true(all(dfBounds$BootstrapCount <= 1000))
   
-  # Extract Analysis_GroupBounds for validation (combined group CIs)
-  dfGroupBounds <- lResult$Analysis_GroupBounds
+  # Extract Analysis_BoundsRef for validation (combined group CIs)
+  dfBoundsRef <- lResult$Analysis_BoundsRef
   
-  expect_s3_class(dfGroupBounds, "data.frame")
-  expect_true(nrow(dfGroupBounds) > 0)
+  expect_s3_class(dfBoundsRef, "data.frame")
+  expect_true(nrow(dfBoundsRef) > 0)
   
   # Should NOT have StudyID column (studies are combined)
-  expect_false("StudyID" %in% names(dfGroupBounds))
+  expect_false("StudyID" %in% names(dfBoundsRef))
   
   expected_cols_group <- c("StudyMonth", "MedianMetric", "LowerBound", 
                             "UpperBound", "BootstrapCount", "GroupCount", "StudyCount")
-  expect_true(all(expected_cols_group %in% names(dfGroupBounds)))
+  expect_true(all(expected_cols_group %in% names(dfBoundsRef)))
   
-  expect_type(dfGroupBounds$StudyMonth, "integer")
-  expect_type(dfGroupBounds$MedianMetric, "double")
-  expect_type(dfGroupBounds$LowerBound, "double")
-  expect_type(dfGroupBounds$UpperBound, "double")
-  expect_type(dfGroupBounds$BootstrapCount, "integer")
-  expect_type(dfGroupBounds$GroupCount, "integer")
-  expect_type(dfGroupBounds$StudyCount, "integer")
+  expect_type(dfBoundsRef$StudyMonth, "integer")
+  expect_type(dfBoundsRef$MedianMetric, "double")
+  expect_type(dfBoundsRef$LowerBound, "double")
+  expect_type(dfBoundsRef$UpperBound, "double")
+  expect_type(dfBoundsRef$BootstrapCount, "integer")
+  expect_type(dfBoundsRef$GroupCount, "integer")
+  expect_type(dfBoundsRef$StudyCount, "integer")
   
   # Verify metadata
-  expect_equal(unique(dfGroupBounds$StudyCount), 3)  # All 3 studies combined
-  expect_true(all(dfGroupBounds$GroupCount > 0))
+  expect_equal(unique(dfBoundsRef$StudyCount), 3)  # All 3 studies combined
+  expect_true(all(dfBoundsRef$GroupCount > 0))
   
   # Verify confidence intervals are sensible
-  expect_true(all(dfGroupBounds$LowerBound <= dfGroupBounds$MedianMetric, na.rm = TRUE))
-  expect_true(all(dfGroupBounds$MedianMetric <= dfGroupBounds$UpperBound, na.rm = TRUE))
+  expect_true(all(dfBoundsRef$LowerBound <= dfBoundsRef$MedianMetric, na.rm = TRUE))
+  expect_true(all(dfBoundsRef$MedianMetric <= dfBoundsRef$UpperBound, na.rm = TRUE))
   
   # Verify StudyMonth is sequential
-  expect_equal(dfGroupBounds$StudyMonth, seq_len(nrow(dfGroupBounds)))
+  expect_equal(dfBoundsRef$StudyMonth, seq_len(nrow(dfBoundsRef)))
   
   # Verify bootstrap count is reasonable (should be close to 1000 per time point)
-  expect_true(all(dfGroupBounds$BootstrapCount > 0))
-  expect_true(all(dfGroupBounds$BootstrapCount <= 1000))
+  expect_true(all(dfBoundsRef$BootstrapCount > 0))
+  expect_true(all(dfBoundsRef$BootstrapCount <= 1000))
   
   # Test Visualize_StudyKRI with workflow output
   # Extract data for the first study
   target_study <- study_ids[1]
   
   dfStudyKRI <- dfTransformed[dfTransformed$StudyID == target_study, ]
-  dfStudyBounds <- dfBounds[dfBounds$StudyID == target_study, ]
+  dfBounds <- dfBounds[dfBounds$StudyID == target_study, ]
   
   # Verify we have data for visualization
   expect_true(nrow(dfStudyKRI) > 0)
-  expect_true(nrow(dfStudyBounds) > 0)
-  expect_true(nrow(dfGroupBounds) > 0)
+  expect_true(nrow(dfBounds) > 0)
+  expect_true(nrow(dfBoundsRef) > 0)
   
   # Create visualization with all components
   p1 <- Visualize_StudyKRI(
     dfStudyKRI = dfStudyKRI,
-    dfGroupBounds = dfGroupBounds,
-    dfStudyBounds = dfStudyBounds,
+    dfBoundsRef = dfBoundsRef,
+    dfBounds = dfBounds,
     strStudyID = target_study,
     strYlab = "Cumulative AE Rate per Visit"
   )
@@ -351,8 +351,8 @@ test_that("kri0001 workflow executes successfully", {
   # Test visualization without individual study bounds
   p2 <- Visualize_StudyKRI(
     dfStudyKRI = dfStudyKRI,
-    dfGroupBounds = dfGroupBounds,
-    dfStudyBounds = NULL,
+    dfBoundsRef = dfBoundsRef,
+    dfBounds = NULL,
     strStudyID = target_study,
     nMaxMonth = 12  # Limit to first 12 months
   )
@@ -389,7 +389,7 @@ test_that("kri0001 workflow validates required mapped data", {
   )
 })
 
-test_that("Analyze_StudyKRI_PredictBoundsGroup works with multi-study portfolio", {
+test_that("Analyze_StudyKRI_PredictBoundsRef works with multi-study portfolio", {
   # Generate multi-study portfolio using SimulatePortfolio
   lRaw_original <- list(
     Raw_SUBJ = clindata::rawplus_dm,
@@ -446,9 +446,9 @@ test_that("Analyze_StudyKRI_PredictBoundsGroup works with multi-study portfolio"
   # Verify site-level data has multiple studies
   expect_equal(length(unique(dfSiteLevel$StudyID)), 3)
   
-  # Test Analyze_StudyKRI_PredictBoundsGroup with vStudyFilter = NULL (use all studies)
+  # Test Analyze_StudyKRI_PredictBoundsRef with vStudyFilter = NULL (use all studies)
   suppressMessages({
-    dfGroupBounds_all <- Analyze_StudyKRI_PredictBoundsGroup(
+    dfBoundsRef_all <- Analyze_StudyKRI_PredictBoundsRef(
       dfInput = dfSiteLevel,
       vStudyFilter = NULL,  # Test default behavior - use all studies
       nBootstrapReps = 50,  # Small for speed
@@ -459,30 +459,30 @@ test_that("Analyze_StudyKRI_PredictBoundsGroup works with multi-study portfolio"
   })
   
   # Validate output structure
-  expect_s3_class(dfGroupBounds_all, "data.frame")
-  expect_true(nrow(dfGroupBounds_all) > 0)
+  expect_s3_class(dfBoundsRef_all, "data.frame")
+  expect_true(nrow(dfBoundsRef_all) > 0)
   
   expected_cols <- c("StudyMonth", "MedianMetric", "LowerBound", 
                      "UpperBound", "BootstrapCount", "GroupCount", "StudyCount")
-  expect_true(all(expected_cols %in% names(dfGroupBounds_all)))
+  expect_true(all(expected_cols %in% names(dfBoundsRef_all)))
   
   # Verify no StudyID column (studies are combined)
-  expect_false("StudyID" %in% names(dfGroupBounds_all))
+  expect_false("StudyID" %in% names(dfBoundsRef_all))
   
   # Verify metadata
-  expect_equal(unique(dfGroupBounds_all$StudyCount), 3)
-  expect_true(all(dfGroupBounds_all$GroupCount > 0))
+  expect_equal(unique(dfBoundsRef_all$StudyCount), 3)
+  expect_true(all(dfBoundsRef_all$GroupCount > 0))
   
   # Verify confidence intervals are sensible
-  expect_true(all(dfGroupBounds_all$LowerBound <= dfGroupBounds_all$MedianMetric, na.rm = TRUE))
-  expect_true(all(dfGroupBounds_all$MedianMetric <= dfGroupBounds_all$UpperBound, na.rm = TRUE))
+  expect_true(all(dfBoundsRef_all$LowerBound <= dfBoundsRef_all$MedianMetric, na.rm = TRUE))
+  expect_true(all(dfBoundsRef_all$MedianMetric <= dfBoundsRef_all$UpperBound, na.rm = TRUE))
   
   # Verify StudyMonth is sequential
-  expect_equal(dfGroupBounds_all$StudyMonth, seq_len(nrow(dfGroupBounds_all)))
+  expect_equal(dfBoundsRef_all$StudyMonth, seq_len(nrow(dfBoundsRef_all)))
   
   # Test with subset of studies (2 out of 3)
   suppressMessages({
-    dfGroupBounds_subset <- Analyze_StudyKRI_PredictBoundsGroup(
+    dfBoundsRef_subset <- Analyze_StudyKRI_PredictBoundsRef(
       dfInput = dfSiteLevel,
       vStudyFilter = study_ids[1:2],
       nBootstrapReps = 50,
@@ -492,16 +492,16 @@ test_that("Analyze_StudyKRI_PredictBoundsGroup works with multi-study portfolio"
     )
   })
   
-  expect_equal(unique(dfGroupBounds_subset$StudyCount), 2)
-  expect_true(nrow(dfGroupBounds_subset) > 0)
+  expect_equal(unique(dfBoundsRef_subset$StudyCount), 2)
+  expect_true(nrow(dfBoundsRef_subset) > 0)
   
   # Verify bounds from subset are different from all studies
   # (different study combinations should yield different bounds)
-  common_months <- intersect(dfGroupBounds_all$StudyMonth, dfGroupBounds_subset$StudyMonth)
+  common_months <- intersect(dfBoundsRef_all$StudyMonth, dfBoundsRef_subset$StudyMonth)
   if (length(common_months) > 0) {
     # At least some bounds should differ
-    all_medians <- dfGroupBounds_all$MedianMetric[dfGroupBounds_all$StudyMonth %in% common_months]
-    subset_medians <- dfGroupBounds_subset$MedianMetric[dfGroupBounds_subset$StudyMonth %in% common_months]
+    all_medians <- dfBoundsRef_all$MedianMetric[dfBoundsRef_all$StudyMonth %in% common_months]
+    subset_medians <- dfBoundsRef_subset$MedianMetric[dfBoundsRef_subset$StudyMonth %in% common_months]
     
     # Allow for some similarity but expect at least some difference
     expect_true(!all(abs(all_medians - subset_medians) < 1e-10))

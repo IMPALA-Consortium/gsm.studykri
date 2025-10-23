@@ -8,10 +8,10 @@ steps:
   - output: lCharts
     name: gsm.studykri::MakeCharts_StudyKRI
     params:
-      dfResults: Reporting_Results$lResults$dfResults
-      dfBounds: Reporting_Bounds$lBounds$dfBounds
-      dfGroups: Reporting_BoundsRef$lBoundsRef$dfBounds
-      dfMetrics: Reporting_Results$lResults$dfMetadata
+      dfResults: Reporting_Results
+      dfBounds: Reporting_Bounds
+      dfBoundsRef: Reporting_BoundsRef
+      dfMetrics: Reporting_Metrics
       nMaxMonth: null
       
   # Step 2: Generate HTML report using gsm.kri
@@ -19,8 +19,9 @@ steps:
     name: gsm.kri::Report_KRI
     params:
       lCharts: lCharts
-      dfResults: Reporting_Results$lResults$dfResults
-      dfGroups: Reporting_BoundsRef$lBoundsRef$dfBounds
-      dfMetrics: Reporting_Results$lResults$dfMetadata
-      strReportPath: "StudyKRI_Report.html"
+      dfResults: Reporting_Results
+      dfGroups: Reporting_Groups
+      dfMetrics: Reporting_Metrics
+      strOutputFile: "StudyKRI_Report.html"
+      strInputPath: null  # Set dynamically when calling workflow
 
