@@ -42,6 +42,9 @@ test_that("hand written test - minimal workflow example", {
     strPackage = NULL
   )
   
+  # Reduce bootstrap iterations for faster testing
+  metrics_wf$kri0001$meta$BootstrapReps <- 100
+  
   # Combine lMapped with metrics workflows for comprehensive result
   lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 
@@ -110,6 +113,9 @@ test_that("kri0001 workflow executes successfully", {
     strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
     strPackage = NULL
   )
+  
+  # Reduce bootstrap iterations for faster testing
+  metrics_wf$kri0001$meta$BootstrapReps <- 100
   
   # Combine lMapped with metrics workflows for comprehensive result
   lData_combined <- lMapped
@@ -213,8 +219,8 @@ test_that("kri0001 workflow executes successfully", {
   
   # Should have approximately nBootstrapReps × site-level row count
   # With replacement sampling, exact count varies
-  expect_true(nrow(dfBootstrapped) > nrow(dfInput) * 100)  # At least 100x for 1000 reps
-  expect_equal(length(unique(dfBootstrapped$BootstrapRep)), 1000)
+  expect_true(nrow(dfBootstrapped) > nrow(dfInput) * 10)  # At least 10x for 100 reps
+  expect_equal(length(unique(dfBootstrapped$BootstrapRep)), 100)
   
   # Extract Analysis_BootstrappedStudy for validation
   dfBootstrappedStudy <- lResult$Analysis_BootstrappedStudy
@@ -230,7 +236,7 @@ test_that("kri0001 workflow executes successfully", {
   expect_type(dfBootstrappedStudy$Denominator, "integer")
   expect_type(dfBootstrappedStudy$Metric, "double")
   expect_type(dfBootstrappedStudy$BootstrapRep, "integer")
-  expect_equal(length(unique(dfBootstrappedStudy$BootstrapRep)), 1000)
+  expect_equal(length(unique(dfBootstrappedStudy$BootstrapRep)), 100)
   
   # Verify it's study-level (fewer rows than site-level bootstrap)
   expect_true(nrow(dfBootstrappedStudy) < nrow(dfBootstrapped))
@@ -279,9 +285,9 @@ test_that("kri0001 workflow executes successfully", {
     expect_equal(study_data$StudyMonth, seq_len(nrow(study_data)))
   }
   
-  # Verify bootstrap count is reasonable (should be close to 1000 per time point)
+  # Verify bootstrap count is reasonable (should be close to 100 per time point)
   expect_true(all(dfBounds$BootstrapCount > 0))
-  expect_true(all(dfBounds$BootstrapCount <= 1000))
+  expect_true(all(dfBounds$BootstrapCount <= 100))
   
   # Extract Analysis_BoundsRef for validation (combined group CIs)
   dfBoundsRef <- lResult$Analysis_BoundsRef
@@ -315,9 +321,9 @@ test_that("kri0001 workflow executes successfully", {
   # Verify StudyMonth is sequential
   expect_equal(dfBoundsRef$StudyMonth, seq_len(nrow(dfBoundsRef)))
   
-  # Verify bootstrap count is reasonable (should be close to 1000 per time point)
+  # Verify bootstrap count is reasonable (should be close to 100 per time point)
   expect_true(all(dfBoundsRef$BootstrapCount > 0))
-  expect_true(all(dfBoundsRef$BootstrapCount <= 1000))
+  expect_true(all(dfBoundsRef$BootstrapCount <= 100))
   
   # Test Visualize_StudyKRI with workflow output
   # Extract data for the first study
@@ -382,6 +388,9 @@ test_that("kri0001 workflow validates required mapped data", {
     strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
     strPackage = NULL
   )
+  
+  # Reduce bootstrap iterations for faster testing
+  metrics_wf$kri0001$meta$BootstrapReps <- 100
   
   # Should error due to missing Mapped_Visit
   expect_error(

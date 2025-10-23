@@ -38,6 +38,9 @@ test_that("Script-based reporting workflow executes successfully", {
     strPath = system.file("workflow/2_metrics", package = "gsm.studykri")
   )
   
+  # Reduce bootstrap iterations for faster testing
+  metrics_wf$kri0001$meta$BootstrapReps <- 100
+  
   lAnalyzed <- gsm.core::RunWorkflows(metrics_wf, lMapped)
   
   # 3. Script-based reporting approach (from Cookbook)
@@ -111,6 +114,9 @@ test_that("MakeCharts_StudyKRI and Report_KRI generate report", {
   metrics_wf <- gsm.core::MakeWorkflowList(
     strPath = system.file("workflow/2_metrics", package = "gsm.studykri")
   )
+  
+  # Reduce bootstrap iterations for faster testing
+  metrics_wf$kri0001$meta$BootstrapReps <- 100
   
   lAnalyzed <- gsm.core::RunWorkflows(metrics_wf, lMapped)
   
@@ -206,6 +212,9 @@ test_that("YAML-based reporting workflow executes successfully", {
     strPath = system.file("workflow/2_metrics", package = "gsm.studykri")
   )
   
+  # Reduce bootstrap iterations for faster testing
+  metrics_wf$kri0001$meta$BootstrapReps <- 100
+  
   lAnalyzed <- gsm.core::RunWorkflows(metrics_wf, lMapped)
   
   # 3. Reporting (YAML workflows)
@@ -291,6 +300,9 @@ test_that("Complete YAML workflow generates HTML report", {
   metrics_wf <- gsm.core::MakeWorkflowList(
     strPath = system.file("workflow/2_metrics", package = "gsm.studykri")
   )
+  
+  # Reduce bootstrap iterations for faster testing
+  metrics_wf$kri0001$meta$BootstrapReps <- 100
   
   lAnalyzed <- gsm.core::RunWorkflows(metrics_wf, lMapped)
   

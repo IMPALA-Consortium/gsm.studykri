@@ -9,9 +9,10 @@ meta:
   Model: Normal Approximation
   Score: Adjusted Z-Score
   AnalysisType: rate
-  Threshold: -2,-1,2,3
-  AccrualThreshold: 30
+  Threshold: 0.95
+  AccrualThreshold: 25
   AccrualMetric: Denominator
+  BootstrapReps: 1000
 spec:
   Mapped_AE:
     subjid:
@@ -49,12 +50,12 @@ steps:
       dfInput: Analysis_Input
       vBy: 
         - StudyID
-      nMinDenominator: 25
+      nMinDenominator: AccrualThreshold
   - output: Analysis_Bootstrapped
     name: gsm.studykri::Analyze_StudyKRI
     params:
       dfInput: Analysis_Input
-      nBootstrapReps: 1000
+      nBootstrapReps: BootstrapReps
       seed: 42
   - output: Analysis_BootstrappedStudy
     name: gsm.studykri::Transform_CumCount
@@ -63,22 +64,22 @@ steps:
       vBy:
         - StudyID
         - BootstrapRep
-      nMinDenominator: 25
+      nMinDenominator: AccrualThreshold
   - output: Analysis_Bounds
     name: gsm.studykri::Analyze_StudyKRI_PredictBounds
     params:
       dfInput: Analysis_BootstrappedStudy
       vBy:
         - StudyID
-      nConfLevel: 0.95
+      nConfLevel: Threshold
   - output: Analysis_BoundsRef
     name: gsm.studykri::Analyze_StudyKRI_PredictBoundsRef
     params:
       dfInput: Analysis_Input
       vStudyFilter: null
-      nBootstrapReps: 1000
-      nConfLevel: 0.95
-      nMinDenominator: 25
+      nBootstrapReps: BootstrapReps
+      nConfLevel: Threshold
+      nMinDenominator: AccrualThreshold
       seed: 42
   - output: lAnalysis
     name: list

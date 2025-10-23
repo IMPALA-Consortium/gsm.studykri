@@ -356,6 +356,9 @@ test_that("Visualize_StudyKRI integration test with workflow output", {
     strPackage = NULL
   )
   
+  # Reduce bootstrap iterations for faster testing
+  metrics_wf$kri0001$meta$BootstrapReps <- 100
+  
   lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
   lAnalysis <- lAnalyzed$Analysis_kri0001
   
