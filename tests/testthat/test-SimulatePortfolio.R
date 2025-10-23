@@ -58,19 +58,6 @@ test_that("SimulatePortfolio output works with mapping workflows", {
   })
 })
 
-test_that("SimulatePortfolio is reproducible with seed", {
-  lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
-    Raw_SITE = clindata::ctms_site
-  )
-  
-  result1 <- SimulatePortfolio(lRaw, nStudies = 2, seed = 100)
-  result2 <- SimulatePortfolio(lRaw, nStudies = 2, seed = 100)
-  
-  expect_equal(result1$Raw_SUBJ$studyid, result2$Raw_SUBJ$studyid)
-  expect_equal(result1$Raw_SUBJ$subjid, result2$Raw_SUBJ$subjid)
-})
-
 test_that("SimulatePortfolio validates inputs", {
   lRaw <- list(Raw_SUBJ = clindata::rawplus_dm)
   

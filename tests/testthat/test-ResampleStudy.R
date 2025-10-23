@@ -497,7 +497,7 @@ test_that("ResampleStudy validates TargetSiteCount parameter", {
 
 # Domain Preservation Tests -----------------------------------------------
 
-test_that("ResampleStudy preserves all input domains", {
+test_that("ResampleStudy preserves all input domains and column names", {
   # Test with comprehensive domain list
   lRaw_full <- list(
     Raw_SUBJ = clindata::rawplus_dm,
@@ -534,33 +534,8 @@ test_that("ResampleStudy preserves all input domains", {
   expect_true(all(output_domains %in% input_domains),
               info = paste("Unexpected domains:", 
                           paste(setdiff(output_domains, input_domains), collapse = ", ")))
-})
-
-test_that("ResampleStudy preserves column names for all domains", {
-  lRaw_full <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
-    Raw_AE = clindata::rawplus_ae,
-    Raw_LB = clindata::rawplus_lb,
-    Raw_SITE = clindata::ctms_site,
-    Raw_STUDY = clindata::ctms_study,
-    Raw_PD = clindata::ctms_protdev,
-    Raw_DATAENT = clindata::edc_data_pages,
-    Raw_QUERY = clindata::edc_queries,
-    Raw_ENROLL = clindata::rawplus_enroll,
-    Raw_Randomization = clindata::rawplus_ixrsrand,
-    Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
-    Raw_STUDCOMP = clindata::rawplus_studcomp,
-    Raw_VISIT = clindata::rawplus_visdt
-  )
   
-  result <- ResampleStudy(
-    lRaw = lRaw_full,
-    strNewStudyID = "COLTEST001",
-    nSubjects = 50,
-    seed = 888
-  )
-  
-  # Check each domain's columns
+  # Check each domain's columns are preserved
   for (domain_name in names(lRaw_full)) {
     input_cols <- names(lRaw_full[[domain_name]])
     output_cols <- names(result[[domain_name]])
