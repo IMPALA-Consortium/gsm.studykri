@@ -1,9 +1,9 @@
-# Helper functions for parameter validation tests
+# Helper functions for parameter error checking tests
 # Reduces boilerplate code across test files
 
-#' Test parameter validation for a function
+#' Test parameter error handling for a function
 #'
-#' Helper to reduce boilerplate in validation tests. Note: This helper is designed
+#' Helper to reduce boilerplate in error checking tests. Note: This helper is designed
 #' to be used within test_that() blocks where testthat functions are available.
 #'
 #' @param fn Function to test
@@ -12,8 +12,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' test_that("validates parameters", {
-#'   test_parameter_validation(
+#' test_that("checks parameter errors", {
+#'   test_parameter_errors(
 #'     fn = my_function,
 #'     valid_args = list(x = 1, y = 2),
 #'     invalid_tests = list(
@@ -23,7 +23,7 @@
 #'   )
 #' })
 #' }
-test_parameter_validation <- function(fn, valid_args, invalid_tests) {
+test_parameter_errors <- function(fn, valid_args, invalid_tests) {
   # Note: expect_error is from testthat, available in test context
   for (test_case in invalid_tests) {
     # Merge invalid args with valid baseline

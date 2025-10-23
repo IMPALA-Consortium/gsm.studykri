@@ -72,7 +72,7 @@ test_that("kri0001 workflow executes successfully", {
   expect_true("Analysis_Transformed" %in% names(lResult))
   expect_equal(lResult$ID, "kri0001")
   
-  # Extract Analysis_Input for detailed validation
+  # Extract Analysis_Input for detailed checks
   dfInput <- lResult$Analysis_Input
   
   # Validate structure
@@ -107,7 +107,7 @@ test_that("kri0001 workflow executes successfully", {
   calculated_metric <- dfInput$Numerator[rows_with_denom] / dfInput$Denominator[rows_with_denom]
   expect_equal(dfInput$Metric[rows_with_denom], calculated_metric, tolerance = 1e-10)
   
-  # Extract Analysis_Transformed for detailed validation
+  # Extract Analysis_Transformed for detailed checks
   dfTransformed <- lResult$Analysis_Transformed
   
   # Validate structure
@@ -147,7 +147,7 @@ test_that("kri0001 workflow executes successfully", {
     tolerance = 1e-10
   )
   
-  # Extract Analysis_Bootstrapped for validation
+  # Extract Analysis_Bootstrapped for checks
   dfBootstrapped <- lResult$Analysis_Bootstrapped
   
   expect_s3_class(dfBootstrapped, "data.frame")
@@ -160,7 +160,7 @@ test_that("kri0001 workflow executes successfully", {
   expect_true(nrow(dfBootstrapped) > nrow(dfInput) * 10)  # At least 10x for 100 reps
   expect_equal(length(unique(dfBootstrapped$BootstrapRep)), 100)
   
-  # Extract Analysis_BootstrappedStudy for validation
+  # Extract Analysis_BootstrappedStudy for checks
   dfBootstrappedStudy <- lResult$Analysis_BootstrappedStudy
   
   expect_s3_class(dfBootstrappedStudy, "data.frame")
@@ -192,7 +192,7 @@ test_that("kri0001 workflow executes successfully", {
   # Verify minimum denominator filter was applied
   expect_true(all(dfBootstrappedStudy$Denominator > 25))
   
-  # Extract Analysis_Bounds for validation (individual study CIs)
+  # Extract Analysis_Bounds for checks (individual study CIs)
   dfBounds <- lResult$Analysis_Bounds
   
   expect_s3_class(dfBounds, "data.frame")
@@ -227,7 +227,7 @@ test_that("kri0001 workflow executes successfully", {
   expect_true(all(dfBounds$BootstrapCount > 0))
   expect_true(all(dfBounds$BootstrapCount <= 100))
   
-  # Extract Analysis_BoundsRef for validation (combined group CIs)
+  # Extract Analysis_BoundsRef for checks (combined group CIs)
   dfBoundsRef <- lResult$Analysis_BoundsRef
   
   expect_s3_class(dfBoundsRef, "data.frame")

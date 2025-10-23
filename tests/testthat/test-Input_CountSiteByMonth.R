@@ -247,7 +247,7 @@ test_that("Input_CountSiteByMonth handles MonthYYYYMM formatting correctly", {
   )
   
   # Check MonthYYYYMM format (should be YYYYMM as numeric)
-  # Filter out NA values for validation
+  # Filter out NA values for checking
   valid_months <- result$MonthYYYYMM[!is.na(result$MonthYYYYMM)]
   expect_true(all(valid_months >= 190001 & valid_months <= 209912))
   

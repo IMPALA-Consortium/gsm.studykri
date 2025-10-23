@@ -206,7 +206,7 @@ test_that("ResampleStudy handles strOversamplDomain parameter", {
   expect_true(mean(ae_high$n_ae) > mean(ae_low$n_ae))
 })
 
-test_that("ResampleStudy input validation works", {
+test_that("ResampleStudy input checking works", {
   lRaw <- list(
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_AE = clindata::rawplus_ae
