@@ -130,7 +130,7 @@ test_that("Visualize_StudyKRI validates input types", {
       dfBoundsRef = list(a = 1),
       strStudyID = "STUDY1"
     ),
-    "dfBoundsRef must be a data.frame"
+    "dfBoundsRef must be a data.frame or NULL"
   )
   
   # Test wrong type for dfBounds
@@ -305,4 +305,48 @@ test_that("Visualize_StudyKRI works with custom column names", {
   )
   
   expect_s3_class(p, "ggplot")
+})
+
+test_that("Visualize_StudyKRI works without reference bounds (dfBoundsRef = NULL)", {
+  dfStudyKRI <- data.frame(
+    StudyID = rep("STUDY1", 5),
+    StudyMonth = 1:5,
+    Metric = c(0.10, 0.12, 0.15, 0.14, 0.13),
+    stringsAsFactors = FALSE
+  )
+  
+  dfBounds <- data.frame(
+    StudyMonth = 1:5,
+    MedianMetric = c(0.10, 0.12, 0.15, 0.14, 0.13),
+    LowerBound = c(0.08, 0.10, 0.12, 0.11, 0.10),
+    UpperBound = c(0.12, 0.14, 0.18, 0.17, 0.16),
+    stringsAsFactors = FALSE
+  )
+  
+  # Plot with study bounds but no reference bounds
+  p1 <- Visualize_StudyKRI(
+    dfStudyKRI = dfStudyKRI,
+    dfBoundsRef = NULL,
+    dfBounds = dfBounds,
+    strStudyID = "STUDY1"
+  )
+  
+  expect_s3_class(p1, "ggplot")
+  expect_true(length(p1$layers) > 0)
+  
+  # Plot with only study data (no bounds at all)
+  p2 <- Visualize_StudyKRI(
+    dfStudyKRI = dfStudyKRI,
+    dfBoundsRef = NULL,
+    dfBounds = NULL,
+    strStudyID = "STUDY1"
+  )
+  
+  expect_s3_class(p2, "ggplot")
+  expect_true(length(p2$layers) > 0)
+  
+  # Verify plot renders without reference bounds - should have at least line and point layers
+  layer_types <- vapply(p2$layers, function(x) class(x$geom)[1], character(1))
+  expect_true("GeomLine" %in% layer_types)
+  expect_true("GeomPoint" %in% layer_types)
 })

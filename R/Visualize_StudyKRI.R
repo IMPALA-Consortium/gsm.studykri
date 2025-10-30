@@ -19,8 +19,8 @@
 #'   Must contain columns specified by `strStudyMonthCol` and `strMetricCol`.
 #'   If a `StudyID` column exists, data will be automatically filtered to `strStudyID`.
 #' @param dfBoundsRef data.frame or NULL. Portfolio/comparison group confidence intervals
-#'   from `Analyze_StudyKRI_PredictBoundsRef` (optional). If provided, must contain: `StudyMonth`,
-#'   `MedianMetric`, `LowerBound`, `UpperBound`. Set to NULL for reference-only studies.
+#'   from `Analyze_StudyKRI_PredictBoundsRef` (optional, default: NULL). If provided, must contain: `StudyMonth`,
+#'   `MedianMetric`, `LowerBound`, `UpperBound`. If NULL, plot will show only study data without reference comparison.
 #' @param dfBounds data.frame or NULL. Individual study confidence intervals
 #'   from `Analyze_StudyKRI_PredictBounds` (optional). If a `StudyID` column exists,
 #'   data will be automatically filtered to `strStudyID`. If provided, must contain:
@@ -39,46 +39,56 @@
 #' @return A ggplot2 object that can be displayed, saved, or further customized.
 #'
 #' @examples
-#' \dontrun{
-#' # Assuming workflow has been run
-#' lAnalysis <- lAnalyzed$Analysis_kri0001
-#'
-#' # Define target study
-#' target_study <- "STUDY1"
-#'
-#' # Option 1: Pass full datasets - function will filter automatically
-#' p <- Visualize_StudyKRI(
-#'   dfStudyKRI = lAnalysis$Analysis_Transformed,
-#'   dfBoundsRef = lAnalysis$Analysis_BoundsRef,
-#'   dfBounds = lAnalysis$Analysis_Bounds,
-#'   strStudyID = target_study,
-#'   strYlab = "Cumulative AE Rate per Visit"
+#' # Basic usage with reference bounds
+#' dfStudyKRI <- data.frame(
+#'   StudyID = rep("STUDY1", 5),
+#'   StudyMonth = 1:5,
+#'   Metric = c(0.10, 0.12, 0.15, 0.14, 0.13)
 #' )
-#'
-#' # Option 2: Pre-filter data manually (equivalent to above)
-#' dfStudyKRI <- lAnalysis$Analysis_Transformed[
-#'   lAnalysis$Analysis_Transformed$StudyID == target_study, ]
-#' dfBounds <- lAnalysis$Analysis_Bounds[
-#'   lAnalysis$Analysis_Bounds$StudyID == target_study, ]
-#'
-#' p <- Visualize_StudyKRI(
+#' 
+#' dfBoundsRef <- data.frame(
+#'   StudyMonth = 1:5,
+#'   MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
+#'   LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
+#'   UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17)
+#' )
+#' 
+#' dfBounds <- data.frame(
+#'   StudyMonth = 1:5,
+#'   MedianMetric = c(0.10, 0.12, 0.15, 0.14, 0.13),
+#'   LowerBound = c(0.08, 0.10, 0.12, 0.11, 0.10),
+#'   UpperBound = c(0.12, 0.14, 0.18, 0.17, 0.16)
+#' )
+#' 
+#' # Plot with reference bounds
+#' p1 <- Visualize_StudyKRI(
 #'   dfStudyKRI = dfStudyKRI,
-#'   dfBoundsRef = lAnalysis$Analysis_BoundsRef,
+#'   dfBoundsRef = dfBoundsRef,
 #'   dfBounds = dfBounds,
-#'   strStudyID = target_study,
+#'   strStudyID = "STUDY1",
 #'   strYlab = "Cumulative AE Rate per Visit"
 #' )
-#'
-#' print(p)
-#'
-#' # Save plot
-#' # ggplot2::ggsave("study_comparison.png", p, width = 10, height = 6)
-#' }
+#' 
+#' # Plot without reference bounds (only study data)
+#' p2 <- Visualize_StudyKRI(
+#'   dfStudyKRI = dfStudyKRI,
+#'   dfBoundsRef = NULL,
+#'   dfBounds = dfBounds,
+#'   strStudyID = "STUDY1",
+#'   strYlab = "Cumulative AE Rate per Visit"
+#' )
+#' 
+#' # Plot with only study data (no bounds at all)
+#' p3 <- Visualize_StudyKRI(
+#'   dfStudyKRI = dfStudyKRI,
+#'   strStudyID = "STUDY1",
+#'   strYlab = "Cumulative AE Rate per Visit"
+#' )
 #'
 #' @export
 Visualize_StudyKRI <- function(
   dfStudyKRI,
-  dfBoundsRef,
+  dfBoundsRef = NULL,
   dfBounds = NULL,
   strStudyID,
   strStudyMonthCol = "StudyMonth",
@@ -159,7 +169,9 @@ Visualize_StudyKRI <- function(
   # Filter to maximum month if specified
   if (!is.null(nMaxMonth)) {
     dfStudyKRI <- dfStudyKRI[dfStudyKRI[[strStudyMonthCol]] <= nMaxMonth, ]
-    dfBoundsRef <- dfBoundsRef[dfBoundsRef$StudyMonth <= nMaxMonth, ]
+    if (!is.null(dfBoundsRef)) {
+      dfBoundsRef <- dfBoundsRef[dfBoundsRef$StudyMonth <= nMaxMonth, ]
+    }
     if (!is.null(dfBounds)) {
       dfBounds <- dfBounds[dfBounds$StudyMonth <= nMaxMonth, ]
     }
@@ -170,7 +182,7 @@ Visualize_StudyKRI <- function(
     stop("No data available for dfStudyKRI after filtering")
   }
   
-  if (nrow(dfBoundsRef) == 0) {
+  if (!is.null(dfBoundsRef) && nrow(dfBoundsRef) == 0) {
     stop("No data available for dfBoundsRef after filtering")
   }
   

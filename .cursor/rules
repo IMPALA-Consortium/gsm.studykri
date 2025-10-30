@@ -134,6 +134,10 @@ How to select the right reference studies for a study?:
         strInputPath = system.file("report", "Report_KRI.Rmd", package = "gsm.studykri")
       )
 
+Visualize_StudyKRI:
+  should also work when dfStudyKRI, dfBounds and strStudyID are provided, then it should only plot the data for the given study
+  if optional argument dfBoundsRef is provided, the reference should be plotted as well
+
 Pipeline Code Draft
 
 lRaw <- list(

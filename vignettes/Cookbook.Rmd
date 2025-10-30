@@ -168,8 +168,8 @@ We can plot the preliminary results.
 
 ```{r}
 gsm.studykri::Visualize_StudyKRI(
-    dfTransformed,
-    df_Bounds,
+    dfStudyKRI = dfTransformed,
+    dfBounds = df_Bounds,
     strStudyID = "AA-4"
   )
 
