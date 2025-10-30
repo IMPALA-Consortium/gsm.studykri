@@ -1,0 +1,19 @@
+meta:
+  Type: Mapped
+  ID: StudyRef
+  Description: Mapping Reference Studies
+  Priority: 1
+spec:
+  Raw_StudyRef:
+    studyid:
+      type: character
+    studyrefid:
+      type: character
+steps:
+  - output: Mapped_StudyRef
+    name: gsm.core::RunQuery
+    params:
+      df: Raw_StudyRef
+      strQuery: "SELECT studyid AS study, studyrefid AS studyref FROM df"
+
+

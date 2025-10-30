@@ -2,14 +2,15 @@
 % Please edit documentation in R/Analyze_StudyKRI_PredictBoundsRef.R
 \name{Analyze_StudyKRI_PredictBoundsRef}
 \alias{Analyze_StudyKRI_PredictBoundsRef}
-\title{Predict Bounds for Combined Group of Studies}
+\title{Predict Bounds for Multiple Studies Using Reference Study Mappings}
 \usage{
 Analyze_StudyKRI_PredictBoundsRef(
   dfInput,
-  vStudyFilter = NULL,
+  dfStudyRef,
+  strStudyCol = "study",
+  strStudyRefCol = "studyref",
   nBootstrapReps = 1000,
   nConfLevel = 0.95,
-  strStudyCol = "StudyID",
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
   strMetricCol = "Metric",
@@ -18,73 +19,64 @@ Analyze_StudyKRI_PredictBoundsRef(
 )
 }
 \arguments{
-\item{dfInput}{data.frame or tbl_lazy. Site-level data from \code{Input_CumCountSiteByMonth}.
-Must contain columns: \code{StudyID}, \code{GroupID}, \code{Numerator}, \code{Denominator}, \code{MonthYYYYMM}.}
+\item{dfInput}{data.frame or tbl_lazy. Site-level data from \code{Input_CumCountSiteByMonth}.}
 
-\item{vStudyFilter}{character or NULL. Study IDs to include in comparison group.
-If NULL (default), uses all studies found in dfInput.
-Example: \code{c("STUDY1", "STUDY2", "STUDY3")}.}
+\item{dfStudyRef}{data.frame. Study-to-reference mappings with two columns specified
+by \code{strStudyCol} and \code{strStudyRefCol}.}
+
+\item{strStudyCol}{character. Column name in \code{dfStudyRef} for target studies (default: "study").}
+
+\item{strStudyRefCol}{character. Column name in \code{dfStudyRef} for reference studies (default: "studyref").}
 
 \item{nBootstrapReps}{integer. Number of bootstrap replicates (default: 1000).}
 
-\item{nConfLevel}{numeric. Confidence level for the bounds, between 0 and 1
-(default: 0.95 for 95\% CI).}
-
-\item{strStudyCol}{character. Column name for study identifier (default: "StudyID").}
+\item{nConfLevel}{numeric. Confidence level for the bounds (default: 0.95).}
 
 \item{strGroupCol}{character. Column name for group identifier (default: "GroupID").}
 
-\item{strStudyMonthCol}{character. Column name for sequential study month
-(default: "StudyMonth").}
+\item{strStudyMonthCol}{character. Column name for study month (default: "StudyMonth").}
 
 \item{strMetricCol}{character. Column name for metric (default: "Metric").}
 
-\item{nMinDenominator}{numeric. Minimum denominator for Transform_CumCount
-(default: 25).}
+\item{nMinDenominator}{numeric. Minimum denominator (default: 25).}
 
-\item{seed}{integer or NULL. Random seed for reproducibility (default: NULL).}
+\item{seed}{integer or NULL. Random seed (default: NULL).}
 }
 \value{
-A data.frame (or tbl_lazy if input was lazy) with confidence intervals.
-Output columns: \code{StudyMonth}, \code{MedianMetric}, \code{LowerBound}, \code{UpperBound},
-\code{BootstrapCount}, \code{GroupCount}, \code{StudyCount}.
-Note: No \code{StudyID} column as studies are intentionally combined.
+A data.frame with columns: \code{StudyID}, \code{StudyRefID}, \code{StudyMonth},
+\code{MedianMetric}, \code{LowerBound}, \code{UpperBound}, \code{BootstrapCount}, \code{GroupCount}, \code{StudyCount}.
 }
 \description{
-Calculates percentile-based confidence intervals (bounds) for a combined portfolio
-of comparison studies. This function creates a "comparison envelope" by:
-\enumerate{
-\item Finding the minimum group (site) count across selected studies
-\item Resampling each study with that minimum to ensure fair comparison
-\item Combining data across all studies
-\item Calculating confidence intervals for the pooled distribution
-}
-
-This enables comparing one study's KRI against expected variation from a portfolio
-of similar studies.
+Wrapper for \code{Analyze_StudyKRI_PredictBoundsRefSet} that applies study-specific
+reference groups. For each study in \code{dfStudyRef}, calculates bounds using its
+mapped reference studies.
 }
 \examples{
-# Create example site-level data for multiple studies
-dfSiteLevel <- data.frame(
-  StudyID = rep(c("STUDY1", "STUDY2", "STUDY3"), each = 60),
-  GroupID = rep(paste0("Site", 1:10), each = 6, times = 3),
-  Numerator = sample(0:5, 180, replace = TRUE),
-  Denominator = sample(10:20, 180, replace = TRUE),
-  MonthYYYYMM = rep(rep(202301:202306, each = 10), times = 3),
-  Metric = runif(180, 0.1, 0.5),
-  GroupLevel = "Site",
-  stringsAsFactors = FALSE
+# Create study reference mapping
+dfStudyRef <- data.frame(
+  study = c(rep("STUDY1", 2), rep("STUDY2", 2)),
+  studyref = c("REF1", "REF2", "REF2", "REF3")
 )
 
-# Calculate comparison envelope from 3 studies
-dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRef(
+# Create site-level data
+dfSiteLevel <- data.frame(
+  StudyID = rep(c("STUDY1", "STUDY2", "REF1", "REF2", "REF3"), each = 60),
+  GroupID = rep(paste0("Site", 1:10), each = 6, times = 5),
+  Numerator = sample(0:5, 300, replace = TRUE),
+  Denominator = sample(10:20, 300, replace = TRUE),
+  MonthYYYYMM = rep(rep(202301:202306, each = 10), times = 5),
+  Metric = runif(300, 0.1, 0.5),
+  GroupLevel = "Site"
+)
+
+# Calculate study-specific reference bounds
+dfBounds <- Analyze_StudyKRI_PredictBoundsRef(
   dfInput = dfSiteLevel,
-  vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
-  nBootstrapReps = 100,  # Use small number for example
-  nConfLevel = 0.95,
+  dfStudyRef = dfStudyRef,
+  nBootstrapReps = 100,
   seed = 42
 )
 
-print(head(dfGroupBounds))
+print(head(dfBounds))
 
 }

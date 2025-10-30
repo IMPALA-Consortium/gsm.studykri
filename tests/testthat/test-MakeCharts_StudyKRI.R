@@ -21,11 +21,13 @@ test_that("MakeCharts_StudyKRI generates charts", {
   )
   
   dfBoundsRef <- data.frame(
-    MetricID = "kri0001",
-    StudyMonth = 1:3,
+    MetricID = rep("kri0001", 6),
+    StudyID = rep(c("STUDY001", "STUDY002"), each = 3),
+    StudyMonth = rep(1:3, 2),
     LowerBound = 0.08,
     UpperBound = 0.32,
-    MedianMetric = 0.18
+    MedianMetric = 0.18,
+    StudyRefID = rep(c("REF1, REF2", "REF2, REF3"), each = 3)
   )
   
   dfMetrics <- data.frame(

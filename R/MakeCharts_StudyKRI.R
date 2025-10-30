@@ -54,7 +54,12 @@ MakeCharts_StudyKRI <- function(
       dplyr::filter(.data$StudyID == study_id, .data$MetricID == metric_id)
     
     df_boundsref <- dfBoundsRef %>%
-      dplyr::filter(.data$MetricID == metric_id)
+      dplyr::filter(.data$StudyID == study_id, .data$MetricID == metric_id)
+    
+    # If no reference bounds for this study, skip (e.g., reference-only studies)
+    if (nrow(df_boundsref) == 0) {
+      next  # Skip to next study
+    }
     
     # Get metric name for y-axis label
     metric_row <- dfMetrics[dfMetrics$MetricID == metric_id, ]

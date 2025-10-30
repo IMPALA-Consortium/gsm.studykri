@@ -1,4 +1,4 @@
-test_that("Analyze_StudyKRI_PredictBoundsRef calculates bounds for multiple studies", {
+test_that("Analyze_StudyKRI_PredictBoundsRefSet calculates bounds for multiple studies", {
   # Create site-level data for 3 studies with different site counts
   dfTest <- data.frame(
     StudyID = c(
@@ -31,7 +31,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef calculates bounds for multiple stud
     stringsAsFactors = FALSE
   )
 
-  result <- Analyze_StudyKRI_PredictBoundsRef(
+  result <- Analyze_StudyKRI_PredictBoundsRefSet(
     dfInput = dfTest,
     vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
     nBootstrapReps = 50,  # Small number for speed
@@ -63,7 +63,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef calculates bounds for multiple stud
   expect_true(all(result$BootstrapCount <= 50))
 })
 
-test_that("Analyze_StudyKRI_PredictBoundsRef works with single study", {
+test_that("Analyze_StudyKRI_PredictBoundsRefSet works with single study", {
   dfTest <- data.frame(
     StudyID = rep("STUDY1", 30),
     GroupID = rep(paste0("Site", 1:5), each = 6),
@@ -75,7 +75,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef works with single study", {
     stringsAsFactors = FALSE
   )
 
-  result <- Analyze_StudyKRI_PredictBoundsRef(
+  result <- Analyze_StudyKRI_PredictBoundsRefSet(
     dfInput = dfTest,
     vStudyFilter = "STUDY1",
     nBootstrapReps = 20,
@@ -89,7 +89,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef works with single study", {
   expect_false("StudyID" %in% names(result))
 })
 
-test_that("Analyze_StudyKRI_PredictBoundsRef uses minimum group count", {
+test_that("Analyze_StudyKRI_PredictBoundsRefSet uses minimum group count", {
   # Create data with very different site counts
   dfTest <- data.frame(
     StudyID = c(
@@ -110,7 +110,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef uses minimum group count", {
 
   # Suppress the informative message
   suppressMessages({
-    result <- Analyze_StudyKRI_PredictBoundsRef(
+    result <- Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfTest,
       vStudyFilter = c("STUDY_SMALL", "STUDY_LARGE"),
       nBootstrapReps = 20,
@@ -123,7 +123,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef uses minimum group count", {
   expect_equal(unique(result$GroupCount), 2)
 })
 
-test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
+test_that("Analyze_StudyKRI_PredictBoundsRefSet validates input", {
   dfTest <- data.frame(
     StudyID = rep("STUDY1", 30),
     GroupID = rep(paste0("Site", 1:5), each = 6),
@@ -136,7 +136,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
 
   # Wrong input type
   expect_error(
-    Analyze_StudyKRI_PredictBoundsRef(
+    Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = list(a = 1),
       vStudyFilter = "STUDY1"
     ),
@@ -146,7 +146,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
   # Missing columns
   dfBad <- dfTest[, setdiff(names(dfTest), "Numerator")]
   expect_error(
-    Analyze_StudyKRI_PredictBoundsRef(
+    Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfBad,
       vStudyFilter = "STUDY1"
     ),
@@ -155,7 +155,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
 
   # Empty vStudyFilter
   expect_error(
-    Analyze_StudyKRI_PredictBoundsRef(
+    Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfTest,
       vStudyFilter = character(0)
     ),
@@ -164,7 +164,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
 
   # Invalid nBootstrapReps
   expect_error(
-    Analyze_StudyKRI_PredictBoundsRef(
+    Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfTest,
       vStudyFilter = "STUDY1",
       nBootstrapReps = -10
@@ -174,7 +174,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
 
   # Invalid nConfLevel
   expect_error(
-    Analyze_StudyKRI_PredictBoundsRef(
+    Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfTest,
       vStudyFilter = "STUDY1",
       nConfLevel = 1.5
@@ -184,7 +184,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
 
   # No matching studies
   expect_error(
-    Analyze_StudyKRI_PredictBoundsRef(
+    Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfTest,
       vStudyFilter = "NONEXISTENT_STUDY"
     ),
@@ -192,7 +192,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
   )
 })
 
-test_that("Analyze_StudyKRI_PredictBoundsRef integration with full workflow", {
+test_that("Analyze_StudyKRI_PredictBoundsRefSet integration with full workflow", {
   # Create realistic test data
   set.seed(789)
   dfSubjects <- data.frame(
@@ -229,7 +229,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef integration with full workflow", {
 
   # Run group bounds function
   suppressMessages({
-    dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRef(
+    dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfSiteLevel,
       vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
       nBootstrapReps = 30,  # Small for speed
@@ -252,7 +252,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef integration with full workflow", {
   expect_true(all(dfGroupBounds$MedianMetric <= dfGroupBounds$UpperBound, na.rm = TRUE))
 })
 
-test_that("Analyze_StudyKRI_PredictBoundsRef output has correct column types", {
+test_that("Analyze_StudyKRI_PredictBoundsRefSet output has correct column types", {
   dfTest <- data.frame(
     StudyID = rep(c("STUDY1", "STUDY2"), each = 30),
     GroupID = rep(paste0("Site", 1:5), each = 6, times = 2),
@@ -265,7 +265,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef output has correct column types", {
   )
 
   suppressMessages({
-    result <- Analyze_StudyKRI_PredictBoundsRef(
+    result <- Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfTest,
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 30,
@@ -283,7 +283,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef output has correct column types", {
   expect_type(result$StudyCount, "integer")
 })
 
-test_that("Analyze_StudyKRI_PredictBoundsRef filters studies correctly", {
+test_that("Analyze_StudyKRI_PredictBoundsRefSet filters studies correctly", {
   # Create data with 3 studies but only use 2
   dfTest <- data.frame(
     StudyID = rep(c("STUDY1", "STUDY2", "STUDY3"), each = 30),
@@ -297,7 +297,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef filters studies correctly", {
   )
 
   suppressMessages({
-    result <- Analyze_StudyKRI_PredictBoundsRef(
+    result <- Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfTest,
       vStudyFilter = c("STUDY1", "STUDY2"),  # Only use 2 of 3 studies
       nBootstrapReps = 20,
@@ -310,5 +310,119 @@ test_that("Analyze_StudyKRI_PredictBoundsRef filters studies correctly", {
   expect_true(nrow(result) > 0)
   expect_equal(unique(result$StudyCount), 2)  # Should only use filtered studies
   expect_false("StudyID" %in% names(result))  # Studies are combined
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRef wrapper works with study mapping", {
+  # Create study reference mapping
+  dfStudyRef <- data.frame(
+    study = c(rep("AA-1", 3), rep("AA-2", 2)),
+    studyref = c("AA-3", "AA-4", "AA-5", "AA-3", "AA-4")
+  )
+  
+  # Create site-level data
+  dfTest <- data.frame(
+    StudyID = rep(c("AA-1", "AA-2", "AA-3", "AA-4", "AA-5"), each = 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6, times = 5),
+    Numerator = rep(1:6, times = 25),
+    Denominator = rep(10:15, times = 25),
+    MonthYYYYMM = rep(202301:202306, times = 25),
+    Metric = runif(150, 0.05, 0.5),
+    GroupLevel = "Site"
+  )
+  
+  suppressMessages({
+    result <- Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfTest,
+      dfStudyRef = dfStudyRef,
+      nBootstrapReps = 20,
+      seed = 456
+    )
+  })
+  
+  # Verify structure
+  expect_s3_class(result, "data.frame")
+  expect_true(all(c("StudyID", "StudyRefID", "StudyMonth", "MedianMetric", 
+                    "LowerBound", "UpperBound") %in% names(result)))
+  
+  # Verify unique studies
+  expect_equal(sort(unique(result$StudyID)), sort(c("AA-1", "AA-2")))
+  
+  # Verify StudyRefID is collapsed
+  ref_aa1 <- unique(result$StudyRefID[result$StudyID == "AA-1"])
+  expect_equal(ref_aa1, "AA-3, AA-4, AA-5")
+  
+  ref_aa2 <- unique(result$StudyRefID[result$StudyID == "AA-2"])
+  expect_equal(ref_aa2, "AA-3, AA-4")
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6),
+    Numerator = rep(1:6, times = 5),
+    Denominator = rep(10:15, times = 5),
+    MonthYYYYMM = rep(202301:202306, times = 5),
+    Metric = runif(30, 0.05, 0.5)
+  )
+  
+  # Missing dfStudyRef
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRef(dfInput = dfTest),
+    "argument \"dfStudyRef\" is missing"
+  )
+  
+  # Wrong dfStudyRef type
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfTest,
+      dfStudyRef = list(a = 1)
+    ),
+    "dfStudyRef must be a data.frame"
+  )
+  
+  # Missing column in dfStudyRef
+  dfBadRef <- data.frame(wrongcol = "A")
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfTest,
+      dfStudyRef = dfBadRef
+    ),
+    "Column 'study' not found in dfStudyRef"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRef with custom column names", {
+  # Create study reference mapping with custom column names
+  dfStudyRef <- data.frame(
+    target_study = c("STUDY1", "STUDY2"),
+    ref_study = c("REF1", "REF2")
+  )
+  
+  # Create site-level data
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2", "REF1", "REF2"), each = 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6, times = 4),
+    Numerator = rep(1:6, times = 20),
+    Denominator = rep(10:15, times = 20),
+    MonthYYYYMM = rep(202301:202306, times = 20),
+    Metric = runif(120, 0.05, 0.5),
+    GroupLevel = "Site"
+  )
+  
+  suppressMessages({
+    result <- Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfTest,
+      dfStudyRef = dfStudyRef,
+      strStudyCol = "target_study",
+      strStudyRefCol = "ref_study",
+      nBootstrapReps = 20,
+      seed = 789
+    )
+  })
+  
+  expect_s3_class(result, "data.frame")
+  expect_true("StudyID" %in% names(result))
+  expect_true("StudyRefID" %in% names(result))
+  expect_equal(sort(unique(result$StudyID)), sort(c("STUDY1", "STUDY2")))
 })
 

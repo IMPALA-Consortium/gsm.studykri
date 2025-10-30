@@ -52,7 +52,7 @@
 #' )
 #'
 #' # Calculate comparison envelope from 3 studies
-#' dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRef(
+#' dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
 #'   dfInput = dfSiteLevel,
 #'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
 #'   nBootstrapReps = 100,  # Use small number for example
@@ -63,7 +63,7 @@
 #' print(head(dfGroupBounds))
 #'
 #' @export
-Analyze_StudyKRI_PredictBoundsRef <- function(
+Analyze_StudyKRI_PredictBoundsRefSet <- function(
   dfInput,
   vStudyFilter = NULL,
   nBootstrapReps = 1000,
@@ -196,5 +196,125 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
   } else {
     return(as.data.frame(dfResult))
   }
+}
+
+#' Predict Bounds for Multiple Studies Using Reference Study Mappings
+#'
+#' @description
+#' Wrapper for `Analyze_StudyKRI_PredictBoundsRefSet` that applies study-specific
+#' reference groups. For each study in `dfStudyRef`, calculates bounds using its
+#' mapped reference studies.
+#'
+#' @importFrom dplyr %>%
+#' @importFrom rlang .data .env
+#'
+#' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
+#' @param dfStudyRef data.frame. Study-to-reference mappings with two columns specified
+#'   by `strStudyCol` and `strStudyRefCol`.
+#' @param strStudyCol character. Column name in `dfStudyRef` for target studies (default: "study").
+#' @param strStudyRefCol character. Column name in `dfStudyRef` for reference studies (default: "studyref").
+#' @param nBootstrapReps integer. Number of bootstrap replicates (default: 1000).
+#' @param nConfLevel numeric. Confidence level for the bounds (default: 0.95).
+#' @param strGroupCol character. Column name for group identifier (default: "GroupID").
+#' @param strStudyMonthCol character. Column name for study month (default: "StudyMonth").
+#' @param strMetricCol character. Column name for metric (default: "Metric").
+#' @param nMinDenominator numeric. Minimum denominator (default: 25).
+#' @param seed integer or NULL. Random seed (default: NULL).
+#'
+#' @return A data.frame with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
+#'   `MedianMetric`, `LowerBound`, `UpperBound`, `BootstrapCount`, `GroupCount`, `StudyCount`.
+#'
+#' @examples
+#' # Create study reference mapping
+#' dfStudyRef <- data.frame(
+#'   study = c(rep("STUDY1", 2), rep("STUDY2", 2)),
+#'   studyref = c("REF1", "REF2", "REF2", "REF3")
+#' )
+#'
+#' # Create site-level data
+#' dfSiteLevel <- data.frame(
+#'   StudyID = rep(c("STUDY1", "STUDY2", "REF1", "REF2", "REF3"), each = 60),
+#'   GroupID = rep(paste0("Site", 1:10), each = 6, times = 5),
+#'   Numerator = sample(0:5, 300, replace = TRUE),
+#'   Denominator = sample(10:20, 300, replace = TRUE),
+#'   MonthYYYYMM = rep(rep(202301:202306, each = 10), times = 5),
+#'   Metric = runif(300, 0.1, 0.5),
+#'   GroupLevel = "Site"
+#' )
+#'
+#' # Calculate study-specific reference bounds
+#' dfBounds <- Analyze_StudyKRI_PredictBoundsRef(
+#'   dfInput = dfSiteLevel,
+#'   dfStudyRef = dfStudyRef,
+#'   nBootstrapReps = 100,
+#'   seed = 42
+#' )
+#'
+#' print(head(dfBounds))
+#'
+#' @export
+Analyze_StudyKRI_PredictBoundsRef <- function(
+  dfInput,
+  dfStudyRef,
+  strStudyCol = "study",
+  strStudyRefCol = "studyref",
+  nBootstrapReps = 1000,
+  nConfLevel = 0.95,
+  strGroupCol = "GroupID",
+  strStudyMonthCol = "StudyMonth",
+  strMetricCol = "Metric",
+  nMinDenominator = 25,
+  seed = NULL
+) {
+  # Input validation
+  if (!is.data.frame(dfStudyRef)) {
+    stop("dfStudyRef must be a data.frame")
+  }
+  
+  if (!strStudyCol %in% colnames(dfStudyRef)) {
+    stop(sprintf("Column '%s' not found in dfStudyRef", strStudyCol))
+  }
+  
+  if (!strStudyRefCol %in% colnames(dfStudyRef)) {
+    stop(sprintf("Column '%s' not found in dfStudyRef", strStudyRefCol))
+  }
+  
+  # Get unique target studies
+  vTargetStudies <- unique(dfStudyRef[[strStudyCol]])
+  
+  # Initialize list to collect results
+  lResults <- list()
+  
+  # Loop over each target study
+  for (study in vTargetStudies) {
+    # Extract reference studies for this target study
+    vRefStudies <- dfStudyRef[[strStudyRefCol]][dfStudyRef[[strStudyCol]] == study]
+    
+    # Call the set function
+    dfBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfInput,
+      vStudyFilter = vRefStudies,
+      nBootstrapReps = nBootstrapReps,
+      nConfLevel = nConfLevel,
+      strStudyCol = "StudyID",
+      strGroupCol = strGroupCol,
+      strStudyMonthCol = strStudyMonthCol,
+      strMetricCol = strMetricCol,
+      nMinDenominator = nMinDenominator,
+      seed = seed
+    )
+    
+    # Add StudyID and StudyRefID columns
+    dfBounds$StudyID <- study
+    dfBounds$StudyRefID <- paste(vRefStudies, collapse = ", ")
+    
+    # Store in list
+    lResults[[study]] <- dfBounds
+  }
+  
+  # Bind all results
+  dfResult <- dplyr::bind_rows(lResults)
+  
+  return(as.data.frame(dfResult))
 }
 

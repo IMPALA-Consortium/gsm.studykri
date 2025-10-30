@@ -219,9 +219,9 @@ test_that("Analyze_StudyKRI_PredictBoundsRef returns lazy table with lazy input"
     strDenominatorDateCol = "visit_dt"
   )
   
-  # Execute Analyze_StudyKRI_PredictBoundsRef
+  # Execute Analyze_StudyKRI_PredictBoundsRefSet (core function) for lazy table check
   suppressMessages({
-    result <- Analyze_StudyKRI_PredictBoundsRef(
+    result <- Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfInput,
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 5,  # Very small number for speed

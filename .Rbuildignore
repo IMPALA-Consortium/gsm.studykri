@@ -3,6 +3,6 @@
 ^.github$
 ^LICENSE\.md$
 ^_pkgdown\.yml$
-^/[a-zA-Z0-9_-]+\.html$
+^[^/]+\.html$
 
 

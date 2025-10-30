@@ -23,9 +23,9 @@ Visualize_StudyKRI(
 Must contain columns specified by \code{strStudyMonthCol} and \code{strMetricCol}.
 If a \code{StudyID} column exists, data will be automatically filtered to \code{strStudyID}.}
 
-\item{dfBoundsRef}{data.frame. Portfolio/comparison group confidence intervals
-from \code{Analyze_StudyKRI_PredictBoundsRef}. Must contain: \code{StudyMonth},
-\code{MedianMetric}, \code{LowerBound}, \code{UpperBound}.}
+\item{dfBoundsRef}{data.frame or NULL. Portfolio/comparison group confidence intervals
+from \code{Analyze_StudyKRI_PredictBoundsRef} (optional). If provided, must contain: \code{StudyMonth},
+\code{MedianMetric}, \code{LowerBound}, \code{UpperBound}. Set to NULL for reference-only studies.}
 
 \item{dfBounds}{data.frame or NULL. Individual study confidence intervals
 from \code{Analyze_StudyKRI_PredictBounds} (optional). If a \code{StudyID} column exists,

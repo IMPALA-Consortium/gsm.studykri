@@ -13,7 +13,11 @@ test_that("kri0001 workflow executes successfully", {
     Raw_Randomization = clindata::rawplus_ixrsrand,
     Raw_LB = clindata::rawplus_lb,
     Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
-    Raw_STUDCOMP = clindata::rawplus_studcomp
+    Raw_STUDCOMP = clindata::rawplus_studcomp,
+    Raw_StudyRef = tibble::tibble(
+      studyid = character(),
+      studyrefid = character()
+    )
   )
   
   # Create a portfolio with 3 studies
@@ -26,6 +30,12 @@ test_that("kri0001 workflow executes successfully", {
   # Verify we have multiple studies
   study_ids <- unique(lRaw$Raw_SUBJ$studyid)
   expect_equal(length(study_ids), 3)
+  
+  # After SimulatePortfolio, populate with actual study references
+  lRaw$Raw_StudyRef <- tibble::tibble(
+    studyid = rep(study_ids, each = 2),
+    studyrefid = rep(study_ids[c(2, 3, 1, 3, 1, 2)], length.out = 6)
+  )
   
   # Run mapping workflows
   mapping_wf <- gsm.core::MakeWorkflowList(
@@ -227,19 +237,20 @@ test_that("kri0001 workflow executes successfully", {
   expect_true(all(dfBounds$BootstrapCount > 0))
   expect_true(all(dfBounds$BootstrapCount <= 100))
   
-  # Extract Analysis_BoundsRef for checks (combined group CIs)
+  # Extract Analysis_BoundsRef for checks (study-specific reference CIs)
   dfBoundsRef <- lResult$Analysis_BoundsRef
   
   expect_s3_class(dfBoundsRef, "data.frame")
   expect_true(nrow(dfBoundsRef) > 0)
   
-  # Should NOT have StudyID column (studies are combined)
-  expect_false("StudyID" %in% names(dfBoundsRef))
+  # Should HAVE StudyID column (per-study reference bounds when dfStudyRef is provided)
+  expect_true("StudyID" %in% names(dfBoundsRef))
   
-  expected_cols_group <- c("StudyMonth", "MedianMetric", "LowerBound", 
+  expected_cols_group <- c("StudyID", "StudyMonth", "MedianMetric", "LowerBound", 
                             "UpperBound", "BootstrapCount", "GroupCount", "StudyCount")
   expect_true(all(expected_cols_group %in% names(dfBoundsRef)))
   
+  expect_type(dfBoundsRef$StudyID, "character")
   expect_type(dfBoundsRef$StudyMonth, "integer")
   expect_type(dfBoundsRef$MedianMetric, "double")
   expect_type(dfBoundsRef$LowerBound, "double")
@@ -248,16 +259,19 @@ test_that("kri0001 workflow executes successfully", {
   expect_type(dfBoundsRef$GroupCount, "integer")
   expect_type(dfBoundsRef$StudyCount, "integer")
   
-  # Verify metadata
-  expect_equal(unique(dfBoundsRef$StudyCount), 3)  # All 3 studies combined
+  # Verify metadata - each study has its own reference set (2 reference studies each)
+  expect_true(all(dfBoundsRef$StudyCount >= 1))
   expect_true(all(dfBoundsRef$GroupCount > 0))
   
   # Verify confidence intervals are sensible
   expect_true(all(dfBoundsRef$LowerBound <= dfBoundsRef$MedianMetric, na.rm = TRUE))
   expect_true(all(dfBoundsRef$MedianMetric <= dfBoundsRef$UpperBound, na.rm = TRUE))
   
-  # Verify StudyMonth is sequential
-  expect_equal(dfBoundsRef$StudyMonth, seq_len(nrow(dfBoundsRef)))
+  # Verify StudyMonth is sequential within each study
+  for (study in unique(dfBoundsRef$StudyID)) {
+    study_data <- dfBoundsRef[dfBoundsRef$StudyID == study, ]
+    expect_equal(study_data$StudyMonth, seq_len(nrow(study_data)))
+  }
   
   # Verify bootstrap count is reasonable (should be close to 100 per time point)
   expect_true(all(dfBoundsRef$BootstrapCount > 0))

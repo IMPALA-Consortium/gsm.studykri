@@ -76,7 +76,7 @@ steps:
     name: gsm.studykri::Analyze_StudyKRI_PredictBoundsRef
     params:
       dfInput: Analysis_Input
-      vStudyFilter: null
+      dfStudyRef: Mapped_StudyRef
       nBootstrapReps: BootstrapReps
       nConfLevel: Threshold
       nMinDenominator: AccrualThreshold

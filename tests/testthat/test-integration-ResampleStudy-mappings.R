@@ -13,7 +13,11 @@ test_that("ResampleStudy output works with mapping workflows", {
     Raw_LB = clindata::rawplus_lb,
     Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
     Raw_STUDCOMP = clindata::rawplus_studcomp,
-    Raw_VISIT = clindata::rawplus_visdt
+    Raw_VISIT = clindata::rawplus_visdt,
+    Raw_StudyRef = tibble::tibble(
+      studyid = character(),
+      studyrefid = character()
+    )
   )
   
   # Create resampled study
@@ -89,7 +93,11 @@ test_that("ResampleStudy with oversampling works with mapping workflows", {
     Raw_LB = clindata::rawplus_lb,
     Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
     Raw_STUDCOMP = clindata::rawplus_studcomp,
-    Raw_VISIT = clindata::rawplus_visdt
+    Raw_VISIT = clindata::rawplus_visdt,
+    Raw_StudyRef = tibble::tibble(
+      studyid = character(),
+      studyrefid = character()
+    )
   )
   
   # Create resampled study with high-AE patients

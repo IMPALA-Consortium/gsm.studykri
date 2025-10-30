@@ -39,8 +39,203 @@ library(gsm.reporting)
 library(gsm.studykri)
 ```
 
+## Introduction
+
+{gsm.studykir} presents an new approach for calculating KRI lower and upper limits on study-level for quality monitoring in clincial trials. The method uses bootstrapping to calculate
+confidence intervals gor a given study over-time. The confidence intervals can then be used to compare the study-level KRI against a fixed expectation or against the confidence intervalls
+and KRI values over time of one or more reference studies. The bootstrapping method resamples a new set of sites with replacement from the original study data set.
+
+
+## Simulate Data Set
+
+We use the clindata package which includes data from one clinical study to simulate new study data. We create a portfolio
+with study AA-4 oversampling patients with low AE counts.
+
+```{r}
+lRaw <- list(
+  Raw_SITE = clindata::ctms_site,
+  Raw_STUDY = clindata::ctms_study,
+  Raw_PD = clindata::ctms_protdev,
+  Raw_DATAENT = clindata::edc_data_pages,
+  Raw_QUERY = clindata::edc_queries,
+  Raw_AE = clindata::rawplus_ae,
+  Raw_SUBJ = clindata::rawplus_dm,
+  Raw_ENROLL = clindata::rawplus_enroll,
+  Raw_Randomization = clindata::rawplus_ixrsrand,
+  Raw_LB = clindata::rawplus_lb,
+  Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
+  Raw_STUDCOMP = clindata::rawplus_studcomp,
+  Raw_VISIT = clindata::rawplus_visdt
+)
+
+lPortfolio <- SimulatePortfolio(
+  lRaw = lRaw,
+  nStudies = 4,
+  dfConfig = tibble(
+    studyid = c("AA-1", "AA-2", "AA-3", "AA-4"),
+    nSubjects = c(500, 750, 150, 200),
+    strOversamplDomain = rep("Raw_AE", 4),
+    vOversamplQuantileRange_min = c(0, 0, 0, 0),
+    vOversamplQuantileRange_max = c(1, 1, 1, 0.75)
+  )
+)
+
+```
+
+## Calculate KRI
+
+We will calculate the KRI "AE per visit". For this we need to create three dataframes:
+
+- dfSubjects: Subject-level data that links subjects and sites from the demographics domain
+- dfNumerator: Subject-level data that contains the events to be counted (AEs in this case)
+- dfDenominator: Subject-level data that contains the denominator events (visits in this case
+
+that we transform to return the site-level count of numerator and denominator per month
+
+```{r}
+
+dfInput <- gsm.studykri::Input_CountSiteByMonth(
+      dfSubjects = lPortfolio$Raw_SUBJ,
+      dfNumerator = lPortfolio$Raw_AE,
+      dfDenominator = lPortfolio$Raw_VISIT,
+      strStudyCol = "studyid",
+      strGroupCol = "invid",
+      strGroupLevel = "GroupLevel",
+      strSubjectCol = "subjid",
+      strNumeratorDateCol = "aest_dt",
+      strDenominatorDateCol = "visit_dt",
+  ) %>%
+  tibble()
+
+```
+
+
+Next we transform the data to return the cumulated event counts on study-level by study month. We define the first study month to be the month in which
+we have reached the first 25 Denominator counts across all sites to account for data artifacts.
+
+```{r}
+dfTransformed <- gsm.studykri::Transform_CumCount(
+      dfInput,
+      nMinDenominator = 25,
+      vBy = c("StudyID")
+  )  %>%
+  tibble()
+
+dfTransformed
+```
+
+Then we generate site-level bootstrap simulations for the study AA-4 which has been oversampled for low AE counts.
+
+```{r}
+
+df_Analyzed_Bootstrap_Site <- dfInput %>%
+  gsm.studykri::Analyze_StudyKRI(nBootstrapReps = 1000) %>%
+  tibble()
+
+
+df_Analyzed_Bootstrap_Site
+```
+
+We aggregate each site-level bootstrap iteration to study-level.
+
+```{r}
+df_Analyzed_Bootstrap_Study <- df_Analyzed_Bootstrap_Site %>%
+  gsm.studykri::Transform_CumCount(
+      nMinDenominator = 25,
+      vBy = c("StudyID", "BootstrapRep")
+  ) %>%
+  tibble()
+
+df_Analyzed_Bootstrap_Study
+```
+
+
+From the study-level bootstrap results we can calculate the 95% confidence intervalls.
+
+```{r}
+
+df_Bounds <- gsm.studykri::Analyze_StudyKRI_PredictBounds(
+    df_Analyzed_Bootstrap_Study,
+    vBy = c("StudyID"),
+    nConfLevel = 0.95
+  ) %>%
+  tibble()
+
+df_Bounds
+```
+
+We can plot the preliminary results.
+
+```{r}
+gsm.studykri::Visualize_StudyKRI(
+    dfTransformed,
+    df_Bounds,
+    strStudyID = "AA-4"
+  )
+
+```
+
+Then we generate the portfolio reference confidence intervals. When calculating the reference bound the study with the smalles number of sites
+determines the total amount of sites sampled for each study, so that each study contributes equally to the reference distribution.
+
+```{r}
+df_Bounds_Ref <- dfInput %>%
+  gsm.studykri::Analyze_StudyKRI_PredictBoundsRefSet(
+      vStudyFilter = c("AA-1", "AA-2", "AA-3"),
+      nBootstrapReps = 1000,
+      nConfLevel = 0.95,
+      nMinDenominator = 25
+  ) %>%
+  tibble()
+
+df_Bounds_Ref
+```
+
+
+Now we can plot the final results.
+
+```{r}
+gsm.studykri::Visualize_StudyKRI(
+    dfTransformed,
+    df_Bounds_Ref,
+    df_Bounds,
+    strStudyID = "AA-4"
+  )
+
+```
+
+We can also plot the members of the reference portfolio.
+
+```{r}
+p1 <- gsm.studykri::Visualize_StudyKRI(
+    dfTransformed,
+    df_Bounds_Ref,
+    df_Bounds,
+    strStudyID = "AA-1"
+  )
+
+p2 <- gsm.studykri::Visualize_StudyKRI(
+    dfTransformed,
+    df_Bounds_Ref,
+    df_Bounds,
+    strStudyID = "AA-2"
+  )
+p3 <- gsm.studykri::Visualize_StudyKRI(
+    dfTransformed,
+    df_Bounds_Ref,
+    df_Bounds,
+    strStudyID = "AA-3"
+  )
+library(patchwork)
+
+p1 + p2 + p3 + patchwork::plot_layout(guides = "collect")
+```
+
+
 
 ## Calculate KRI using yaml workflows
+
+We can also use the {gsm}-style yaml workflow.
 
 ```{r cook4}
 # Generate multi-study portfolio using SimulatePortfolio
@@ -64,7 +259,19 @@ lRaw_original <- list(
 lRaw <- SimulatePortfolio(
     lRaw = lRaw_original,
     nStudies = 3,
-    seed = 123
+    seed = 123,
+    dfConfig = tibble(
+      studyid = c("AA-1", "AA-2", "AA-3", "AA-4", "AA-5", "AA-6"),
+      nSubjects = c(500, 750, 150, 200, 250, 300),
+      strOversamplDomain = rep("Raw_AE", 6),
+      vOversamplQuantileRange_min = c(0, 0, 0, 0, 0, 0),
+      vOversamplQuantileRange_max = c(1, 0.75, 1, 1, 0.95, 0.9)
+  )
+)
+
+lRaw$Raw_StudyRef <- tibble(
+   studyid = c(rep("AA-1", 3), rep("AA-2", 4)),
+   studyrefid = c("AA-3", "AA-4", "AA-5", "AA-3", "AA-4", "AA-5", "AA-6")
 )
 
 # Run mapping workflows
@@ -94,6 +301,8 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 
 ## Generate KRI report using scripts
 
+and subsequently generate a KRI report using {gsm.reporting}.
+
 ```{r cook5}
 
 dfResults <- gsm.reporting::BindResults(lAnalyzed, "Analysis_Transformed")
@@ -110,9 +319,9 @@ dfGroups <- dplyr::bind_rows(
   lMapped$Country
 )
 
-lCharts <- MakeCharts_StudyKRI(dfResults, dfBounds, dfBoundsRef, dfMetrics)
+lCharts <- gsm.studykri::MakeCharts_StudyKRI(dfResults, dfBounds, dfBoundsRef, dfMetrics)
 
-gsm.kri::Report_KRI(
+gsm.studykri::Report_KRI_StudyKRI(
   lCharts = lCharts,
   dfResults = dfResults,
   dfGroups = dfGroups,

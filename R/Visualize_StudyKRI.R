@@ -18,9 +18,9 @@
 #' @param dfStudyKRI data.frame. Actual study-level metric data from `Transform_CumCount`.
 #'   Must contain columns specified by `strStudyMonthCol` and `strMetricCol`.
 #'   If a `StudyID` column exists, data will be automatically filtered to `strStudyID`.
-#' @param dfBoundsRef data.frame. Portfolio/comparison group confidence intervals
-#'   from `Analyze_StudyKRI_PredictBoundsRef`. Must contain: `StudyMonth`,
-#'   `MedianMetric`, `LowerBound`, `UpperBound`.
+#' @param dfBoundsRef data.frame or NULL. Portfolio/comparison group confidence intervals
+#'   from `Analyze_StudyKRI_PredictBoundsRef` (optional). If provided, must contain: `StudyMonth`,
+#'   `MedianMetric`, `LowerBound`, `UpperBound`. Set to NULL for reference-only studies.
 #' @param dfBounds data.frame or NULL. Individual study confidence intervals
 #'   from `Analyze_StudyKRI_PredictBounds` (optional). If a `StudyID` column exists,
 #'   data will be automatically filtered to `strStudyID`. If provided, must contain:
@@ -94,8 +94,8 @@ Visualize_StudyKRI <- function(
     stop("dfStudyKRI must be a data.frame")
   }
   
-  if (!is.data.frame(dfBoundsRef)) {
-    stop("dfBoundsRef must be a data.frame")
+  if (!is.null(dfBoundsRef) && !is.data.frame(dfBoundsRef)) {
+    stop("dfBoundsRef must be a data.frame or NULL")
   }
   
   if (!is.null(dfBounds) && !is.data.frame(dfBounds)) {
@@ -112,14 +112,16 @@ Visualize_StudyKRI <- function(
     ))
   }
   
-  # Check required columns in dfBoundsRef
-  required_group <- c("StudyMonth", "LowerBound", "UpperBound", "MedianMetric")
-  missing_group <- setdiff(required_group, names(dfBoundsRef))
-  if (length(missing_group) > 0) {
-    stop(sprintf(
-      "dfBoundsRef missing required columns: %s",
-      paste(missing_group, collapse = ", ")
-    ))
+  # Check required columns in dfBoundsRef if provided
+  if (!is.null(dfBoundsRef)) {
+    required_group <- c("StudyMonth", "LowerBound", "UpperBound", "MedianMetric")
+    missing_group <- setdiff(required_group, names(dfBoundsRef))
+    if (length(missing_group) > 0) {
+      stop(sprintf(
+        "dfBoundsRef missing required columns: %s",
+        paste(missing_group, collapse = ", ")
+      ))
+    }
   }
   
   # Check required columns in dfBounds if provided
@@ -179,27 +181,35 @@ Visualize_StudyKRI <- function(
   
   # Generate default subtitle if not provided
   if (is.null(strSubtitle)) {
-    if ("StudyCount" %in% names(dfBoundsRef)) {
+    if (!is.null(dfBoundsRef) && "StudyCount" %in% names(dfBoundsRef)) {
       n_studies <- unique(dfBoundsRef$StudyCount)[1]
       strSubtitle <- sprintf("Comparison Portfolio: %d studies", n_studies)
-    } else {
+    } else if (!is.null(dfBoundsRef)) {
       strSubtitle <- "Comparison Portfolio Envelope"
+    } else {
+      strSubtitle <- ""
     }
   }
   
-  # Start with group bounds (background layer - light blue)
-  p <- ggplot2::ggplot(dfBoundsRef, ggplot2::aes(x = .data$StudyMonth)) +
-    # Group CI ribbon (light blue background)
-    ggplot2::geom_ribbon(
-      ggplot2::aes(ymin = .data$LowerBound, ymax = .data$UpperBound, fill = "Portfolio CI"),
-      alpha = 0.5
-    ) +
-    # Group median line (dashed blue)
-    ggplot2::geom_line(
-      ggplot2::aes(y = .data$MedianMetric, color = "Portfolio Median"),
-      linetype = "dashed",
-      linewidth = 0.5
-    )
+  # Start with base plot
+  if (!is.null(dfBoundsRef) && nrow(dfBoundsRef) > 0) {
+    # Start with group bounds (background layer - light blue)
+    p <- ggplot2::ggplot(dfBoundsRef, ggplot2::aes(x = .data$StudyMonth)) +
+      # Group CI ribbon (light blue background)
+      ggplot2::geom_ribbon(
+        ggplot2::aes(ymin = .data$LowerBound, ymax = .data$UpperBound, fill = "Portfolio CI"),
+        alpha = 0.5
+      ) +
+      # Group median line (dashed blue)
+      ggplot2::geom_line(
+        ggplot2::aes(y = .data$MedianMetric, color = "Portfolio Median"),
+        linetype = "dashed",
+        linewidth = 0.5
+      )
+  } else {
+    # No reference bounds - start with empty plot
+    p <- ggplot2::ggplot(dfStudyKRI, ggplot2::aes(x = .data[[strStudyMonthCol]]))
+  }
   
   # Add individual study bounds if provided (middle layer - orange)
   if (!is.null(dfBounds) && nrow(dfBounds) > 0) {

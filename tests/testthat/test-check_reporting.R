@@ -20,7 +20,11 @@ test_that("Complete YAML workflow generates HTML report", {
     Raw_LB = clindata::rawplus_lb,
     Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
     Raw_STUDCOMP = clindata::rawplus_studcomp,
-    Raw_VISIT = clindata::rawplus_visdt
+    Raw_VISIT = clindata::rawplus_visdt,
+    Raw_StudyRef = tibble::tibble(
+      studyid = "AA-AA-000-0000",
+      studyrefid = "AA-AA-000-0000"
+    )
   )
   
   # 1. Mappings
@@ -41,6 +45,8 @@ test_that("Complete YAML workflow generates HTML report", {
   
   # Reduce bootstrap iterations for faster testing
   metrics_wf$kri0001$meta$BootstrapReps <- 100
+  # Lower accrual threshold to ensure bounds for small test data
+  metrics_wf$kri0001$meta$AccrualThreshold <- 5
   
   lAnalyzed <- gsm.core::RunWorkflows(metrics_wf, lMapped)
   

@@ -7,9 +7,8 @@ Rules:
 - when data cannot be processed explain and ask for instructions
 - always include all files in R/ folder and inst/workflows/ in the context
 - do not write any non-standard documentation as *.md files
+- be short and concise prioritize conciseness over grammar
 - when attempting to fix something do not do more than 2 iterations w/o asking for instructions
-- when writing vignettes as Rmd files keep it short and precise, never hallucinate any code output
-- do not add summaries or checks to vignettes
 - we are sticking to the gsm.core framework this does not include any S3 objects
 - break down any multi-step implementation into small, verifiable substeps; after each substep, wait for confirmation before continuing
 - prefer minimal, self-explanatory code over verbose or commented code; only comment non-obvious logic
@@ -28,7 +27,7 @@ Rules:
 - for dplyr::select and dplyr::rename use tidy_select functions instead of rlang::.data and rlang::.env
 - we want to write dbplyr compatible code for all metric functions, only use dbplyr functions that are dbplyr compatible
 - never edit unit tests that have the prefix "hand written test -"
-- never edit any vignette files
+- NEVER edit any vignette files
 - do not use the term validation in the context of unit tests
 
 here is an example for the correct usage of .data and .env
@@ -110,6 +109,30 @@ Process
 - Implement Mapping on simulated data
 - Implement KRI Functions
 - Implement Report
+
+How to select the right reference studies for a study?:
+  - study references will be provided as a table with two columns StudyID and StudyRefID
+  - the reference table will have its own mapping file
+  - we modify Analyze_StudyKRI_PredictBoundsRef()
+    * isolate existing function and rename it to Analyze_StudyKRI_PredictBoundsRefSet
+    * wrapper for Analyze_StudyKRI_PredictBoundsRefSet will be Analyze_StudyKRI_PredictBoundsRef
+    * Analyze_StudyKRI_PredictBoundsRef will have dfStudyRef argument instead of vStudyFilter
+    * Analyze_StudyKRI_PredictBoundsRef will have strStudyCol argument and a strStudyRefCol argument
+    * Analyze_StudyKRI_PredictBoundsRef will call Analyze_StudyKRI_PredictBoundsRefSet for each unique value in dfStudyRef$StudyID
+    * Analyze_StudyKRI_PredictBoundsRef will pass all matching StudyIDs in dfRefStudy$StudyRefID to Analyze_StudyKRI_PredictBoundsRefSet
+    * Analyze_StudyKRI_PredictBoundsRef will concatenate the results with StudyID and StudyRefID (contains collapsed StudyIDs)
+  - MakeCharts_StudyKRI should expect and handle results from new Analyze_StudyKRI_PredictBoundsRef()
+  - We need a new function called Report_KRI_StudyKRI that wraps calls to gsm.kri::Report_KRI() based on dfStudyRef
+     * we expect one call to gsm.kri::Report_KRI() per unique dfStudyRef$StudyID
+     * Report_KRI_StudyKRI needs to filter the study specific data needed for the report
+     * gsm.studykri::Report_KRI_StudyKRI(
+        lCharts = lCharts,
+        dfResults = dfResults,
+        dfGroups = dfGroups,
+        dfMetrics = dfMetrics,
+        strOutputFile = "report_kri_site.html",
+        strInputPath = system.file("report", "Report_KRI.Rmd", package = "gsm.studykri")
+      )
 
 Pipeline Code Draft
 

@@ -13,7 +13,11 @@ test_that("mapping workflows execute successfully on clindata", {
     Raw_LB = clindata::rawplus_lb,
     Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
     Raw_STUDCOMP = clindata::rawplus_studcomp,
-    Raw_VISIT = clindata::rawplus_visdt
+    Raw_VISIT = clindata::rawplus_visdt,
+    Raw_StudyRef = tibble::tibble(
+      studyid = character(),
+      studyrefid = character()
+    )
   )
 
   # Load mapping workflows
@@ -68,7 +72,11 @@ test_that("mapping workflows execute successfully on portfolio data", {
     Raw_LB = clindata::rawplus_lb,
     Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
     Raw_STUDCOMP = clindata::rawplus_studcomp,
-    Raw_VISIT = clindata::rawplus_visdt
+    Raw_VISIT = clindata::rawplus_visdt,
+    Raw_StudyRef = tibble::tibble(
+      studyid = character(),
+      studyrefid = character()
+    )
   )
   
   # Generate portfolio with 3 studies
@@ -76,6 +84,13 @@ test_that("mapping workflows execute successfully on portfolio data", {
     lRaw = lRaw_original,
     nStudies = 3,
     seed = 54321
+  )
+  
+  # Optionally populate with references between the 3 studies
+  study_ids <- unique(lPortfolio$Raw_SUBJ$studyid)
+  lPortfolio$Raw_StudyRef <- tibble::tibble(
+    studyid = rep(study_ids, each = 2),
+    studyrefid = rep(study_ids[c(2, 3, 1, 3, 1, 2)], length.out = 6)
   )
   
   # Load mapping workflows
