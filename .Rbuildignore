@@ -4,5 +4,5 @@
 ^LICENSE\.md$
 ^_pkgdown\.yml$
 ^[^/]+\.html$
-
+^\.Renviron$
 

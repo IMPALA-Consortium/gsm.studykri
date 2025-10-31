@@ -44,7 +44,9 @@ test_that("Complete YAML workflow generates HTML report", {
   )
   
   # Reduce bootstrap iterations for faster testing
-  metrics_wf$kri0001$meta$BootstrapReps <- 100
+  for (kri_name in names(metrics_wf)) {
+    metrics_wf[[kri_name]]$meta$BootstrapReps <- 100
+  }
   # Lower accrual threshold to ensure bounds for small test data
   metrics_wf$kri0001$meta$AccrualThreshold <- 5
   
@@ -89,13 +91,15 @@ test_that("Complete YAML workflow generates HTML report", {
     lData = lReporting
   )
   
-  # Verify report was generated
-  expect_true(file.exists(tmpfile))
-  expect_true(file.size(tmpfile) > 0)
-  
   # Verify report output path was returned (workflow returns only final step output)
   expect_type(lModule$Module_StudyKRI, "character")
   expect_true(nchar(lModule$Module_StudyKRI) > 0)
   
-  unlink(tmpfile)
+  # Report_KRI_StudyKRI appends study ID to filename, so check the actual returned path
+  actual_file <- lModule$Module_StudyKRI
+  expect_true(file.exists(actual_file))
+  expect_true(file.size(actual_file) > 0)
+  
+  # Clean up the actual file that was created
+  unlink(actual_file)
 })

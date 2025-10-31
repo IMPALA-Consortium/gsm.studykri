@@ -63,7 +63,9 @@ test_that("kri0001 workflow executes successfully", {
   )
   
   # Reduce bootstrap iterations for faster testing
-  metrics_wf$kri0001$meta$BootstrapReps <- 100
+  for (kri_name in names(metrics_wf)) {
+    metrics_wf[[kri_name]]$meta$BootstrapReps <- 100
+  }
   
   # Combine lMapped with metrics workflows for comprehensive result
   lData_combined <- lMapped
@@ -342,7 +344,9 @@ test_that("kri0001 workflow validates required mapped data", {
   )
   
   # Reduce bootstrap iterations for faster testing
-  metrics_wf$kri0001$meta$BootstrapReps <- 100
+  for (kri_name in names(metrics_wf)) {
+    metrics_wf[[kri_name]]$meta$BootstrapReps <- 100
+  }
   
   # Should error due to missing Mapped_Visit
   expect_error(

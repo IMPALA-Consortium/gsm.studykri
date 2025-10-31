@@ -12,10 +12,9 @@ Input_CountSiteByMonth(
   strGroupCol = "invid",
   strGroupLevel = "Site",
   strSubjectCol = "subjid",
-  strNumeratorCol = NULL,
-  strDenominatorCol = NULL,
   strNumeratorDateCol,
-  strDenominatorDateCol
+  strDenominatorDateCol,
+  strDenominatorEndDateCol = NULL
 )
 }
 \arguments{
@@ -33,13 +32,11 @@ Input_CountSiteByMonth(
 
 \item{strSubjectCol}{character. Column name for subject identifier (default: "subjid").}
 
-\item{strNumeratorCol}{character. Column name for numerator flag (default: NULL, counts all rows).}
-
-\item{strDenominatorCol}{character. Column name for denominator flag (default: NULL, counts all rows).}
-
 \item{strNumeratorDateCol}{character. Date column name in numerator data.}
 
-\item{strDenominatorDateCol}{character. Date column name in denominator data.}
+\item{strDenominatorDateCol}{character. Date column name in denominator data (start date).}
+
+\item{strDenominatorEndDateCol}{character. End date column in denominator data (default: NULL). When provided, calculates sum of days between start/end dates per month instead of record counts.}
 }
 \value{
 data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM
@@ -47,6 +44,8 @@ data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, St
 \description{
 Calculates monthly event counts and ratios by site and month for KRI analysis.
 Joins subject, numerator, and denominator data to create monthly metrics.
+When strDenominatorEndDateCol is provided, calculates days between start/end dates
+per month instead of counting records.
 Note: This function returns monthly counts, not cumulative. Cumulative aggregation
 is performed at the study level in Transform_CumCount.
 Supports both in-memory data frames and dbplyr lazy tables.
@@ -56,12 +55,23 @@ dfSubjects <- clindata::rawplus_dm
 dfNumerator <- clindata::rawplus_ae
 dfDenominator <- clindata::rawplus_visdt
 
+# Count-based calculation
 result <- Input_CountSiteByMonth(
   dfSubjects = dfSubjects,
   dfNumerator = dfNumerator,
   dfDenominator = dfDenominator,
   strNumeratorDateCol = "aest_dt",
   strDenominatorDateCol = "visit_dt"
+)
+
+# Days-based calculation with end dates
+result_days <- Input_CountSiteByMonth(
+  dfSubjects = dfSubjects,
+  dfNumerator = dfNumerator,
+  dfDenominator = dfSubjects,
+  strNumeratorDateCol = "aest_dt",
+  strDenominatorDateCol = "firstparticipantdate",
+  strDenominatorEndDateCol = "lastparticipantdate"
 )
 
 }

@@ -16,12 +16,12 @@ steps:
       
   # Step 2: Generate HTML report using gsm.kri
   - output: strReportPath
-    name: gsm.kri::Report_KRI
+    name: gsm.studykri::Report_KRI_StudyKRI
     params:
       lCharts: lCharts
       dfResults: Reporting_Results
       dfGroups: Reporting_Groups
       dfMetrics: Reporting_Metrics
-      strOutputFile: "StudyKRI_Report.html"
+      strOutputFile: "report_studykri.html"
       strInputPath: null  # Set dynamically when calling workflow
 

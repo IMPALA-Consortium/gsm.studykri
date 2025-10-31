@@ -100,15 +100,35 @@ dfInput <- gsm.studykri::Input_CountSiteByMonth(
       dfDenominator = lPortfolio$Raw_VISIT,
       strStudyCol = "studyid",
       strGroupCol = "invid",
-      strGroupLevel = "GroupLevel",
+      strGroupLevel = "Site",
       strSubjectCol = "subjid",
       strNumeratorDateCol = "aest_dt",
       strDenominatorDateCol = "visit_dt",
   ) %>%
   tibble()
 
-```
+dfInput
+ ```
 
+Alternatively we can also use days on study as a denominator by passing subjects as denominator and an end date.
+
+```{r}
+dfInputDays <- gsm.studykri::Input_CountSiteByMonth(
+      dfSubjects = lPortfolio$Raw_SUBJ,
+      dfNumerator = lPortfolio$Raw_AE,
+      dfDenominator = lPortfolio$Raw_SUBJ,
+      strStudyCol = "studyid",
+      strGroupCol = "invid",
+      strGroupLevel = "Site",
+      strSubjectCol = "subjid",
+      strNumeratorDateCol = "aest_dt",
+      strDenominatorDateCol = "firstparticipantdate",
+      strDenominatorEndDateCol = "lastparticipantdate"
+  ) %>%
+  tibble()
+
+dfInputDays
+```
 
 Next we transform the data to return the cumulated event counts on study-level by study month. We define the first study month to be the month in which
 we have reached the first 25 Denominator counts across all sites to account for data artifacts.
@@ -235,7 +255,8 @@ p1 + p2 + p3 + patchwork::plot_layout(guides = "collect")
 
 ## Calculate KRI using yaml workflows
 
-We can also use the {gsm}-style yaml workflow.
+We can also use the {gsm}-style yaml workflow. Here we start with a portfolio with 6 studies of
+ which 2 are target studies for whcih reports will be built, while the others serve as reference.
 
 ```{r cook4}
 # Generate multi-study portfolio using SimulatePortfolio
@@ -326,7 +347,7 @@ gsm.studykri::Report_KRI_StudyKRI(
   dfResults = dfResults,
   dfGroups = dfGroups,
   dfMetrics = dfMetrics,
-  strOutputFile = "report_kri_site.html",
+  strOutputFile = "report_studykri.html",
   strInputPath = system.file("report", "Report_KRI.Rmd", package = "gsm.studykri")
 )
 
@@ -335,7 +356,6 @@ gsm.studykri::Report_KRI_StudyKRI(
 ## Generate KRI report using yaml workflows
 
 ```{r cook6}
-
 
 reporting_wf <- gsm.core::MakeWorkflowList(
     strPath = system.file("workflow/3_reporting", package = "gsm.studykri")
@@ -353,7 +373,6 @@ lReporting <- gsm.core::RunWorkflows(
     )
 )
 
-
 module_wf_gsm <- gsm.core::MakeWorkflowList(
   strNames = NULL,
   strPath = system.file("workflow/4_modules", package = "gsm.studykri"),
@@ -367,6 +386,5 @@ n_steps <- length(module_wf_gsm$StudyKRI$steps)
 module_wf_gsm$StudyKRI$steps[[n_steps]]$params$strInputPath <- report_path
 
 lModule <- gsm.core::RunWorkflows(module_wf_gsm, lReporting)
-
 
 ```

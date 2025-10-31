@@ -21,6 +21,8 @@ spec:
       type: integer
     firstparticipantdate:
       type: Date
+    lastparticipantdate:
+      type: Date
     firstdosedate:
       type: Date
     timeontreatment:

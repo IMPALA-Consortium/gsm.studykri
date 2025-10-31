@@ -1,16 +1,16 @@
 meta:
   Type: Analysis
-  ID: kri0001
+  ID: kri0002
   GroupLevel: Site
   Abbreviation: AE
-  Metric: Adverse Event Rate per Visit
+  Metric: Adverse Event Rate per Days on Study
   Numerator: Adverse Events
-  Denominator: Visits
+  Denominator: Days on Study
   Model: Bootstrap CI
   Score: Bootstrap CI
   AnalysisType: rate
   Threshold: 0.95
-  AccrualThreshold: 25
+  AccrualThreshold: 180
   AccrualMetric: Denominator
   BootstrapReps: 1000
 spec:
@@ -26,10 +26,9 @@ spec:
       type: character
     studyid:
       type: character
-  Mapped_Visit:
-    subjid:
-      type: character
-    visit_dt:
+    firstparticipantdate:
+      type: Date
+    lastparticipantdate:
       type: Date
 steps:
   - output: Analysis_Input
@@ -37,13 +36,14 @@ steps:
     params:
       dfSubjects: Mapped_SUBJ
       dfNumerator: Mapped_AE
-      dfDenominator: Mapped_Visit
+      dfDenominator: Mapped_SUBJ
       strStudyCol: studyid
       strGroupCol: invid
       strGroupLevel: GroupLevel
       strSubjectCol: subjid
       strNumeratorDateCol: aest_dt
-      strDenominatorDateCol: visit_dt
+      strDenominatorDateCol: firstparticipantdate
+      strDenominatorEndDateCol: lastparticipantdate
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount
     params:

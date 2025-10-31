@@ -83,7 +83,7 @@ Goal:
 - method for CI calculation is outlined in studykri.Rmd
 
 - functions to be used in KRI calculation:
-  - Input_CumCountSitebyMonth(dfSubjects, dfNumerator, dfDenominator, strStudyCol, strGroupCol, strGroupLevel, strSubjectCol, strNumeratorCol, strDenominatorCol, strNumeratorDateCol, strDenominatorDateCol)
+  - Input_CumCountSitebyMonth(dfSubjects, dfNumerator, dfDenominator, strStudyCol, strGroupCol, strGroupLevel, strSubjectCol, strNumeratorCol, strDenominatorCol, strNumeratorDateCol, strDenominatorDateCol, strDenominatorEndDateCol)
   - Transform_CumCount(dfInput, vBy) #called get_study_kri in example
   - Analyze_StudyKRI(dfTransformed, dfStudyGroups, Studies) # get_boot in example
   - Analyze_StudyKRI_PredictBounds # called get_ci in example
@@ -137,6 +137,18 @@ How to select the right reference studies for a study?:
 Visualize_StudyKRI:
   should also work when dfStudyKRI, dfBounds and strStudyID are provided, then it should only plot the data for the given study
   if optional argument dfBoundsRef is provided, the reference should be plotted as well
+
+Input_CumCountSitebyMonth:
+  - currently for DfDenominatorEndDateCol is not used, but it should be
+  - when start and end dates are supplied it should sum up the days between the start and end dates for each month
+  e.g subjectid: 123id, start_date: 2024-01-30, end_date: 2024-03-03
+  YYYYMM, days 
+  2022401, 2,
+  202402, 28,
+  202403, 3
+  for multiple subjects the days should be summed up for each month
+  - make sure to use expand_lazy_table to handle lazy tables
+  - do not create separate logic for the date calculations for lazy tables and in-memory data frames dbplyr should be able to handle it
 
 Pipeline Code Draft
 
