@@ -2,14 +2,17 @@ url: https://impala-consortium.github.io/gsm.studykri/
 template:
   bootstrap: 5
 
+
 navbar:
+  structure:
+    left: [articles, Reports, reference, news]
+    right: [search, github]
   components:
-    reports:
+    Reports:
       text: Sample Reports
       menu:
-        - text: Study AA-1
+        - text: Study AA-1 Report
           href: report_studykri_AA-1.html
-        - text: Study AA-2
+        - text: Study AA-2 Report
           href: report_studykri_AA-2.html
-  right:
-    - reports
+

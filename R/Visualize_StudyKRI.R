@@ -68,6 +68,7 @@
 #'   strStudyID = "STUDY1",
 #'   strYlab = "Cumulative AE Rate per Visit"
 #' )
+#' p1
 #' 
 #' # Plot without reference bounds (only study data)
 #' p2 <- Visualize_StudyKRI(
@@ -77,6 +78,7 @@
 #'   strStudyID = "STUDY1",
 #'   strYlab = "Cumulative AE Rate per Visit"
 #' )
+#' p2
 #' 
 #' # Plot with only study data (no bounds at all)
 #' p3 <- Visualize_StudyKRI(
@@ -84,7 +86,7 @@
 #'   strStudyID = "STUDY1",
 #'   strYlab = "Cumulative AE Rate per Visit"
 #' )
-#'
+#' p3
 #' @export
 Visualize_StudyKRI <- function(
   dfStudyKRI,
