@@ -36,6 +36,17 @@ jobs:
           extra-packages: any::pkgdown, local::.
           needs: website
 
+      - name: Generate sample reports
+        run: |
+          source(system.file("scripts/generate_reports.R", package = "gsm.studykri"))
+        shell: Rscript {0}
+
+      - name: Copy reports to assets
+        run: |
+          mkdir -p pkgdown/assets
+          cp -f report_studykri_AA-*.html pkgdown/assets/ || true
+        shell: bash
+
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}

@@ -229,3 +229,13 @@ README.Rmd
 - base on https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/README.Rmd (look it up) double check content agains gsm.studykri and adapr if necessary
 - add disclaimer about AI usage mention cursor and Sonnet 4.5
 - add code demo similar to cookbook.rmd until the first visualisation that includes also the reference studies. use days on study example, add one code chunk, use code comments for the explanations
+
+
+Sample Reports:
+
+I want to add the sample reports for the two different studies to the pkgdown website.
+
+here is an example how this. can be done:
+https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/.github/workflows/pkgdown.yaml 
+
+https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/_pkgdown.yml 
