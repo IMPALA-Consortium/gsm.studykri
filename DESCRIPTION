@@ -25,12 +25,12 @@ Suggests:
     patchwork,
     DBI
 VignetteBuilder: knitr
-Remotes: 
-    Gilead-BioStats/clindata,
-    Gilead-BioStats/gsm.core,
-    Gilead-BioStats/gsm.mapping,
-    Gilead-BioStats/gsm.reporting,
-    Gilead-BioStats/gsm.kri
+Remotes:
+    clindata=Gilead-BioStats/clindata,
+    gsm.core=Gilead-BioStats/gsm.core@main,
+    gsm.mapping=Gilead-BioStats/gsm.mapping@main,
+    gsm.kri=Gilead-BioStats/gsm.kri@main,
+    gsm.reporting=Gilead-BioStats/gsm.reporting@dev
 Config/testthat/edition: 3
 Config/testthat/parallel: true
 Imports: 
