@@ -2,10 +2,23 @@
 <url><loc>https://impala-consortium.github.io/gsm.studykri/404.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/LICENSE-text.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/LICENSE.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/articles/Cookbook.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/articles/index.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/authors.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/index.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBounds.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRef.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRefSet.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Input_CountSiteByMonth.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/MakeCharts_StudyKRI.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Report_KRI_StudyKRI.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/ResampleStudy.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/SimulatePortfolio.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Transform_CumCount.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Visualize_StudyKRI.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/calculate_days_by_month.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/expand_lazy_table.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/gsm.studykri-package.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/has_column.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/index.html</loc></url>
@@ -14,5 +27,6 @@
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/process_study_domain.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/process_subject_domain.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/update_composite_id.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/validate_month_sequence.html</loc></url>
 </urlset>
 
