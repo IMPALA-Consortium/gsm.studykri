@@ -28,7 +28,7 @@ test_parameter_errors <- function(fn, valid_args, invalid_tests) {
   for (test_case in invalid_tests) {
     # Merge invalid args with valid baseline
     test_args <- modifyList(valid_args, test_case$args)
-    
+
     # Test that error is thrown with expected pattern
     testthat::expect_error(
       do.call(fn, test_args),
@@ -75,4 +75,3 @@ create_minimal_analyze_data <- function() {
     stringsAsFactors = FALSE
   )
 }
-

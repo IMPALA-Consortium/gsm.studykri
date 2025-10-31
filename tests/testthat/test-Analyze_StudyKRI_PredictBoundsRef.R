@@ -2,9 +2,9 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet calculates bounds for multiple s
   # Create site-level data for 3 studies with different site counts
   dfTest <- data.frame(
     StudyID = c(
-      rep("STUDY1", 60),  # 10 sites * 6 months
-      rep("STUDY2", 48),  # 8 sites * 6 months
-      rep("STUDY3", 72)   # 12 sites * 6 months
+      rep("STUDY1", 60), # 10 sites * 6 months
+      rep("STUDY2", 48), # 8 sites * 6 months
+      rep("STUDY3", 72) # 12 sites * 6 months
     ),
     GroupID = c(
       rep(paste0("S1_Site", 1:10), each = 6),
@@ -12,12 +12,12 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet calculates bounds for multiple s
       rep(paste0("S3_Site", 1:12), each = 6)
     ),
     Numerator = c(
-      rep(1:6, times = 10),  # Cumulative: 1, 2, 3, 4, 5, 6
+      rep(1:6, times = 10), # Cumulative: 1, 2, 3, 4, 5, 6
       rep(1:6, times = 8),
       rep(1:6, times = 12)
     ),
     Denominator = c(
-      rep(10:15, times = 10),  # Cumulative denominators
+      rep(10:15, times = 10), # Cumulative denominators
       rep(10:15, times = 8),
       rep(10:15, times = 12)
     ),
@@ -34,21 +34,23 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet calculates bounds for multiple s
   result <- Analyze_StudyKRI_PredictBoundsRefSet(
     dfInput = dfTest,
     vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
-    nBootstrapReps = 50,  # Small number for speed
+    nBootstrapReps = 50, # Small number for speed
     nConfLevel = 0.95,
     seed = 123
   )
 
   # Verify structure
   expect_s3_class(result, "data.frame")
-  expect_true(all(c("StudyMonth", "MedianMetric", "LowerBound", "UpperBound",
-                    "BootstrapCount", "GroupCount", "StudyCount") %in% names(result)))
+  expect_true(all(c(
+    "StudyMonth", "MedianMetric", "LowerBound", "UpperBound",
+    "BootstrapCount", "GroupCount", "StudyCount"
+  ) %in% names(result)))
 
   # Verify no StudyID column (intentionally combined)
   expect_false("StudyID" %in% names(result))
 
   # Verify metadata
-  expect_equal(unique(result$GroupCount), 8)  # Minimum across 10, 8, 12
+  expect_equal(unique(result$GroupCount), 8) # Minimum across 10, 8, 12
   expect_equal(unique(result$StudyCount), 3)
 
   # Verify confidence intervals are sensible
@@ -93,8 +95,8 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet uses minimum group count", {
   # Create data with very different site counts
   dfTest <- data.frame(
     StudyID = c(
-      rep("STUDY_SMALL", 12),  # 2 sites * 6 months
-      rep("STUDY_LARGE", 60)   # 10 sites * 6 months
+      rep("STUDY_SMALL", 12), # 2 sites * 6 months
+      rep("STUDY_LARGE", 60) # 10 sites * 6 months
     ),
     GroupID = c(
       rep(paste0("Small_Site", 1:2), each = 6),
@@ -232,9 +234,9 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet integration with full workflow",
     dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfSiteLevel,
       vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
-      nBootstrapReps = 30,  # Small for speed
+      nBootstrapReps = 30, # Small for speed
       nConfLevel = 0.95,
-      nMinDenominator = 5,  # Lower threshold for small test data
+      nMinDenominator = 5, # Lower threshold for small test data
       seed = 789
     )
   })
@@ -242,8 +244,10 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet integration with full workflow",
   # Verify output
   expect_s3_class(dfGroupBounds, "data.frame")
   expect_true(nrow(dfGroupBounds) > 0)
-  expect_true(all(c("StudyMonth", "MedianMetric", "LowerBound", "UpperBound",
-                    "BootstrapCount", "GroupCount", "StudyCount") %in% names(dfGroupBounds)))
+  expect_true(all(c(
+    "StudyMonth", "MedianMetric", "LowerBound", "UpperBound",
+    "BootstrapCount", "GroupCount", "StudyCount"
+  ) %in% names(dfGroupBounds)))
   expect_equal(unique(dfGroupBounds$StudyCount), 3)
   expect_false("StudyID" %in% names(dfGroupBounds))
 
@@ -299,7 +303,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet filters studies correctly", {
   suppressMessages({
     result <- Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfTest,
-      vStudyFilter = c("STUDY1", "STUDY2"),  # Only use 2 of 3 studies
+      vStudyFilter = c("STUDY1", "STUDY2"), # Only use 2 of 3 studies
       nBootstrapReps = 20,
       nConfLevel = 0.95,
       seed = 111
@@ -308,8 +312,8 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet filters studies correctly", {
 
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
-  expect_equal(unique(result$StudyCount), 2)  # Should only use filtered studies
-  expect_false("StudyID" %in% names(result))  # Studies are combined
+  expect_equal(unique(result$StudyCount), 2) # Should only use filtered studies
+  expect_false("StudyID" %in% names(result)) # Studies are combined
 })
 
 test_that("Analyze_StudyKRI_PredictBoundsRef wrapper works with study mapping", {
@@ -318,7 +322,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef wrapper works with study mapping", 
     study = c(rep("AA-1", 3), rep("AA-2", 2)),
     studyref = c("AA-3", "AA-4", "AA-5", "AA-3", "AA-4")
   )
-  
+
   # Create site-level data
   dfTest <- data.frame(
     StudyID = rep(c("AA-1", "AA-2", "AA-3", "AA-4", "AA-5"), each = 30),
@@ -329,7 +333,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef wrapper works with study mapping", 
     Metric = runif(150, 0.05, 0.5),
     GroupLevel = "Site"
   )
-  
+
   suppressMessages({
     result <- Analyze_StudyKRI_PredictBoundsRef(
       dfInput = dfTest,
@@ -338,19 +342,21 @@ test_that("Analyze_StudyKRI_PredictBoundsRef wrapper works with study mapping", 
       seed = 456
     )
   })
-  
+
   # Verify structure
   expect_s3_class(result, "data.frame")
-  expect_true(all(c("StudyID", "StudyRefID", "StudyMonth", "MedianMetric", 
-                    "LowerBound", "UpperBound") %in% names(result)))
-  
+  expect_true(all(c(
+    "StudyID", "StudyRefID", "StudyMonth", "MedianMetric",
+    "LowerBound", "UpperBound"
+  ) %in% names(result)))
+
   # Verify unique studies
   expect_equal(sort(unique(result$StudyID)), sort(c("AA-1", "AA-2")))
-  
+
   # Verify StudyRefID is collapsed
   ref_aa1 <- unique(result$StudyRefID[result$StudyID == "AA-1"])
   expect_equal(ref_aa1, "AA-3, AA-4, AA-5")
-  
+
   ref_aa2 <- unique(result$StudyRefID[result$StudyID == "AA-2"])
   expect_equal(ref_aa2, "AA-3, AA-4")
 })
@@ -364,13 +370,13 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
     MonthYYYYMM = rep(202301:202306, times = 5),
     Metric = runif(30, 0.05, 0.5)
   )
-  
+
   # Missing dfStudyRef
   expect_error(
     Analyze_StudyKRI_PredictBoundsRef(dfInput = dfTest),
     "argument \"dfStudyRef\" is missing"
   )
-  
+
   # Wrong dfStudyRef type
   expect_error(
     Analyze_StudyKRI_PredictBoundsRef(
@@ -379,7 +385,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates input", {
     ),
     "dfStudyRef must be a data.frame"
   )
-  
+
   # Missing column in dfStudyRef
   dfBadRef <- data.frame(wrongcol = "A")
   expect_error(
@@ -397,7 +403,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef with custom column names", {
     target_study = c("STUDY1", "STUDY2"),
     ref_study = c("REF1", "REF2")
   )
-  
+
   # Create site-level data
   dfTest <- data.frame(
     StudyID = rep(c("STUDY1", "STUDY2", "REF1", "REF2"), each = 30),
@@ -408,7 +414,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef with custom column names", {
     Metric = runif(120, 0.05, 0.5),
     GroupLevel = "Site"
   )
-  
+
   suppressMessages({
     result <- Analyze_StudyKRI_PredictBoundsRef(
       dfInput = dfTest,
@@ -419,10 +425,9 @@ test_that("Analyze_StudyKRI_PredictBoundsRef with custom column names", {
       seed = 789
     )
   })
-  
+
   expect_s3_class(result, "data.frame")
   expect_true("StudyID" %in% names(result))
   expect_true("StudyRefID" %in% names(result))
   expect_equal(sort(unique(result$StudyID)), sort(c("STUDY1", "STUDY2")))
 })
-

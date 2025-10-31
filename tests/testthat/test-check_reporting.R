@@ -5,7 +5,7 @@ test_that("Complete YAML workflow generates HTML report", {
   skip_if_not_installed("gsm.kri")
   skip_if_not_installed("clindata")
   skip_if_not_installed("rmarkdown")
-  
+
   # Full pipeline test
   lRaw <- list(
     Raw_SITE = clindata::ctms_site,
@@ -26,37 +26,37 @@ test_that("Complete YAML workflow generates HTML report", {
       studyrefid = "AA-AA-000-0000"
     )
   )
-  
+
   # 1. Mappings
   mapping_wf <- gsm.core::MakeWorkflowList(
     strPath = system.file("workflow/1_mappings", package = "gsm.studykri")
   )
-  
+
   suppressWarnings({
     lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
   })
-  
+
   lMapped <- gsm.core::RunWorkflows(mapping_wf, lIngest)
-  
+
   # 2. Metrics
   metrics_wf <- gsm.core::MakeWorkflowList(
     strPath = system.file("workflow/2_metrics", package = "gsm.studykri")
   )
-  
+
   # Reduce bootstrap iterations for faster testing
   for (kri_name in names(metrics_wf)) {
     metrics_wf[[kri_name]]$meta$BootstrapReps <- 100
   }
   # Lower accrual threshold to ensure bounds for small test data
   metrics_wf$kri0001$meta$AccrualThreshold <- 5
-  
+
   lAnalyzed <- gsm.core::RunWorkflows(metrics_wf, lMapped)
-  
+
   # 3. Reporting (YAML workflows)
   reporting_wf <- gsm.core::MakeWorkflowList(
     strPath = system.file("workflow/3_reporting", package = "gsm.studykri")
   )
-  
+
   lReporting <- gsm.core::RunWorkflows(
     lWorkflows = reporting_wf,
     lData = c(
@@ -67,39 +67,39 @@ test_that("Complete YAML workflow generates HTML report", {
       )
     )
   )
-  
+
   # 4. Modules (charts + report via YAML)
   module_wf <- gsm.core::MakeWorkflowList(
     strPath = system.file("workflow/4_modules", package = "gsm.studykri")
   )
-  
+
   # Set output path - use simple filename not tempfile()
   tmpfile <- "test_complete_studykri_report.html"
-  
+
   # Get report template path
   report_path <- system.file("report", "Report_KRI.Rmd", package = "gsm.studykri")
   expect_true(nchar(report_path) > 0, info = "Report template path should not be empty")
   expect_true(file.exists(report_path), info = "Report template file should exist")
-  
+
   # Update workflow with output path and input template path
   module_wf$StudyKRI$steps[[2]]$params$strOutputFile <- tmpfile
   module_wf$StudyKRI$steps[[2]]$params$strInputPath <- report_path
-  
+
   # Run module workflow - pass all reporting outputs
   lModule <- gsm.core::RunWorkflows(
     lWorkflows = module_wf,
     lData = lReporting
   )
-  
+
   # Verify report output path was returned (workflow returns only final step output)
   expect_type(lModule$Module_StudyKRI, "character")
   expect_true(nchar(lModule$Module_StudyKRI) > 0)
-  
+
   # Report_KRI_StudyKRI appends study ID to filename, so check the actual returned path
   actual_file <- lModule$Module_StudyKRI
   expect_true(file.exists(actual_file))
   expect_true(file.size(actual_file) > 0)
-  
+
   # Clean up the actual file that was created
   unlink(actual_file)
 })

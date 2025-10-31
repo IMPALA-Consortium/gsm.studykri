@@ -53,16 +53,15 @@
 #'
 #' @export
 Transform_CumCount <- function(
-  dfInput,
-  vBy,
-  nMinDenominator = 25,
-  tblMonthSequence = NULL
-) {
+    dfInput,
+    vBy,
+    nMinDenominator = 25,
+    tblMonthSequence = NULL) {
   # Input validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfInput, c("data.frame", "tbl"))) {
     stop("dfInput must be a data frame or tbl object")
   }
-  
+
   required_cols <- c("GroupID", "Numerator", "Denominator", "MonthYYYYMM")
   missing_cols <- setdiff(required_cols, colnames(dfInput))
   if (length(missing_cols) > 0) {
@@ -71,11 +70,11 @@ Transform_CumCount <- function(
       paste(missing_cols, collapse = ", ")
     ))
   }
-  
+
   if (!is.character(vBy) || length(vBy) == 0) {
     stop("vBy must be a non-empty character vector")
   }
-  
+
   missing_by <- setdiff(vBy, colnames(dfInput))
   if (length(missing_by) > 0) {
     stop(sprintf(
@@ -83,37 +82,38 @@ Transform_CumCount <- function(
       paste(missing_by, collapse = ", ")
     ))
   }
-  
+
   if (!is.numeric(nMinDenominator) || length(nMinDenominator) != 1 || nMinDenominator < 0) {
     stop("nMinDenominator must be a single non-negative numeric value")
   }
-  
+
   # Helper to detect lazy tables
   is_lazy_table <- function(x) {
     inherits(x, "tbl_lazy")
   }
-  
+
   # For in-memory data frames, check for empty results
   # For lazy tables, skip this check as it would force evaluation
   if (is.data.frame(dfInput) && nrow(dfInput) == 0) {
     stop("dfInput has no rows")
   }
-  
+
   # Filter out rows with NA MonthYYYYMM before processing
   dfFiltered_input <- dfInput %>%
     dplyr::filter(!is.na(.data$MonthYYYYMM))
-  
+
   # For in-memory data frames, check if filtered data is empty
   # For lazy tables, skip this check as it would force evaluation
   if (is.data.frame(dfFiltered_input) && nrow(dfFiltered_input) == 0) {
     warning("All rows have NA MonthYYYYMM, returning empty data frame")
     return(data.frame(
       stringsAsFactors = FALSE
-    )[0, c(vBy, "MonthYYYYMM", "StudyMonth", "Numerator", 
-           "Denominator", "Metric", "GroupCount")]
-    )
+    )[0, c(
+      vBy, "MonthYYYYMM", "StudyMonth", "Numerator",
+      "Denominator", "Metric", "GroupCount"
+    )])
   }
-  
+
   # Create initial StudyMonth by ranking calendar months within groups
   if (is_lazy_table(dfFiltered_input)) {
     dfWithStudyMonth <- dfFiltered_input %>%
@@ -130,17 +130,17 @@ Transform_CumCount <- function(
         .by = dplyr::all_of(.env$vBy)
       )
   }
-  
+
   # Aggregate to study level by grouping columns and StudyMonth
   dfAggregated <- dfWithStudyMonth %>%
     dplyr::summarise(
-      MonthYYYYMM = min(.data$MonthYYYYMM),  # Keep the calendar month
+      MonthYYYYMM = min(.data$MonthYYYYMM), # Keep the calendar month
       Numerator = sum(.data$Numerator, na.rm = TRUE),
       Denominator = sum(.data$Denominator, na.rm = TRUE),
       GroupCount = dplyr::n_distinct(.data$GroupID),
       .by = c(dplyr::all_of(.env$vBy), "StudyMonth")
     )
-  
+
   # Fill gaps in calendar months with zeros to maintain timeline continuity
   # This ensures StudyMonth represents actual elapsed time, not compressed time
   if (!is_lazy_table(dfAggregated)) {
@@ -152,23 +152,23 @@ Transform_CumCount <- function(
         max_month = max(.data$MonthYYYYMM),
         .by = dplyr::all_of(.env$vBy)
       )
-    
+
     # Helper function to generate complete YYYYMM sequence
     generate_month_seq <- function(start_yyyymm, end_yyyymm) {
       start_year <- floor(start_yyyymm / 100)
       start_month <- start_yyyymm %% 100
       end_year <- floor(end_yyyymm / 100)
       end_month <- end_yyyymm %% 100
-      
+
       dates <- seq(
         as.Date(paste0(start_year, "-", sprintf("%02d", start_month), "-01")),
         as.Date(paste0(end_year, "-", sprintf("%02d", end_month), "-01")),
         by = "month"
       )
-      
+
       as.numeric(format(dates, "%Y%m"))
     }
-    
+
     # Create complete month grid for each group
     dfCompleteMonths <- dfMonthRanges %>%
       dplyr::rowwise() %>%
@@ -177,7 +177,7 @@ Transform_CumCount <- function(
       ) %>%
       dplyr::select(-"min_month", -"max_month") %>%
       tidyr::unnest("MonthYYYYMM")
-    
+
     # Left join to fill gaps with zeros
     dfAggregated <- dfCompleteMonths %>%
       dplyr::left_join(
@@ -196,30 +196,30 @@ Transform_CumCount <- function(
       )
   } else {
     # Lazy table: Use helper function for gap filling
-    
+
     # Get actual date ranges (collect small summary)
-    dfMonthRanges <- dfAggregated %>% 
+    dfMonthRanges <- dfAggregated %>%
       dplyr::summarise(
         min_month = min(.data$MonthYYYYMM),
         max_month = max(.data$MonthYYYYMM),
         .by = dplyr::all_of(.env$vBy)
       ) %>%
       dplyr::collect()
-    
+
     if (!is.null(tblMonthSequence)) {
       # User provided - validate first
       validate_month_sequence(tblMonthSequence, vBy)
-      
+
       # Filter to actual study date ranges
       # For each study, filter month sequence to its actual range
       dfCompleteMonths <- tblMonthSequence
-      
+
       # Build a filter for each study's date range
       for (i in seq_len(nrow(dfMonthRanges))) {
         study_row <- dfMonthRanges[i, , drop = FALSE]
         min_m <- study_row$min_month
         max_m <- study_row$max_month
-        
+
         # Build filter condition for this study
         study_filter <- TRUE
         for (col in vBy) {
@@ -228,8 +228,8 @@ Transform_CumCount <- function(
             dfCompleteMonths <- tblMonthSequence %>%
               dplyr::filter(
                 .data[[col]] %in% dfMonthRanges[[col]] &
-                .data$MonthYYYYMM >= min_m & 
-                .data$MonthYYYYMM <= max_m
+                  .data$MonthYYYYMM >= min_m &
+                  .data$MonthYYYYMM <= max_m
               )
             break
           }
@@ -243,16 +243,16 @@ Transform_CumCount <- function(
         start_month <- start_yyyymm %% 100
         end_year <- floor(end_yyyymm / 100)
         end_month <- end_yyyymm %% 100
-        
+
         dates <- seq(
           as.Date(paste0(start_year, "-", sprintf("%02d", start_month), "-01")),
           as.Date(paste0(end_year, "-", sprintf("%02d", end_month), "-01")),
           by = "month"
         )
-        
+
         as.numeric(format(dates, "%Y%m"))
       }
-      
+
       dfCompleteMonths_mem <- dfMonthRanges %>%
         dplyr::rowwise() %>%
         dplyr::mutate(
@@ -260,7 +260,7 @@ Transform_CumCount <- function(
         ) %>%
         dplyr::select(-"min_month", -"max_month") %>%
         tidyr::unnest("MonthYYYYMM")
-      
+
       # Use helper to write or error
       dfCompleteMonths <- expand_lazy_table(
         tblInput = dfAggregated,
@@ -270,7 +270,7 @@ Transform_CumCount <- function(
         strExpansionType = "complete month sequences"
       )
     }
-    
+
     # Left join to fill gaps (same as in-memory logic)
     dfAggregated <- dfCompleteMonths %>%
       dplyr::left_join(
@@ -290,7 +290,7 @@ Transform_CumCount <- function(
       ) %>%
       dplyr::ungroup()
   }
-  
+
   # Calculate cumulative sums at study level
   # This ensures that when sites drop out, their cumulative contributions persist
   if (is_lazy_table(dfAggregated)) {
@@ -312,11 +312,11 @@ Transform_CumCount <- function(
       ) %>%
       dplyr::ungroup()
   }
-  
+
   # Apply minimum denominator filter
   dfFiltered <- dfCumulative %>%
     dplyr::filter(.data$Denominator > .env$nMinDenominator)
-  
+
   # Re-rank StudyMonth after filtering to ensure sequential numbering
   if (is_lazy_table(dfFiltered)) {
     dfReranked <- dfFiltered %>%
@@ -333,7 +333,7 @@ Transform_CumCount <- function(
         .by = dplyr::all_of(.env$vBy)
       )
   }
-  
+
   # Calculate metric
   dfResult <- dfReranked %>%
     dplyr::mutate(
@@ -344,14 +344,16 @@ Transform_CumCount <- function(
       )
     ) %>%
     dplyr::arrange(dplyr::across(dplyr::all_of(.env$vBy)), .data$StudyMonth)
-  
+
   # Select final columns in desired order
-  final_cols <- c(vBy, "MonthYYYYMM", "StudyMonth", "Numerator", 
-                  "Denominator", "Metric", "GroupCount")
-  
+  final_cols <- c(
+    vBy, "MonthYYYYMM", "StudyMonth", "Numerator",
+    "Denominator", "Metric", "GroupCount"
+  )
+
   dfFinal <- dfResult %>%
     dplyr::select(dplyr::all_of(.env$final_cols))
-  
+
   # Return lazy table if input was lazy, data.frame otherwise
   if (inherits(dfInput, "tbl_lazy")) {
     return(dfFinal)
@@ -359,4 +361,3 @@ Transform_CumCount <- function(
     return(as.data.frame(dfFinal))
   }
 }
-

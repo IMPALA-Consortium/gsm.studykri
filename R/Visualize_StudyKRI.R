@@ -45,21 +45,21 @@
 #'   StudyMonth = 1:5,
 #'   Metric = c(0.10, 0.12, 0.15, 0.14, 0.13)
 #' )
-#' 
+#'
 #' dfBoundsRef <- data.frame(
 #'   StudyMonth = 1:5,
 #'   MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
 #'   LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
 #'   UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17)
 #' )
-#' 
+#'
 #' dfBounds <- data.frame(
 #'   StudyMonth = 1:5,
 #'   MedianMetric = c(0.10, 0.12, 0.15, 0.14, 0.13),
 #'   LowerBound = c(0.08, 0.10, 0.12, 0.11, 0.10),
 #'   UpperBound = c(0.12, 0.14, 0.18, 0.17, 0.16)
 #' )
-#' 
+#'
 #' # Plot with reference bounds
 #' p1 <- Visualize_StudyKRI(
 #'   dfStudyKRI = dfStudyKRI,
@@ -69,7 +69,7 @@
 #'   strYlab = "Cumulative AE Rate per Visit"
 #' )
 #' p1
-#' 
+#'
 #' # Plot without reference bounds (only study data)
 #' p2 <- Visualize_StudyKRI(
 #'   dfStudyKRI = dfStudyKRI,
@@ -79,7 +79,7 @@
 #'   strYlab = "Cumulative AE Rate per Visit"
 #' )
 #' p2
-#' 
+#'
 #' # Plot with only study data (no bounds at all)
 #' p3 <- Visualize_StudyKRI(
 #'   dfStudyKRI = dfStudyKRI,
@@ -89,31 +89,30 @@
 #' p3
 #' @export
 Visualize_StudyKRI <- function(
-  dfStudyKRI,
-  dfBoundsRef = NULL,
-  dfBounds = NULL,
-  strStudyID,
-  strStudyMonthCol = "StudyMonth",
-  strMetricCol = "Metric",
-  nMaxMonth = NULL,
-  strTitle = NULL,
-  strSubtitle = NULL,
-  strYlab = "Metric",
-  strXlab = "Study Month"
-) {
+    dfStudyKRI,
+    dfBoundsRef = NULL,
+    dfBounds = NULL,
+    strStudyID,
+    strStudyMonthCol = "StudyMonth",
+    strMetricCol = "Metric",
+    nMaxMonth = NULL,
+    strTitle = NULL,
+    strSubtitle = NULL,
+    strYlab = "Metric",
+    strXlab = "Study Month") {
   # Input validation
   if (!is.data.frame(dfStudyKRI)) {
     stop("dfStudyKRI must be a data.frame")
   }
-  
+
   if (!is.null(dfBoundsRef) && !is.data.frame(dfBoundsRef)) {
     stop("dfBoundsRef must be a data.frame or NULL")
   }
-  
+
   if (!is.null(dfBounds) && !is.data.frame(dfBounds)) {
     stop("dfBounds must be a data.frame or NULL")
   }
-  
+
   # Check required columns in dfStudyKRI
   required_kri <- c(strStudyMonthCol, strMetricCol)
   missing_kri <- setdiff(required_kri, names(dfStudyKRI))
@@ -123,7 +122,7 @@ Visualize_StudyKRI <- function(
       paste(missing_kri, collapse = ", ")
     ))
   }
-  
+
   # Check required columns in dfBoundsRef if provided
   if (!is.null(dfBoundsRef)) {
     required_group <- c("StudyMonth", "LowerBound", "UpperBound", "MedianMetric")
@@ -135,7 +134,7 @@ Visualize_StudyKRI <- function(
       ))
     }
   }
-  
+
   # Check required columns in dfBounds if provided
   if (!is.null(dfBounds)) {
     required_study <- c("StudyMonth", "LowerBound", "UpperBound", "MedianMetric")
@@ -147,27 +146,27 @@ Visualize_StudyKRI <- function(
       ))
     }
   }
-  
+
   if (!is.character(strStudyID) || length(strStudyID) != 1) {
     stop("strStudyID must be a single character string")
   }
-  
+
   if (!is.null(nMaxMonth)) {
     if (!is.numeric(nMaxMonth) || length(nMaxMonth) != 1 || nMaxMonth <= 0) {
       stop("nMaxMonth must be NULL or a positive number")
     }
   }
-  
+
   # Filter dfStudyKRI by strStudyID if StudyID column exists
   if ("StudyID" %in% names(dfStudyKRI)) {
     dfStudyKRI <- dfStudyKRI[dfStudyKRI$StudyID == strStudyID, ]
   }
-  
+
   # Filter dfBounds by strStudyID if StudyID column exists
   if (!is.null(dfBounds) && "StudyID" %in% names(dfBounds)) {
     dfBounds <- dfBounds[dfBounds$StudyID == strStudyID, ]
   }
-  
+
   # Filter to maximum month if specified
   if (!is.null(nMaxMonth)) {
     dfStudyKRI <- dfStudyKRI[dfStudyKRI[[strStudyMonthCol]] <= nMaxMonth, ]
@@ -178,21 +177,21 @@ Visualize_StudyKRI <- function(
       dfBounds <- dfBounds[dfBounds$StudyMonth <= nMaxMonth, ]
     }
   }
-  
+
   # Check for empty data after filtering
   if (nrow(dfStudyKRI) == 0) {
     stop("No data available for dfStudyKRI after filtering")
   }
-  
+
   if (!is.null(dfBoundsRef) && nrow(dfBoundsRef) == 0) {
     stop("No data available for dfBoundsRef after filtering")
   }
-  
+
   # Generate default title if not provided
   if (is.null(strTitle)) {
     strTitle <- sprintf("Study %s KRI Comparison", strStudyID)
   }
-  
+
   # Generate default subtitle if not provided
   if (is.null(strSubtitle)) {
     if (!is.null(dfBoundsRef) && "StudyCount" %in% names(dfBoundsRef)) {
@@ -204,7 +203,7 @@ Visualize_StudyKRI <- function(
       strSubtitle <- ""
     }
   }
-  
+
   # Start with base plot
   if (!is.null(dfBoundsRef) && nrow(dfBoundsRef) > 0) {
     # Start with group bounds (background layer - light blue)
@@ -224,7 +223,7 @@ Visualize_StudyKRI <- function(
     # No reference bounds - start with empty plot
     p <- ggplot2::ggplot(dfStudyKRI, ggplot2::aes(x = .data[[strStudyMonthCol]]))
   }
-  
+
   # Add individual study bounds if provided (middle layer - orange)
   if (!is.null(dfBounds) && nrow(dfBounds) > 0) {
     p <- p +
@@ -239,7 +238,7 @@ Visualize_StudyKRI <- function(
         alpha = 0.4
       )
   }
-  
+
   # Add actual study metric line (foreground layer - black)
   p <- p +
     ggplot2::geom_line(
@@ -261,7 +260,7 @@ Visualize_StudyKRI <- function(
       ),
       size = 2
     )
-  
+
   # Add labels
   p <- p +
     ggplot2::labs(
@@ -291,7 +290,6 @@ Visualize_StudyKRI <- function(
       panel.grid.minor = ggplot2::element_blank(),
       legend.position = "right"
     )
-  
+
   return(p)
 }
-
