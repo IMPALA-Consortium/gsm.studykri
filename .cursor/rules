@@ -222,3 +222,10 @@ n_steps <- length(module_wf_gsm$report_kri_site$steps)
 module_wf_gsm$report_kri_site$steps[[n_steps]]$params$strInputPath <- report_path
 
 lModule <- gsm.core::RunWorkflows(module_wf_gsm, lReport)
+
+
+README.Rmd
+
+- base on https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/README.Rmd (look it up) double check content agains gsm.studykri and adapr if necessary
+- add disclaimer about AI usage mention cursor and Sonnet 4.5
+- add code demo similar to cookbook.rmd until the first visualisation only use days on study example, add one code chunk, use code comments for the explanations
