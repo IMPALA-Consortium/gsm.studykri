@@ -73,7 +73,7 @@ dfComparison <- dfBootstrapStudy \%>\%
 
 dfBoundsRef <- Analyze_StudyKRI_PredictBounds(
   dfInput = dfComparison,
-  vBy = character(0),  # Combine all studies
+  vBy = character(0), # Combine all studies
   nConfLevel = 0.95
 )
 }
