@@ -45,19 +45,8 @@ library(gsm.studykri)
 
 # Load raw data from clindata package
 lRaw <- list(
-  Raw_SITE = clindata::ctms_site,
-  Raw_STUDY = clindata::ctms_study,
-  Raw_PD = clindata::ctms_protdev,
-  Raw_DATAENT = clindata::edc_data_pages,
-  Raw_QUERY = clindata::edc_queries,
   Raw_AE = clindata::rawplus_ae,
-  Raw_SUBJ = clindata::rawplus_dm,
-  Raw_ENROLL = clindata::rawplus_enroll,
-  Raw_Randomization = clindata::rawplus_ixrsrand,
-  Raw_LB = clindata::rawplus_lb,
-  Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
-  Raw_STUDCOMP = clindata::rawplus_studcomp,
-  Raw_VISIT = clindata::rawplus_visdt
+  Raw_SUBJ = clindata::rawplus_dm
 )
 
 # Simulate portfolio with 4 studies, AA-4 oversampled for low AE counts
@@ -118,9 +107,21 @@ df_Bounds <- Analyze_StudyKRI_PredictBounds(
   nConfLevel = 0.95
 ) %>% tibble()
 
-# Plot KRI over time with confidence intervals for study AA-4
+# Calculate reference portfolio bounds from studies AA-1, AA-2, AA-3
+# Reference bounds equalize site counts across studies for fair comparison
+df_Bounds_Ref <- dfInputDays %>%
+  Analyze_StudyKRI_PredictBoundsRefSet(
+    vStudyFilter = c("AA-1", "AA-2", "AA-3"),
+    nBootstrapReps = 1000,
+    nConfLevel = 0.95,
+    nMinDenominator = 25
+  ) %>% tibble()
+#> Resampling with minimum group count: 71
+
+# Plot AA-4 KRI vs reference portfolio confidence intervals
 Visualize_StudyKRI(
   dfStudyKRI = dfTransformed,
+  dfBoundsRef = df_Bounds_Ref,
   dfBounds = df_Bounds,
   strStudyID = "AA-4"
 )

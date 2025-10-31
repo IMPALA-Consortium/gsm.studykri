@@ -108,7 +108,7 @@ dfInput <- gsm.studykri::Input_CountSiteByMonth(
   tibble()
 
 dfInput
- ```
+```
 
 Alternatively we can also use days on study as a denominator by passing subjects as denominator and an end date.
 

@@ -228,4 +228,4 @@ README.Rmd
 
 - base on https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/README.Rmd (look it up) double check content agains gsm.studykri and adapr if necessary
 - add disclaimer about AI usage mention cursor and Sonnet 4.5
-- add code demo similar to cookbook.rmd until the first visualisation only use days on study example, add one code chunk, use code comments for the explanations
+- add code demo similar to cookbook.rmd until the first visualisation that includes also the reference studies. use days on study example, add one code chunk, use code comments for the explanations
