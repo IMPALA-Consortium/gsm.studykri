@@ -239,3 +239,12 @@ here is an example how this. can be done:
 https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/.github/workflows/pkgdown.yaml 
 
 https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/_pkgdown.yml 
+
+
+Code Coverage
+- Code Coverage needs to be 100%
+
+Sys.setenv(NOT_CRAN = "true")
+cov <- covr::package_coverage()
+cov
+covr::file_report(cov, "R/filename.R")

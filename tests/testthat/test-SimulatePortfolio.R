@@ -76,4 +76,74 @@ test_that("SimulatePortfolio validates inputs", {
     SimulatePortfolio(lRaw, dfConfig = dfConfig),
     regexp = "duplicate"
   )
+  
+  # Missing required columns in dfConfig
+  dfConfig_bad <- data.frame(
+    studyid = c("TEST1", "TEST2")
+    # Missing nSubjects column
+  )
+  expect_error(
+    SimulatePortfolio(lRaw, dfConfig = dfConfig_bad),
+    regexp = "studyid, nSubjects"
+  )
+})
+
+test_that("SimulatePortfolio handles optional dfConfig parameters", {
+  lRaw <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_SITE = clindata::ctms_site
+  )
+  
+  # Test with replacement parameter
+  dfConfig <- data.frame(
+    studyid = c("TEST1", "TEST2"),
+    nSubjects = c(20, 30),
+    replacement = c(TRUE, FALSE)
+  )
+  
+  result <- SimulatePortfolio(lRaw, dfConfig = dfConfig, seed = 123)
+  expect_equal(length(unique(result$Raw_SUBJ$studyid)), 2)
+  
+  # Test with strOversamplDomain parameter
+  dfConfig2 <- data.frame(
+    studyid = c("TEST3", "TEST4"),
+    nSubjects = c(25, 35),
+    strOversamplDomain = c("Raw_AE", "Raw_AE"),
+    vOversamplQuantileRange_min = c(0, 0.5),
+    vOversamplQuantileRange_max = c(0.5, 1.0)
+  )
+  
+  result2 <- suppressMessages(
+    SimulatePortfolio(lRaw, dfConfig = dfConfig2, seed = 456)
+  )
+  expect_equal(length(unique(result2$Raw_SUBJ$studyid)), 2)
+  
+  # Test with only min specified (should default max to 1)
+  dfConfig3 <- data.frame(
+    studyid = "TEST5",
+    nSubjects = 20,
+    strOversamplDomain = "Raw_AE",
+    vOversamplQuantileRange_min = 0.75
+    # max not specified, should default to 1
+  )
+  
+  result3 <- suppressMessages(
+    SimulatePortfolio(lRaw, dfConfig = dfConfig3, seed = 789)
+  )
+  expect_true(nrow(result3$Raw_SUBJ) > 0)
+  
+  # Test with only max specified (should default min to 0)
+  dfConfig4 <- data.frame(
+    studyid = "TEST6",
+    nSubjects = 20,
+    strOversamplDomain = "Raw_AE",
+    vOversamplQuantileRange_max = 0.25
+    # min not specified, should default to 0
+  )
+  
+  result4 <- suppressMessages(
+    SimulatePortfolio(lRaw, dfConfig = dfConfig4, seed = 101)
+  )
+  expect_true(nrow(result4$Raw_SUBJ) > 0)
 })

@@ -4,7 +4,14 @@
 \alias{process_subject_domain}
 \title{Process subject-level domain}
 \usage{
-process_subject_domain(df, subject_mapping, new_study_id, sampled_subj)
+process_subject_domain(
+  df,
+  subject_mapping,
+  new_study_id,
+  sampled_subj,
+  raw_subj,
+  vSubjectIDs
+)
 }
 \description{
 Process subject-level domain

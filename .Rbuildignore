@@ -6,3 +6,4 @@
 ^[^/]+\.html$
 ^\.Renviron$
 ^README\.Rmd$
+^docs$
