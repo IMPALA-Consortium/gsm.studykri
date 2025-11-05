@@ -241,3 +241,140 @@ test_that("Analyze_StudyKRI_PredictBoundsRef returns lazy table with lazy input"
   # Cleanup
   DBI::dbDisconnect(lazy_tables$con)
 })
+
+# Test 6: Transform_CumCount lazy table month sequence auto-generation
+test_that("Transform_CumCount auto-generates month sequences for lazy tables", {
+  test_data <- list(
+    dfInput = data.frame(
+      StudyID = rep("STUDY1", 6),
+      GroupID = rep(c("SITE1", "SITE2"), each = 3),
+      GroupLevel = "Site",
+      MonthYYYYMM = rep(c(202301, 202302, 202303), 2),
+      Numerator = c(5, 10, 15, 3, 8, 12),
+      Denominator = c(10, 20, 30, 10, 20, 30),
+      Metric = c(0.5, 0.5, 0.5, 0.3, 0.4, 0.4),
+      stringsAsFactors = FALSE
+    )
+  )
+  
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  DBI::dbWriteTable(con, "dfInput", test_data$dfInput)
+  tblInput <- dplyr::tbl(con, "dfInput")
+  
+  result <- Transform_CumCount(
+    dfInput = tblInput,
+    vBy = "StudyID",
+    nMinDenominator = 25
+  )
+  
+  expect_s3_class(result, "tbl_lazy")
+  
+  result_df <- dplyr::collect(result)
+  expect_s3_class(result_df, "data.frame")
+  expect_true(nrow(result_df) > 0)
+  expect_true(all(c("StudyID", "MonthYYYYMM", "StudyMonth", "Numerator",
+                    "Denominator", "Metric", "GroupCount") %in% names(result_df)))
+  expect_true(all(diff(result_df$Numerator) >= 0))
+  
+  DBI::dbDisconnect(con)
+})
+
+# Test 7: Transform_CumCount lazy table with multiple studies  
+test_that("Transform_CumCount handles multiple studies with lazy tables", {
+  test_data <- list(
+    dfInput = data.frame(
+      StudyID = rep(c("STUDY1", "STUDY2"), each = 6),
+      GroupID = rep(c("SITE1", "SITE2"), each = 3, times = 2),
+      GroupLevel = "Site",
+      MonthYYYYMM = rep(c(202301, 202302, 202303), 4),
+      Numerator = rep(c(5, 10, 15), 4),
+      Denominator = rep(c(10, 20, 30), 4),
+      Metric = rep(c(0.5, 0.5, 0.5), 4),
+      stringsAsFactors = FALSE
+    )
+  )
+  
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  DBI::dbWriteTable(con, "dfInput", test_data$dfInput)
+  tblInput <- dplyr::tbl(con, "dfInput")
+  
+  result <- Transform_CumCount(dfInput = tblInput, vBy = "StudyID", nMinDenominator = 25)
+  
+  expect_s3_class(result, "tbl_lazy")
+  result_df <- dplyr::collect(result)
+  
+  expect_equal(length(unique(result_df$StudyID)), 2)
+  expect_true(all(c("STUDY1", "STUDY2") %in% result_df$StudyID))
+  
+  for (study in c("STUDY1", "STUDY2")) {
+    study_data <- result_df[result_df$StudyID == study, ]
+    expect_equal(min(study_data$StudyMonth), 1)
+  }
+  
+  DBI::dbDisconnect(con)
+})
+
+# Test 8: Transform_CumCount lazy table cumulative persistence
+test_that("Transform_CumCount lazy table produces monotonically increasing cumulative counts", {
+  test_data <- list(
+    dfInput = data.frame(
+      StudyID = rep("STUDY1", 5),
+      GroupID = c("SITE1", "SITE1", "SITE1", "SITE2", "SITE2"),
+      GroupLevel = "Site",
+      MonthYYYYMM = c(202301, 202302, 202303, 202301, 202302),
+      Numerator = c(10, 5, 8, 20, 10),
+      Denominator = c(100, 50, 80, 200, 100),
+      Metric = c(0.1, 0.1, 0.1, 0.1, 0.1),
+      stringsAsFactors = FALSE
+    )
+  )
+  
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  DBI::dbWriteTable(con, "dfInput", test_data$dfInput)
+  tblInput <- dplyr::tbl(con, "dfInput")
+  
+  result <- Transform_CumCount(dfInput = tblInput, vBy = "StudyID", nMinDenominator = 0)
+  
+  expect_s3_class(result, "tbl_lazy")
+  result_df <- dplyr::collect(result) %>% dplyr::arrange(MonthYYYYMM)
+  
+  numerator_diffs <- diff(result_df$Numerator)
+  expect_true(all(numerator_diffs >= 0))
+  
+  expect_equal(result_df$Numerator[1], 30)
+  expect_equal(result_df$Numerator[2], 45)
+  expect_equal(result_df$Numerator[3], 53) # Site2 contribution persists!
+  
+  DBI::dbDisconnect(con)
+})
+
+# Test 9: Transform_CumCount lazy table filters gaps correctly
+test_that("Transform_CumCount lazy table fills gaps in calendar months", {
+  test_data <- list(
+    dfInput = data.frame(
+      StudyID = rep("STUDY1", 6),
+      GroupID = rep(c("SITE1", "SITE2"), each = 3),
+      GroupLevel = "Site",
+      MonthYYYYMM = rep(c(202301, 202303, 202305), 2),
+      Numerator = c(5, 10, 15, 3, 8, 12),
+      Denominator = c(10, 20, 30, 10, 20, 30),
+      Metric = c(0.5, 0.5, 0.5, 0.3, 0.4, 0.4),
+      stringsAsFactors = FALSE
+    )
+  )
+  
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  DBI::dbWriteTable(con, "dfInput", test_data$dfInput)
+  tblInput <- dplyr::tbl(con, "dfInput")
+  
+  result <- Transform_CumCount(dfInput = tblInput, vBy = "StudyID", nMinDenominator = 0)
+  
+  expect_s3_class(result, "tbl_lazy")
+  result_df <- dplyr::collect(result) %>% dplyr::arrange(MonthYYYYMM)
+  
+  expect_equal(nrow(result_df), 5)
+  expect_true(all(c(202301, 202302, 202303, 202304, 202305) %in% result_df$MonthYYYYMM))
+  expect_equal(result_df$StudyMonth, 1:5)
+  
+  DBI::dbDisconnect(con)
+})

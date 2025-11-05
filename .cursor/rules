@@ -248,3 +248,35 @@ Sys.setenv(NOT_CRAN = "true")
 cov <- covr::package_coverage()
 cov
 covr::file_report(cov, "R/filename.R")
+
+
+lazy tables:
+- do not create separate if else logic that checks for dataframe or lazy table in the user facing functions
+- create separate helper functions for these cases for example:
+
+#' @keywords internal
+SortDf <- function(data, ...) {
+  if (inherits(data, "data.frame")) {
+    data <- data %>%
+      dplyr::arrange(...)
+  } else if (inherits(data, "tbl_lazy")) {
+    data <- data %>%
+      dbplyr::window_order(...)
+  }
+
+  return(data)
+}
+
+- never define helper functions within the scope of a function, you may use short anonymous functions
+
+
+this logic is acceptable inside user facing functions
+df1 # lazy or dataframe
+
+df_expand # dataframe create with nest
+
+if (df1 is lazy table) {
+  df_expand <- expand_lazy_table(df1, tblExpansion, dfExpansion_mem = df_expand)
+}
+
+df_expanded <- create as join of df1 and df_expand

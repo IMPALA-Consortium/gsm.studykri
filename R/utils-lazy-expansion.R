@@ -152,3 +152,51 @@ validate_month_sequence <- function(tblMonthSeq, vGroupCols) {
 
   invisible(TRUE)
 }
+
+#' Sort Data Frame or Lazy Table
+#'
+#' @param data data.frame or tbl_lazy
+#' @param ... Columns to sort by
+#' @return Sorted data
+#' @keywords internal
+SortDf <- function(data, ...) {
+  if (inherits(data, "data.frame")) {
+    data %>% dplyr::arrange(...)
+  } else if (inherits(data, "tbl_lazy")) {
+    data %>% dbplyr::window_order(...)
+  }
+}
+
+#' Generate Complete Month Sequence
+#'
+#' @param start_yyyymm numeric. Start month in YYYYMM format
+#' @param end_yyyymm numeric. End month in YYYYMM format
+#' @return data.frame with MonthYYYYMM column
+#' @keywords internal
+generate_month_seq <- function(start_yyyymm, end_yyyymm) {
+  # Check for NA values
+  if (is.na(start_yyyymm) || is.na(end_yyyymm)) {
+    stop("Cannot generate month sequence: start or end month is NA")
+  }
+  
+  start_year <- floor(start_yyyymm / 100)
+  start_month <- start_yyyymm %% 100
+  end_year <- floor(end_yyyymm / 100)
+  end_month <- end_yyyymm %% 100
+  
+  # Validate month values
+  if (start_month < 1 || start_month > 12 || end_month < 1 || end_month > 12) {
+    stop(sprintf(
+      "Invalid month in YYYYMM format: start=%d (month=%d), end=%d (month=%d)",
+      start_yyyymm, start_month, end_yyyymm, end_month
+    ))
+  }
+  
+  dates <- seq(
+    as.Date(paste0(start_year, "-", sprintf("%02d", start_month), "-01")),
+    as.Date(paste0(end_year, "-", sprintf("%02d", end_month), "-01")),
+    by = "month"
+  )
+  
+  data.frame(MonthYYYYMM = as.numeric(format(dates, "%Y%m")))
+}

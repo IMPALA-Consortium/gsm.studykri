@@ -277,22 +277,6 @@ test_that("Transform_CumCount validates nMinDenominator parameter", {
   )
 })
 
-test_that("Transform_CumCount handles empty data frame", {
-  dfInput <- data.frame(
-    StudyID = character(0),
-    GroupID = character(0),
-    MonthYYYYMM = numeric(0),
-    Numerator = numeric(0),
-    Denominator = numeric(0),
-    Metric = numeric(0)
-  )
-
-  expect_error(
-    Transform_CumCount(dfInput = dfInput, vBy = "StudyID"),
-    "dfInput has no rows"
-  )
-})
-
 test_that("Transform_CumCount filters all data when threshold too high", {
   dfInput <- data.frame(
     StudyID = rep("STUDY001", 6),
@@ -520,4 +504,54 @@ test_that("Cumulative counts persist when sites drop out (integration test)", {
   expect_equal(result_ordered$Denominator[1], 300) # Month 1
   expect_equal(result_ordered$Denominator[2], 450) # Month 2
   expect_equal(result_ordered$Denominator[3], 530) # Month 3
+})
+
+test_that("Transform_CumCount accepts tbl (non-lazy) input", {
+  # Create a tibble (tbl_df) input
+  dfInput <- dplyr::tibble(
+    StudyID = rep("STUDY001", 6),
+    GroupID = rep(c("SITE01", "SITE02"), each = 3),
+    GroupLevel = "Site",
+    MonthYYYYMM = rep(c(202301, 202302, 202303), 2),
+    Numerator = c(5, 10, 15, 3, 8, 12),
+    Denominator = c(10, 20, 30, 10, 20, 30),
+    Metric = c(0.5, 0.5, 0.5, 0.3, 0.4, 0.4)
+  )
+
+  result <- Transform_CumCount(
+    dfInput = dfInput,
+    vBy = "StudyID",
+    nMinDenominator = 25
+  )
+
+  expect_s3_class(result, "data.frame")
+  expect_true(nrow(result) > 0)
+})
+
+test_that("Transform_CumCount handles zero cumulative denominator correctly", {
+  # Create scenario where some months have zero denominator after aggregation
+  dfInput <- data.frame(
+    StudyID = rep("STUDY001", 9),
+    GroupID = rep(c("SITE01", "SITE02", "SITE03"), each = 3),
+    GroupLevel = "Site",
+    MonthYYYYMM = rep(c(202301, 202302, 202303), 3),
+    Numerator = c(5, 0, 15, 3, 0, 12, 2, 0, 13),
+    Denominator = c(10, 0, 30, 10, 0, 30, 10, 0, 30), # Month 2 has zero denominator
+    Metric = c(0.5, NA, 0.5, 0.3, NA, 0.4, 0.2, NA, 0.43)
+  )
+
+  result <- Transform_CumCount(
+    dfInput = dfInput,
+    vBy = "StudyID",
+    nMinDenominator = 0 # Don't filter to see all months
+  )
+
+  # Month with zero total denominator should be filtered by threshold,
+  # but test that metric calculation handles zero denominators correctly
+  expect_type(result$Metric, "double")
+
+  # After cumsum, denominators should never be zero (cumulative),
+  # but test the if_else logic is exercised
+  # Month 202302 cumulative will be 30 + 0 = 30 (from previous)
+  expect_true(all(!is.na(result$Metric)))
 })
