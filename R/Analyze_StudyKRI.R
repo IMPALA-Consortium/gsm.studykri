@@ -98,11 +98,6 @@ Analyze_StudyKRI <- function(
     stop("dfInput has no rows")
   }
 
-  # Helper to detect lazy tables
-  is_lazy_table <- function(x) {
-    inherits(x, "tbl_lazy")
-  }
-
   # Set random seed if provided (only affects in-memory operations)
   if (!is.null(seed)) {
     if (!is.numeric(seed) || length(seed) != 1) {
@@ -111,16 +106,13 @@ Analyze_StudyKRI <- function(
     set.seed(seed)
   }
 
-  # Detect if working with lazy tables
-  is_lazy <- is_lazy_table(dfInput)
-
   # Create replicate index
   dfReps_mem <- data.frame(
     BootstrapRep = seq_len(nBootstrapReps)
   )
 
   # If lazy table, use helper function
-  if (is_lazy) {
+  if (inherits(dfInput, "tbl_lazy")) {
     dfReps <- expand_lazy_table(
       tblInput = dfInput,
       tblExpansion = tblBootstrapReps,
@@ -192,32 +184,14 @@ Analyze_StudyKRI <- function(
 
     dfPositions_mem <- data.frame(Position = seq_len(max_effective))
 
-    # For lazy tables, use helper if needed
-    if (is_lazy && !is.null(tblBootstrapReps)) {
-      # User provided bootstrap reps - they might also provide positions
-      # For now, create positions in-memory since it's typically small
-      dfPositions <- dfPositions_mem
-    } else if (is_lazy) {
-      # Try to write positions to database (already have connection from reps)
-      tryCatch(
-        {
-          con <- dbplyr::remote_con(dfInput)
-          dfPositions <- dplyr::copy_to(con, dfPositions_mem,
-            name = "bootstrap_positions",
-            temporary = TRUE, overwrite = TRUE
-          )
-        },
-        error = function(e) {
-          stop(sprintf(
-            paste0(
-              "Failed to create position indices for nGroups with lazy table.\n\n",
-              "When using nGroups with lazy tables, temp table creation is required.\n",
-              "Consider using collect() first or ensure write privileges.\n\n",
-              "Original error: %s"
-            ),
-            conditionMessage(e)
-          ), call. = FALSE)
-        }
+    # Convert to lazy table if needed
+    if (inherits(dfInput, "tbl_lazy")) {
+      dfPositions <- expand_lazy_table(
+        tblInput = dfInput,
+        tblExpansion = NULL,
+        dfExpansion_mem = dfPositions_mem,
+        strTempTableName = "bootstrap_positions",
+        strExpansionType = "position indices for nGroups"
       )
     } else {
       dfPositions <- dfPositions_mem
@@ -258,10 +232,5 @@ Analyze_StudyKRI <- function(
     ) %>%
     dplyr::select(-"GroupNumber")
 
-  # Return (keeping as lazy table if input was lazy, or convert to data.frame)
-  if (inherits(dfInput, "tbl_lazy")) {
-    return(dfBootstrapData)
-  } else {
-    return(as.data.frame(dfBootstrapData))
-  }
+  return(dfBootstrapData)
 }

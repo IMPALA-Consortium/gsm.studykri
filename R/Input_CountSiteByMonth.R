@@ -380,10 +380,5 @@ Input_CountSiteByMonth <- function(
       "MonthYYYYMM"
     )
 
-  # Return lazy table if input was lazy, data.frame otherwise
-  if (inherits(dfNumerator, "tbl_lazy") || inherits(dfDenominator, "tbl_lazy") || inherits(dfSubjects, "tbl_lazy")) {
-    return(dfFinal)
-  } else {
-    return(as.data.frame(dfFinal))
-  }
+  return(dfFinal)
 }

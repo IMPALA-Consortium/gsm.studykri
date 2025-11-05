@@ -126,10 +126,5 @@ Analyze_StudyKRI_PredictBounds <- function(
   dfResult <- dfBounds %>%
     dplyr::arrange(dplyr::across(dplyr::all_of(.env$group_cols)))
 
-  # Return lazy table if input was lazy, data.frame otherwise
-  if (inherits(dfInput, "tbl_lazy")) {
-    return(dfResult)
-  } else {
-    return(as.data.frame(dfResult))
-  }
+  return(dfResult)
 }

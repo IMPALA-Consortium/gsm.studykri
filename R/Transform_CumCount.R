@@ -212,10 +212,5 @@ Transform_CumCount <- function(
   dfFinal <- dfResult %>%
     dplyr::select(dplyr::all_of(.env$final_cols))
 
-  # Return lazy table if input was lazy, data.frame otherwise
-  if (inherits(dfInput, "tbl_lazy")) {
-    return(dfFinal)
-  } else {
-    return(as.data.frame(dfFinal))
-  }
+  return(dfFinal)
 }

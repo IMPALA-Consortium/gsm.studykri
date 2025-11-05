@@ -89,15 +89,10 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     ))
   }
 
-  # Helper to detect lazy tables
-  is_lazy_table <- function(x) {
-    inherits(x, "tbl_lazy")
-  }
-
   # Handle vStudyFilter - extract all studies if NULL
   if (is.null(vStudyFilter)) {
     # Extract all unique study IDs from input
-    if (is_lazy_table(dfInput)) {
+    if (inherits(dfInput, "tbl_lazy")) {
       vStudyFilter <- dfInput %>%
         dplyr::distinct(.data[[strStudyCol]]) %>%
         dplyr::collect() %>%
@@ -145,7 +140,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 
   # Find minimum across studies
   # For lazy tables, collect just the counts
-  if (is_lazy_table(dfGroupCounts)) {
+  if (inherits(dfGroupCounts, "tbl_lazy")) {
     dfGroupCounts_mem <- dplyr::collect(dfGroupCounts)
     nMinGroups <- min(dfGroupCounts_mem$GroupCount)
   } else {
@@ -189,12 +184,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
       StudyCount = length(.env$vStudyFilter)
     )
 
-  # Return lazy table if input was lazy, data.frame otherwise
-  if (is_lazy_table(dfInput)) {
-    return(dfResult)
-  } else {
-    return(as.data.frame(dfResult))
-  }
+  return(dfResult)
 }
 
 #' Predict Bounds for Multiple Studies Using Reference Study Mappings
