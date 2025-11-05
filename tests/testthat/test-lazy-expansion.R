@@ -201,3 +201,81 @@ test_that("expand_lazy_table returns user-supplied lazy table when connection ma
   # Result should be the same as user-supplied table
   expect_equal(nrow(dplyr::collect(result)), 7)
 })
+
+test_that("expand_lazy_table handles NULL connection error", {
+  skip_if_not_installed("duckdb")
+
+  # Create a lazy table
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  on.exit(DBI::dbDisconnect(con))
+
+  DBI::dbWriteTable(con, "test_data", data.frame(x = 1:5))
+  tbl_lazy <- dplyr::tbl(con, "test_data")
+
+  # Mock dbplyr::remote_con to return NULL
+  local_mocked_bindings(
+    remote_con = function(x) NULL,
+    .package = "dbplyr"
+  )
+
+  expect_error(
+    expand_lazy_table(
+      tblInput = tbl_lazy,
+      tblExpansion = NULL,
+      dfExpansion_mem = data.frame(x = 1:10),
+      strTempTableName = "test_temp",
+      strExpansionType = "test expansion"
+    ),
+    "Cannot extract database connection from lazy table"
+  )
+})
+
+test_that("expand_lazy_table handles temp table creation failure", {
+  skip_if_not_installed("duckdb")
+
+  # Create a lazy table
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  on.exit(DBI::dbDisconnect(con))
+
+  DBI::dbWriteTable(con, "test_data", data.frame(x = 1:5))
+  tbl_lazy <- dplyr::tbl(con, "test_data")
+
+  # Mock dplyr::copy_to to throw an error
+  local_mocked_bindings(
+    copy_to = function(...) stop("Permission denied: cannot create temporary table"),
+    .package = "dplyr"
+  )
+
+  expect_error(
+    expand_lazy_table(
+      tblInput = tbl_lazy,
+      tblExpansion = NULL,
+      dfExpansion_mem = data.frame(x = 1:10),
+      strTempTableName = "test_temp",
+      strExpansionType = "bootstrap replicates"
+    ),
+    "Failed to create bootstrap replicates for lazy table"
+  )
+
+  expect_error(
+    expand_lazy_table(
+      tblInput = tbl_lazy,
+      tblExpansion = NULL,
+      dfExpansion_mem = data.frame(x = 1:10),
+      strTempTableName = "test_temp",
+      strExpansionType = "bootstrap replicates"
+    ),
+    "Possible solutions"
+  )
+
+  expect_error(
+    expand_lazy_table(
+      tblInput = tbl_lazy,
+      tblExpansion = NULL,
+      dfExpansion_mem = data.frame(x = 1:10),
+      strTempTableName = "test_temp",
+      strExpansionType = "bootstrap replicates"
+    ),
+    "Permission denied"
+  )
+})
