@@ -112,7 +112,7 @@ validate_month_sequence <- function(tblMonthSeq, vGroupCols) {
 
   # Now we can safely sort
   sample <- sample %>%
-    dplyr::arrange(dplyr::across(dplyr::all_of(vGroupCols)), .data$MonthYYYYMM)
+    SortDf(dplyr::across(dplyr::all_of(vGroupCols)), .data$MonthYYYYMM)
 
   # Generate expected sequence helper
   generate_month_seq <- function(start_yyyymm, end_yyyymm) {

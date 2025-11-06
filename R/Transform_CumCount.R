@@ -102,7 +102,7 @@ Transform_CumCount <- function(
   # Aggregate to study level by grouping columns and StudyMonth
   dfAggregated <- dfWithStudyMonth %>%
     dplyr::summarise(
-      MonthYYYYMM = min(.data$MonthYYYYMM), # Keep the calendar month
+      MonthYYYYMM = min(.data$MonthYYYYMM, na.rm = TRUE), # Keep the calendar month
       Numerator = sum(.data$Numerator, na.rm = TRUE),
       Denominator = sum(.data$Denominator, na.rm = TRUE),
       GroupCount = dplyr::n_distinct(.data$GroupID),
@@ -113,8 +113,8 @@ Transform_CumCount <- function(
   # Get group-specific month ranges (collect works for both types)
   dfMonthRanges <- dfAggregated %>%
     dplyr::summarise(
-      min_month = min(.data$MonthYYYYMM),
-      max_month = max(.data$MonthYYYYMM),
+      min_month = min(.data$MonthYYYYMM, na.rm = TRUE),
+      max_month = max(.data$MonthYYYYMM, na.rm = TRUE),
       .by = dplyr::all_of(.env$vBy)
     ) %>%
     dplyr::collect()

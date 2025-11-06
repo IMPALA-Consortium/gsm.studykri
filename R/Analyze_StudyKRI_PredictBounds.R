@@ -124,7 +124,7 @@ Analyze_StudyKRI_PredictBounds <- function(
 
   # Arrange by grouping columns and study month
   dfResult <- dfBounds %>%
-    dplyr::arrange(dplyr::across(dplyr::all_of(.env$group_cols)))
+    SortDf(dplyr::across(dplyr::all_of(.env$group_cols)))
 
   return(dfResult)
 }

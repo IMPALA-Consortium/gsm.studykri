@@ -92,14 +92,10 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   # Handle vStudyFilter - extract all studies if NULL
   if (is.null(vStudyFilter)) {
     # Extract all unique study IDs from input
-    if (inherits(dfInput, "tbl_lazy")) {
-      vStudyFilter <- dfInput %>%
-        dplyr::distinct(.data[[strStudyCol]]) %>%
-        dplyr::collect() %>%
-        dplyr::pull(.data[[strStudyCol]])
-    } else {
-      vStudyFilter <- unique(dfInput[[strStudyCol]])
-    }
+    vStudyFilter <- dfInput %>%
+      dplyr::distinct(.data[[strStudyCol]]) %>%
+      dplyr::collect() %>%
+      dplyr::pull(.data[[strStudyCol]])
     message(sprintf("No vStudyFilter specified. Using all %d studies.", length(vStudyFilter)))
   }
 
@@ -178,10 +174,13 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   )
 
   # Add metadata
+  # Compute scalar values before mutate to avoid SQL translation issues
+  nStudyCount <- length(vStudyFilter)
+  
   dfResult <- dfBounds %>%
     dplyr::mutate(
       GroupCount = .env$nMinGroups,
-      StudyCount = length(.env$vStudyFilter)
+      StudyCount = .env$nStudyCount
     )
 
   return(dfResult)

@@ -431,3 +431,329 @@ test_that("Analyze_StudyKRI_PredictBoundsRef with custom column names", {
   expect_true("StudyRefID" %in% names(result))
   expect_equal(sort(unique(result$StudyID)), sort(c("STUDY1", "STUDY2")))
 })
+
+test_that("Analyze_StudyKRI_PredictBoundsRefSet with NULL vStudyFilter uses all studies", {
+  # Create data with multiple studies
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2", "STUDY3"), each = 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6, times = 3),
+    Numerator = rep(1:6, times = 15),
+    Denominator = rep(10:15, times = 15),
+    MonthYYYYMM = rep(202301:202306, times = 15),
+    Metric = runif(90, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Capture the message about using all studies
+  expect_message(
+    result <- Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = NULL,
+      nBootstrapReps = 20,
+      nConfLevel = 0.95,
+      seed = 999
+    ),
+    "No vStudyFilter specified. Using all 3 studies."
+  )
+
+  expect_s3_class(result, "data.frame")
+  expect_equal(unique(result$StudyCount), 3)
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRefSet validates vStudyFilter type", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6),
+    Numerator = rep(1:6, times = 5),
+    Denominator = rep(10:15, times = 5),
+    MonthYYYYMM = rep(202301:202306, times = 5),
+    Metric = runif(30, 0.05, 0.5),
+    stringsAsFactors = FALSE
+  )
+
+  # Non-character vStudyFilter
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = 123
+    ),
+    "vStudyFilter must be a non-empty character vector"
+  )
+
+  # NA character - will fail on "No data found" which is also acceptable
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = c(NA_character_)
+    ),
+    "No data found for specified studies in vStudyFilter"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRefSet validates nMinDenominator", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6),
+    Numerator = rep(1:6, times = 5),
+    Denominator = rep(10:15, times = 5),
+    MonthYYYYMM = rep(202301:202306, times = 5),
+    Metric = runif(30, 0.05, 0.5),
+    stringsAsFactors = FALSE
+  )
+
+  # Negative nMinDenominator
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nMinDenominator = -5
+    ),
+    "nMinDenominator must be a single non-negative numeric value"
+  )
+
+  # Non-numeric nMinDenominator
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nMinDenominator = "invalid"
+    ),
+    "nMinDenominator must be a single non-negative numeric value"
+  )
+
+  # Multiple values for nMinDenominator
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nMinDenominator = c(5, 10)
+    ),
+    "nMinDenominator must be a single non-negative numeric value"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRefSet validates nBootstrapReps edge cases", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6),
+    Numerator = rep(1:6, times = 5),
+    Denominator = rep(10:15, times = 5),
+    MonthYYYYMM = rep(202301:202306, times = 5),
+    Metric = runif(30, 0.05, 0.5),
+    stringsAsFactors = FALSE
+  )
+
+  # Zero bootstrap reps
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nBootstrapReps = 0
+    ),
+    "nBootstrapReps must be a positive integer"
+  )
+
+  # Non-numeric bootstrap reps
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nBootstrapReps = "ten"
+    ),
+    "nBootstrapReps must be a positive integer"
+  )
+
+  # Multiple values
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nBootstrapReps = c(10, 20)
+    ),
+    "nBootstrapReps must be a positive integer"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRefSet validates nConfLevel edge cases", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6),
+    Numerator = rep(1:6, times = 5),
+    Denominator = rep(10:15, times = 5),
+    MonthYYYYMM = rep(202301:202306, times = 5),
+    Metric = runif(30, 0.05, 0.5),
+    stringsAsFactors = FALSE
+  )
+
+  # nConfLevel = 0
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nConfLevel = 0
+    ),
+    "nConfLevel must be between 0 and 1"
+  )
+
+  # nConfLevel = 1
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nConfLevel = 1
+    ),
+    "nConfLevel must be between 0 and 1"
+  )
+
+  # nConfLevel < 0
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nConfLevel = -0.5
+    ),
+    "nConfLevel must be between 0 and 1"
+  )
+
+  # Non-numeric
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nConfLevel = "0.95"
+    ),
+    "nConfLevel must be between 0 and 1"
+  )
+
+  # Multiple values
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = "STUDY1",
+      nConfLevel = c(0.9, 0.95)
+    ),
+    "nConfLevel must be between 0 and 1"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRef validates strStudyRefCol missing", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6),
+    Numerator = rep(1:6, times = 5),
+    Denominator = rep(10:15, times = 5),
+    MonthYYYYMM = rep(202301:202306, times = 5),
+    Metric = runif(30, 0.05, 0.5)
+  )
+
+  # Create dfStudyRef with wrong column name
+  dfBadRef <- data.frame(study = "STUDY1", wrongcol = "REF1")
+  
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfTest,
+      dfStudyRef = dfBadRef,
+      strStudyRefCol = "studyref"
+    ),
+    "Column 'studyref' not found in dfStudyRef"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRefSet works with lazy tables", {
+  skip_if_not_installed("dbplyr")
+  skip_if_not_installed("duckdb")
+  
+  # Create in-memory database
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  
+  # Create test data
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2"), each = 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6, times = 2),
+    Numerator = rep(1:6, times = 10),
+    Denominator = rep(10:15, times = 10),
+    MonthYYYYMM = rep(202301:202306, times = 10),
+    Metric = runif(60, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+  
+  # Write to database
+  DBI::dbWriteTable(con, "site_data", dfTest)
+  
+  # Create lazy table
+  dfLazy <- dplyr::tbl(con, "site_data")
+  
+  # Test with lazy table - should not produce warnings after our fixes
+  suppressMessages({
+    result <- Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfLazy,
+      vStudyFilter = c("STUDY1", "STUDY2"),
+      nBootstrapReps = 20,
+      nConfLevel = 0.95,
+      seed = 888
+    )
+  })
+  
+  # Collect if lazy
+  if (inherits(result, "tbl_lazy")) {
+    result <- dplyr::collect(result)
+  }
+  
+  expect_s3_class(result, "data.frame")
+  expect_true(nrow(result) > 0)
+  expect_equal(unique(result$StudyCount), 2)
+  
+  # Clean up
+  DBI::dbDisconnect(con, shutdown = TRUE)
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRefSet with lazy table and NULL vStudyFilter", {
+  skip_if_not_installed("dbplyr")
+  skip_if_not_installed("duckdb")
+  
+  # Create in-memory database
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  
+  # Create test data
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2", "STUDY3"), each = 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6, times = 3),
+    Numerator = rep(1:6, times = 15),
+    Denominator = rep(10:15, times = 15),
+    MonthYYYYMM = rep(202301:202306, times = 15),
+    Metric = runif(90, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+  
+  # Write to database
+  DBI::dbWriteTable(con, "site_data", dfTest)
+  
+  # Create lazy table
+  dfLazy <- dplyr::tbl(con, "site_data")
+  
+  # Test with NULL vStudyFilter on lazy table - should not produce warnings after our fixes
+  expect_message(
+    result <- Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfLazy,
+      vStudyFilter = NULL,
+      nBootstrapReps = 20,
+      nConfLevel = 0.95,
+      seed = 777
+    ),
+    "No vStudyFilter specified. Using all 3 studies."
+  )
+  
+  # Collect if lazy
+  if (inherits(result, "tbl_lazy")) {
+    result <- dplyr::collect(result)
+  }
+  
+  expect_s3_class(result, "data.frame")
+  expect_equal(unique(result$StudyCount), 3)
+  
+  # Clean up
+  DBI::dbDisconnect(con, shutdown = TRUE)
+})

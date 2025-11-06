@@ -29,6 +29,7 @@ Rules:
 - never edit unit tests that have the prefix "hand written test -"
 - NEVER edit any vignette files
 - do not use the term validation in the context of unit tests
+- never use supressWarnings() in unit tests use expect_warning with a regex match for the expected message, always ask user to confirm unit tests that handle warnings
 
 here is an example for the correct usage of .data and .env
 
