@@ -118,19 +118,19 @@ Transform_CumCount <- function(
       .by = dplyr::all_of(.env$vBy)
     ) %>%
     dplyr::collect()
-  
+
   # Get global min/max to generate single month sequence
   global_min <- min(dfMonthRanges$min_month)
   global_max <- max(dfMonthRanges$max_month)
-  
+
   # Generate complete month sequence once (reused across all groups)
   dfAllMonths <- generate_month_seq(global_min, global_max)
-  
+
   # Cross join all groups with all months
   dfCompleteMonths_mem <- dfMonthRanges %>%
     dplyr::select(dplyr::all_of(.env$vBy)) %>%
     dplyr::cross_join(dfAllMonths)
-  
+
   # Filter to group-specific month ranges
   dfCompleteMonths_mem <- dfCompleteMonths_mem %>%
     dplyr::left_join(
@@ -139,10 +139,10 @@ Transform_CumCount <- function(
     ) %>%
     dplyr::filter(
       .data$MonthYYYYMM >= .data$min_month &
-      .data$MonthYYYYMM <= .data$max_month
+        .data$MonthYYYYMM <= .data$max_month
     ) %>%
     dplyr::select(-"min_month", -"max_month")
-  
+
   # Convert to lazy table if needed (single inline if allowed)
   if (inherits(dfAggregated, "tbl_lazy")) {
     dfCompleteMonths <- expand_lazy_table(
@@ -155,7 +155,7 @@ Transform_CumCount <- function(
   } else {
     dfCompleteMonths <- dfCompleteMonths_mem
   }
-  
+
   # Left join to fill gaps and recalculate StudyMonth
   dfAggregated <- dfCompleteMonths %>%
     dplyr::left_join(

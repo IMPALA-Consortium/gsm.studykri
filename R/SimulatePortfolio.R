@@ -166,7 +166,7 @@ ResampleStudy <- function(
 
     # Find subject ID column and map to subjid (already validated above)
     subj_info <- find_subject_id_column(domain_df, lRaw$Raw_SUBJ, vSubjectIDs)
-    
+
     # Filter out invalid mappings if needed
     if (!is.null(subj_info$valid_idx)) {
       domain_df <- domain_df[subj_info$valid_idx, ]
@@ -265,7 +265,7 @@ ResampleStudy <- function(
 
   # ---- Process All Domains ----
   lResult <- list()
-  
+
   # Get used site IDs from sampled subjects
   # For non-TargetSiteCount: use siteid (matches site_num in site table)
   # For TargetSiteCount: use invid (already set with study prefix)
@@ -278,7 +278,7 @@ ResampleStudy <- function(
     # Generic domain processing based on columns present
     subj_info <- find_subject_id_column(domain_df, lRaw$Raw_SUBJ, vSubjectIDs)
     site_info <- find_site_id_column(domain_df, vSiteIDs)
-    
+
     if (!is.null(subj_info)) {
       # Subject-level domain
       lResult[[domain_name]] <- process_subject_domain(
@@ -331,46 +331,46 @@ has_column <- function(df, col_name) {
 generate_sites <- function(raw_site_df, sampled_subj, new_study_id, target_site_count, vSiteIDs) {
   # 1. Generate site IDs
   new_site_nums <- seq_len(target_site_count)
-  
+
   # 2. Sample metadata for each site from original sites
   sampled_site_indices <- sample(seq_len(nrow(raw_site_df)), size = target_site_count, replace = TRUE)
   generated_sites <- raw_site_df[sampled_site_indices, ]
-  
+
   # 3. Update site IDs
   new_site_ids <- paste0(new_study_id, "_", new_site_nums)
   generated_sites$invid <- new_site_ids
   if (has_column(generated_sites, "studyid")) {
     generated_sites$studyid <- new_study_id
   }
-  
+
   # Update site_num to match the numeric part of invid
   if (has_column(generated_sites, "site_num")) {
     generated_sites$site_num <- as.character(new_site_nums)
   }
-  
+
   # 4. Sample patient counts from observed distribution
   site_info <- find_site_id_column(sampled_subj, vSiteIDs)
   site_col_subj <- if (!is.null(site_info)) site_info$column else "invid"
   observed_counts <- as.vector(table(sampled_subj[[site_col_subj]]))
-  
+
   # Sample patient counts for new sites
   sampled_counts <- sample(observed_counts, size = target_site_count, replace = TRUE)
-  
+
   # 5. Create weighted ID vector
   weighted_site_ids <- rep(new_site_ids, times = sampled_counts)
-  
+
   # 6. Assign subjects to sites via weighted sampling
   sampled_subj$invid <- sample(weighted_site_ids, size = nrow(sampled_subj), replace = TRUE)
-  
+
   # Update siteid if present (extract numeric part from invid)
   if (has_column(sampled_subj, "siteid")) {
     sampled_subj$siteid <- gsub("^.*_", "", sampled_subj$invid)
   }
-  
+
   # Only keep sites that actually have subjects assigned
   used_site_ids <- unique(sampled_subj$invid)
   generated_sites <- generated_sites[generated_sites$invid %in% used_site_ids, ]
-  
+
   list(
     generated_sites = generated_sites,
     updated_sampled_subj = sampled_subj
@@ -402,7 +402,7 @@ find_site_id_column <- function(df, vSiteIDs) {
 find_subject_id_column <- function(df, raw_subj, vSubjectIDs) {
   for (col in vSubjectIDs) {
     if (!has_column(df, col)) next
-    
+
     if (col == "subjid") {
       return(list(column = col, ids = df$subjid))
     } else if (col == "subjectenrollmentnumber") {
@@ -417,7 +417,7 @@ find_subject_id_column <- function(df, raw_subj, vSubjectIDs) {
       return(list(column = col, ids = ids, valid_idx = valid_idx))
     }
   }
-  
+
   return(NULL)
 }
 
@@ -426,7 +426,7 @@ find_subject_id_column <- function(df, raw_subj, vSubjectIDs) {
 process_subject_domain <- function(df, subject_mapping, new_study_id, sampled_subj, raw_subj, vSubjectIDs) {
   # Find subject ID column and map to subjid
   subj_info <- find_subject_id_column(df, raw_subj, vSubjectIDs)
-  
+
   # Get mapped subjids (handling invalid mappings)
   if (!is.null(subj_info$valid_idx)) {
     valid_df <- df[subj_info$valid_idx, ]
@@ -435,14 +435,14 @@ process_subject_domain <- function(df, subject_mapping, new_study_id, sampled_su
     valid_df <- df
     mapped_subjids <- subj_info$ids
   }
-  
+
   # Filter to selected subjects
   result <- valid_df[mapped_subjids %in% subject_mapping$old_subjid, ]
 
   if (nrow(result) == 0) {
     return(result)
   }
-  
+
   # Store old subjid for composite ID updates
   old_subjid_col <- mapped_subjids[mapped_subjids %in% subject_mapping$old_subjid]
 
@@ -478,7 +478,7 @@ process_subject_domain <- function(df, subject_mapping, new_study_id, sampled_su
     }
     # Map through old subjid to get correct new site
     result$invid <- subj_to_site[old_subjid_col]
-    
+
     # Update siteid to match invid if needed
     # For TargetSiteCount: extract from invid (format: STUDY_123)
     # For regular: siteid already correct in sampled_subj, but need to map through subjects

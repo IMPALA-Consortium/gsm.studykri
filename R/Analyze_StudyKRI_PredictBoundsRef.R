@@ -176,7 +176,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   # Add metadata
   # Compute scalar values before mutate to avoid SQL translation issues
   nStudyCount <- length(vStudyFilter)
-  
+
   dfResult <- dfBounds %>%
     dplyr::mutate(
       GroupCount = .env$nMinGroups,

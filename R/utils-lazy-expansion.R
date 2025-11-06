@@ -178,12 +178,12 @@ generate_month_seq <- function(start_yyyymm, end_yyyymm) {
   start_month <- start_yyyymm %% 100
   end_year <- floor(end_yyyymm / 100)
   end_month <- end_yyyymm %% 100
-  
+
   dates <- seq(
     as.Date(paste0(start_year, "-", sprintf("%02d", start_month), "-01")),
     as.Date(paste0(end_year, "-", sprintf("%02d", end_month), "-01")),
     by = "month"
   )
-  
+
   data.frame(MonthYYYYMM = as.numeric(format(dates, "%Y%m")))
 }

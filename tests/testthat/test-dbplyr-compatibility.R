@@ -256,30 +256,32 @@ test_that("Transform_CumCount auto-generates month sequences for lazy tables", {
       stringsAsFactors = FALSE
     )
   )
-  
+
   con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
   DBI::dbWriteTable(con, "dfInput", test_data$dfInput)
   tblInput <- dplyr::tbl(con, "dfInput")
-  
+
   result <- Transform_CumCount(
     dfInput = tblInput,
     vBy = "StudyID",
     nMinDenominator = 25
   )
-  
+
   expect_s3_class(result, "tbl_lazy")
-  
+
   result_df <- dplyr::collect(result)
   expect_s3_class(result_df, "data.frame")
   expect_true(nrow(result_df) > 0)
-  expect_true(all(c("StudyID", "MonthYYYYMM", "StudyMonth", "Numerator",
-                    "Denominator", "Metric", "GroupCount") %in% names(result_df)))
+  expect_true(all(c(
+    "StudyID", "MonthYYYYMM", "StudyMonth", "Numerator",
+    "Denominator", "Metric", "GroupCount"
+  ) %in% names(result_df)))
   expect_true(all(diff(result_df$Numerator) >= 0))
-  
+
   DBI::dbDisconnect(con)
 })
 
-# Test 7: Transform_CumCount lazy table with multiple studies  
+# Test 7: Transform_CumCount lazy table with multiple studies
 test_that("Transform_CumCount handles multiple studies with lazy tables", {
   test_data <- list(
     dfInput = data.frame(
@@ -293,24 +295,24 @@ test_that("Transform_CumCount handles multiple studies with lazy tables", {
       stringsAsFactors = FALSE
     )
   )
-  
+
   con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
   DBI::dbWriteTable(con, "dfInput", test_data$dfInput)
   tblInput <- dplyr::tbl(con, "dfInput")
-  
+
   result <- Transform_CumCount(dfInput = tblInput, vBy = "StudyID", nMinDenominator = 25)
-  
+
   expect_s3_class(result, "tbl_lazy")
   result_df <- dplyr::collect(result)
-  
+
   expect_equal(length(unique(result_df$StudyID)), 2)
   expect_true(all(c("STUDY1", "STUDY2") %in% result_df$StudyID))
-  
+
   for (study in c("STUDY1", "STUDY2")) {
     study_data <- result_df[result_df$StudyID == study, ]
     expect_equal(min(study_data$StudyMonth), 1)
   }
-  
+
   DBI::dbDisconnect(con)
 })
 
@@ -328,23 +330,23 @@ test_that("Transform_CumCount lazy table produces monotonically increasing cumul
       stringsAsFactors = FALSE
     )
   )
-  
+
   con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
   DBI::dbWriteTable(con, "dfInput", test_data$dfInput)
   tblInput <- dplyr::tbl(con, "dfInput")
-  
+
   result <- Transform_CumCount(dfInput = tblInput, vBy = "StudyID", nMinDenominator = 0)
-  
+
   expect_s3_class(result, "tbl_lazy")
   result_df <- dplyr::collect(result) %>% dplyr::arrange(MonthYYYYMM)
-  
+
   numerator_diffs <- diff(result_df$Numerator)
   expect_true(all(numerator_diffs >= 0))
-  
+
   expect_equal(result_df$Numerator[1], 30)
   expect_equal(result_df$Numerator[2], 45)
   expect_equal(result_df$Numerator[3], 53) # Site2 contribution persists!
-  
+
   DBI::dbDisconnect(con)
 })
 
@@ -362,19 +364,19 @@ test_that("Transform_CumCount lazy table fills gaps in calendar months", {
       stringsAsFactors = FALSE
     )
   )
-  
+
   con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
   DBI::dbWriteTable(con, "dfInput", test_data$dfInput)
   tblInput <- dplyr::tbl(con, "dfInput")
-  
+
   result <- Transform_CumCount(dfInput = tblInput, vBy = "StudyID", nMinDenominator = 0)
-  
+
   expect_s3_class(result, "tbl_lazy")
   result_df <- dplyr::collect(result) %>% dplyr::arrange(MonthYYYYMM)
-  
+
   expect_equal(nrow(result_df), 5)
   expect_true(all(c(202301, 202302, 202303, 202304, 202305) %in% result_df$MonthYYYYMM))
   expect_equal(result_df$StudyMonth, 1:5)
-  
+
   DBI::dbDisconnect(con)
 })

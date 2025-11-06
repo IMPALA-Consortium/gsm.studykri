@@ -368,7 +368,7 @@ test_that("calculate_days_by_month handles multi-month date ranges", {
   expect_s3_class(result, "data.frame")
   # Should have entries for Jan, Feb, and Mar (3 months)
   expect_true(nrow(result) >= 3)
-  
+
   # Check that days are calculated correctly
   expect_true(all(result$Denominator > 0))
 })
@@ -636,10 +636,10 @@ test_that("Input_CountSiteByMonth errors when no enrolled subjects", {
 test_that("Input_CountSiteByMonth works with lazy tables", {
   skip_if_not_installed("dbplyr")
   skip_if_not_installed("duckdb")
-  
+
   # Create in-memory database
   con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
-  
+
   # Create test data
   dfSubjects <- data.frame(
     studyid = rep("STUDY001", 3),
@@ -660,17 +660,17 @@ test_that("Input_CountSiteByMonth works with lazy tables", {
     visit_dt = as.Date(c("2024-01-10", "2024-01-15", "2024-02-05")),
     stringsAsFactors = FALSE
   )
-  
+
   # Write to database
   DBI::dbWriteTable(con, "subjects", dfSubjects)
   DBI::dbWriteTable(con, "numerator", dfNumerator)
   DBI::dbWriteTable(con, "denominator", dfDenominator)
-  
+
   # Create lazy tables
   tblSubjects <- dplyr::tbl(con, "subjects")
   tblNumerator <- dplyr::tbl(con, "numerator")
   tblDenominator <- dplyr::tbl(con, "denominator")
-  
+
   # Execute with lazy tables
   result <- Input_CountSiteByMonth(
     dfSubjects = tblSubjects,
@@ -679,16 +679,16 @@ test_that("Input_CountSiteByMonth works with lazy tables", {
     strNumeratorDateCol = "aest_dt",
     strDenominatorDateCol = "visit_dt"
   )
-  
+
   # Collect results
   if (inherits(result, "tbl_lazy")) {
     result <- dplyr::collect(result)
   }
-  
+
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
   expect_true(all(c("GroupID", "Numerator", "Denominator", "MonthYYYYMM") %in% names(result)))
-  
+
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
 })
@@ -696,10 +696,10 @@ test_that("Input_CountSiteByMonth works with lazy tables", {
 test_that("calculate_days_by_month works with lazy tables", {
   skip_if_not_installed("dbplyr")
   skip_if_not_installed("duckdb")
-  
+
   # Create in-memory database
   con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
-  
+
   # Create test data
   dfSubjects <- data.frame(
     studyid = "STUDY001",
@@ -721,17 +721,17 @@ test_that("calculate_days_by_month works with lazy tables", {
     end_date = as.Date("2024-02-29"),
     stringsAsFactors = FALSE
   )
-  
+
   # Write to database
   DBI::dbWriteTable(con, "subjects", dfSubjects)
   DBI::dbWriteTable(con, "numerator", dfNumerator)
   DBI::dbWriteTable(con, "denominator", dfDenominator)
-  
+
   # Create lazy tables
   tblSubjects <- dplyr::tbl(con, "subjects")
   tblNumerator <- dplyr::tbl(con, "numerator")
   tblDenominator <- dplyr::tbl(con, "denominator")
-  
+
   # Execute with lazy tables and end date column
   result <- Input_CountSiteByMonth(
     dfSubjects = tblSubjects,
@@ -741,16 +741,16 @@ test_that("calculate_days_by_month works with lazy tables", {
     strDenominatorDateCol = "start_date",
     strDenominatorEndDateCol = "end_date"
   )
-  
+
   # Collect results
   if (inherits(result, "tbl_lazy")) {
     result <- dplyr::collect(result)
   }
-  
+
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) >= 2) # Should have Jan and Feb
   expect_true(all(result$Denominator > 0))
-  
+
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
 })

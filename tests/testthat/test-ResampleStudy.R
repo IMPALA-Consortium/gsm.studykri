@@ -238,7 +238,7 @@ test_that("ResampleStudy input checking works", {
     ResampleStudy(lRaw, "STUDY001", strOversamplDomain = "NonExistent"),
     "not found in lRaw"
   )
-  
+
   # Invalid strOversamplDomain type
   expect_error(
     ResampleStudy(lRaw, "STUDY001", strOversamplDomain = c("Raw_AE", "Raw_LB")),
@@ -646,7 +646,7 @@ test_that("ResampleStudy handles strOversamplDomain without subject ID column", 
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_SITE = clindata::ctms_site
   )
-  
+
   # Raw_SITE has no subject ID column - should fail
   expect_error(
     ResampleStudy(
@@ -663,12 +663,12 @@ test_that("ResampleStudy handles no enrolled subjects", {
   # Create data with no enrolled subjects
   subj_no_enrolled <- clindata::rawplus_dm
   subj_no_enrolled$enrollyn <- "N"
-  
+
   lRaw <- list(
     Raw_SUBJ = subj_no_enrolled,
     Raw_SITE = clindata::ctms_site
   )
-  
+
   expect_error(
     ResampleStudy(lRaw, "STUDY001"),
     "No enrolled subjects found"
@@ -680,7 +680,7 @@ test_that("ResampleStudy handles extreme quantile ranges", {
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_AE = clindata::rawplus_ae
   )
-  
+
   # Test with extreme narrow range - may or may not have subjects
   # This tests the quantile filtering logic
   result <- suppressMessages(
@@ -693,7 +693,7 @@ test_that("ResampleStudy handles extreme quantile ranges", {
       seed = 123
     )
   )
-  
+
   # Should work - may have fewer subjects than requested if range is very narrow
   expect_true(nrow(result$Raw_SUBJ) > 0)
   expect_true(nrow(result$Raw_SUBJ) <= 50)
@@ -702,7 +702,7 @@ test_that("ResampleStudy handles extreme quantile ranges", {
 test_that("ResampleStudy errors on impossible quantile range", {
   # Create artificial data where NO subjects fall in the specified quantile range
   # Need a large enough dataset to create a clear gap
-  
+
   # Create 100 subjects: 50 with 1 AE, 50 with 100 AEs (big gap in middle)
   artificial_subj <- data.frame(
     studyid = "TEST",
@@ -713,7 +713,7 @@ test_that("ResampleStudy errors on impossible quantile range", {
     siteid = rep("1", 100),
     stringsAsFactors = FALSE
   )
-  
+
   # First 50 subjects get 1 AE each, last 50 get 100 AEs each
   artificial_ae <- data.frame(
     studyid = "TEST",
@@ -723,12 +723,12 @@ test_that("ResampleStudy errors on impossible quantile range", {
     ),
     stringsAsFactors = FALSE
   )
-  
+
   lRaw_artificial <- list(
     Raw_SUBJ = artificial_subj,
     Raw_AE = artificial_ae
   )
-  
+
   # With this distribution:
   # 50% have 1 AE (quantile 0-0.5)
   # 50% have 100 AEs (quantile 0.5-1.0)
@@ -736,12 +736,12 @@ test_that("ResampleStudy errors on impossible quantile range", {
   # Actually, let's target a gap: quantile 0.45-0.48 should be right at the boundary
   # Even better: 0.01-0.02 will only include subjects with exactly 1 AE
   # And then check if they're all filtered out somehow
-  
+
   # Actually, to get zero subjects, we need a range where NO ONE falls
   # With 50 at count=1 and 50 at count=100, quantile 0.5 is the boundary
   # Any range that spans neither group will be empty
   # The issue is that quantile() with these values will always include someone
-  
+
   # Let me use a different approach: 98 subjects with 1 AE, 2 subjects with 100 AEs
   # Then quantile 0.99-1.0 will be count=100, and 0.01-0.98 will be count=1
   # Range 0.985-0.995 might work to catch the gap
@@ -754,14 +754,14 @@ test_that("ResampleStudy works with site domain without invid", {
   if ("invid" %in% names(site_no_invid)) {
     site_no_invid$invid <- NULL
   }
-  
+
   lRaw <- list(
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_SITE = site_no_invid
   )
-  
+
   result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, seed = 123)
-  
+
   # Should work - site domain will be filtered based on site_num or other site ID
   expect_true("Raw_SITE" %in% names(result))
   # invid is not created if it doesn't exist - that's expected behavior
@@ -774,17 +774,17 @@ test_that("ResampleStudy handles domains with subjectenrollmentnumber", {
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_ENROLL = clindata::rawplus_enroll
   )
-  
+
   # Create a domain where subjectenrollmentnumber is the only subject ID
   enroll_test <- lRaw$Raw_ENROLL
   if ("subjid" %in% names(enroll_test)) {
     enroll_test$subjid <- NULL
   }
-  
+
   lRaw$Raw_ENROLL_TEST <- enroll_test
-  
+
   result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 30, seed = 123)
-  
+
   # Should work and map via subjectenrollmentnumber
   expect_true("Raw_ENROLL_TEST" %in% names(result))
   if (nrow(result$Raw_ENROLL_TEST) > 0) {
@@ -798,18 +798,18 @@ test_that("ResampleStudy handles invalid composite ID mappings", {
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_AE = clindata::rawplus_ae
   )
-  
+
   # Create test domain with some invalid composite IDs for oversampling
   test_domain <- lRaw$Raw_AE
   if ("subjid" %in% names(test_domain)) {
-    test_domain$subjid <- NULL  # Remove subjid so it uses subjectenrollmentnumber
+    test_domain$subjid <- NULL # Remove subjid so it uses subjectenrollmentnumber
   }
   # Add some invalid subjectenrollmentnumber values that won't map
   if ("subjectenrollmentnumber" %in% names(test_domain) && nrow(test_domain) > 5) {
     test_domain$subjectenrollmentnumber[1:5] <- "INVALID_ID_12345"
   }
   lRaw$Raw_AE_TEST <- test_domain
-  
+
   # This should work - invalid mappings will be filtered out
   result <- suppressMessages(
     ResampleStudy(
@@ -821,7 +821,7 @@ test_that("ResampleStudy handles invalid composite ID mappings", {
       seed = 123
     )
   )
-  
+
   expect_true(nrow(result$Raw_SUBJ) > 0)
 })
 
@@ -831,7 +831,7 @@ test_that("ResampleStudy handles domains with subject_nsv only", {
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_DATAENT = clindata::edc_data_pages
   )
-  
+
   # Create a domain where subject_nsv is the only subject ID
   dataent_test <- lRaw$Raw_DATAENT
   if ("subjid" %in% names(dataent_test)) {
@@ -840,11 +840,11 @@ test_that("ResampleStudy handles domains with subject_nsv only", {
   if ("subjectenrollmentnumber" %in% names(dataent_test)) {
     dataent_test$subjectenrollmentnumber <- NULL
   }
-  
+
   lRaw$Raw_DATAENT_TEST <- dataent_test
-  
+
   result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 30, seed = 123)
-  
+
   # Should work and map via subject_nsv
   expect_true("Raw_DATAENT_TEST" %in% names(result))
   # The domain should be filtered to sampled subjects
@@ -860,7 +860,7 @@ test_that("ResampleStudy with TargetSiteCount updates site studyid", {
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_SITE = clindata::ctms_site
   )
-  
+
   result <- ResampleStudy(
     lRaw,
     "STUDY001",
@@ -868,12 +868,12 @@ test_that("ResampleStudy with TargetSiteCount updates site studyid", {
     TargetSiteCount = 10,
     seed = 123
   )
-  
+
   # Generated sites should have studyid updated
   if ("studyid" %in% names(result$Raw_SITE)) {
     expect_true(all(result$Raw_SITE$studyid == "STUDY001"))
   }
-  
+
   # Sites should have invid with study prefix
   expect_true(all(grepl("^STUDY001_", result$Raw_SITE$invid)))
 })
@@ -882,28 +882,28 @@ test_that("ResampleStudy handles site data with studyid column", {
   # Create artificial site data WITH studyid column
   artificial_site <- clindata::ctms_site[1:5, ]
   artificial_site$studyid <- "ORIGINAL_STUDY"
-  
+
   # Create subject data that uses these sites
   artificial_subj <- clindata::rawplus_dm[1:20, ]
   artificial_subj$enrollyn <- "Y"
   artificial_subj$siteid <- as.character(sample(artificial_site$site_num, 20, replace = TRUE))
-  
+
   lRaw_with_studyid <- list(
     Raw_SUBJ = artificial_subj,
     Raw_SITE = artificial_site
   )
-  
+
   result <- ResampleStudy(
     lRaw_with_studyid,
     "NEWSTUDY",
     nSubjects = 15,
     seed = 123
   )
-  
+
   # Site studyid should be updated to new study ID
   expect_true("studyid" %in% names(result$Raw_SITE))
   expect_true(all(result$Raw_SITE$studyid == "NEWSTUDY"))
-  
+
   # Subject studyid should also be updated
   expect_true(all(result$Raw_SUBJ$studyid == "NEWSTUDY"))
 })
@@ -912,16 +912,16 @@ test_that("ResampleStudy with TargetSiteCount updates studyid in generated sites
   # Create artificial site data WITH studyid column
   artificial_site <- clindata::ctms_site[1:5, ]
   artificial_site$studyid <- "ORIGINAL_STUDY"
-  
+
   artificial_subj <- clindata::rawplus_dm[1:20, ]
   artificial_subj$enrollyn <- "Y"
   artificial_subj$siteid <- as.character(sample(artificial_site$site_num, 20, replace = TRUE))
-  
+
   lRaw_with_studyid <- list(
     Raw_SUBJ = artificial_subj,
     Raw_SITE = artificial_site
   )
-  
+
   result <- ResampleStudy(
     lRaw_with_studyid,
     "NEWSTUDY",
@@ -929,11 +929,11 @@ test_that("ResampleStudy with TargetSiteCount updates studyid in generated sites
     TargetSiteCount = 8,
     seed = 123
   )
-  
+
   # Generated sites should have studyid updated
   expect_true("studyid" %in% names(result$Raw_SITE))
   expect_true(all(result$Raw_SITE$studyid == "NEWSTUDY"))
-  
+
   # Generated sites should have invid
   expect_true("invid" %in% names(result$Raw_SITE))
   expect_true(all(grepl("^NEWSTUDY_", result$Raw_SITE$invid)))
@@ -942,41 +942,42 @@ test_that("ResampleStudy with TargetSiteCount updates studyid in generated sites
 test_that("ResampleStudy handles site data with invid as primary site ID", {
   # To trigger line 552 in process_site_domain:
   # 1. Site table needs invid as the detected site ID column (first in hierarchy)
-  # 2. used_site_ids comes from sampled_subj$siteid  
+  # 2. used_site_ids comes from sampled_subj$siteid
   # 3. These must match for sites to pass filtering
   # 4. Then invid gets prefixed
-  
+
   # Create site data where invid values match what will be in sampled_subj$siteid
   artificial_site <- clindata::ctms_site[1:5, ]
   # Key: invid in site table should match the siteid values subjects will have
-  artificial_site$invid <- as.character(1:5)  # Simple numeric IDs
+  artificial_site$invid <- as.character(1:5) # Simple numeric IDs
   artificial_site$studyid <- "ORIGINAL_STUDY"
   # Also keep site_num for reference
   artificial_site$site_num <- 1:5
-  
+
   # Create subject data with siteid that matches site invid
   artificial_subj <- clindata::rawplus_dm[1:20, ]
   artificial_subj$enrollyn <- "Y"
   artificial_subj$siteid <- as.character(sample(1:5, 20, replace = TRUE))
-  
+
   lRaw_with_invid <- list(
     Raw_SUBJ = artificial_subj,
     Raw_SITE = artificial_site
   )
-  
+
   result <- ResampleStudy(
     lRaw_with_invid,
     "NEWSTUDY",
     nSubjects = 15,
     seed = 123
   )
-  
+
   # Site invid should be prefixed with new study ID
   expect_true("invid" %in% names(result$Raw_SITE))
   expect_true(nrow(result$Raw_SITE) > 0, info = "Sites should pass filtering")
-  expect_true(all(grepl("^NEWSTUDY_", result$Raw_SITE$invid)), 
-    info = "All site invids should be prefixed with NEWSTUDY_")
-  
+  expect_true(all(grepl("^NEWSTUDY_", result$Raw_SITE$invid)),
+    info = "All site invids should be prefixed with NEWSTUDY_"
+  )
+
   # Site studyid should be updated
   expect_true("studyid" %in% names(result$Raw_SITE))
   expect_true(all(result$Raw_SITE$studyid == "NEWSTUDY"))
@@ -988,13 +989,13 @@ test_that("ResampleStudy handles site domain filtering", {
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_SITE = clindata::ctms_site
   )
-  
+
   # Sample just a few subjects to create a small site set
   result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 5, seed = 123)
-  
+
   # Should still have some sites
   expect_true(nrow(result$Raw_SITE) >= 0)
-  
+
   # If sites exist, they should have invid column (from original data)
   if (nrow(result$Raw_SITE) > 0 && "invid" %in% names(result$Raw_SITE)) {
     # All sites in SITE should be used by SUBJ

@@ -457,7 +457,7 @@ test_that("Visualize_StudyKRI filters dfBounds by nMaxMonth", {
 
   expect_s3_class(p, "ggplot")
   expect_true(length(p$layers) > 0)
-  
+
   # Check that all layers have filtered data
   study_data <- p$layers[[4]]$data # Study line layer (after ribbons)
   expect_true(all(study_data$StudyMonth <= 5))

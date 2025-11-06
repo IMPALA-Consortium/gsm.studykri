@@ -511,12 +511,12 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet validates all numeric parameters
       list(args = list(nMinDenominator = -5), error = "nMinDenominator must be a single non-negative numeric value"),
       list(args = list(nMinDenominator = "invalid"), error = "nMinDenominator must be a single non-negative numeric value"),
       list(args = list(nMinDenominator = c(5, 10)), error = "nMinDenominator must be a single non-negative numeric value"),
-      
+
       # nBootstrapReps validations
       list(args = list(nBootstrapReps = 0), error = "nBootstrapReps must be a positive integer"),
       list(args = list(nBootstrapReps = "ten"), error = "nBootstrapReps must be a positive integer"),
       list(args = list(nBootstrapReps = c(10, 20)), error = "nBootstrapReps must be a positive integer"),
-      
+
       # nConfLevel validations
       list(args = list(nConfLevel = 0), error = "nConfLevel must be between 0 and 1"),
       list(args = list(nConfLevel = 1), error = "nConfLevel must be between 0 and 1"),
@@ -539,7 +539,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates strStudyRefCol missing", 
 
   # Create dfStudyRef with wrong column name
   dfBadRef <- data.frame(study = "STUDY1", wrongcol = "REF1")
-  
+
   expect_error(
     Analyze_StudyKRI_PredictBoundsRef(
       dfInput = dfTest,
@@ -553,10 +553,10 @@ test_that("Analyze_StudyKRI_PredictBoundsRef validates strStudyRefCol missing", 
 test_that("Analyze_StudyKRI_PredictBoundsRefSet works with lazy tables", {
   skip_if_not_installed("dbplyr")
   skip_if_not_installed("duckdb")
-  
+
   # Create in-memory database
   con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
-  
+
   # Create test data
   dfTest <- data.frame(
     StudyID = rep(c("STUDY1", "STUDY2"), each = 30),
@@ -568,13 +568,13 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet works with lazy tables", {
     GroupLevel = "Site",
     stringsAsFactors = FALSE
   )
-  
+
   # Write to database
   DBI::dbWriteTable(con, "site_data", dfTest)
-  
+
   # Create lazy table
   dfLazy <- dplyr::tbl(con, "site_data")
-  
+
   # Test with lazy table - should not produce warnings after our fixes
   suppressMessages({
     result <- Analyze_StudyKRI_PredictBoundsRefSet(
@@ -585,16 +585,16 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet works with lazy tables", {
       seed = 888
     )
   })
-  
+
   # Collect if lazy
   if (inherits(result, "tbl_lazy")) {
     result <- dplyr::collect(result)
   }
-  
+
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
   expect_equal(unique(result$StudyCount), 2)
-  
+
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
 })
@@ -602,10 +602,10 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet works with lazy tables", {
 test_that("Analyze_StudyKRI_PredictBoundsRefSet with lazy table and NULL vStudyFilter", {
   skip_if_not_installed("dbplyr")
   skip_if_not_installed("duckdb")
-  
+
   # Create in-memory database
   con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
-  
+
   # Create test data
   dfTest <- data.frame(
     StudyID = rep(c("STUDY1", "STUDY2", "STUDY3"), each = 30),
@@ -617,13 +617,13 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet with lazy table and NULL vStudyF
     GroupLevel = "Site",
     stringsAsFactors = FALSE
   )
-  
+
   # Write to database
   DBI::dbWriteTable(con, "site_data", dfTest)
-  
+
   # Create lazy table
   dfLazy <- dplyr::tbl(con, "site_data")
-  
+
   # Test with NULL vStudyFilter on lazy table - should not produce warnings after our fixes
   expect_message(
     result <- Analyze_StudyKRI_PredictBoundsRefSet(
@@ -635,15 +635,15 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet with lazy table and NULL vStudyF
     ),
     "No vStudyFilter specified. Using all 3 studies."
   )
-  
+
   # Collect if lazy
   if (inherits(result, "tbl_lazy")) {
     result <- dplyr::collect(result)
   }
-  
+
   expect_s3_class(result, "data.frame")
   expect_equal(unique(result$StudyCount), 3)
-  
+
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
 })
