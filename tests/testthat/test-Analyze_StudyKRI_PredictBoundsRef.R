@@ -491,7 +491,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet validates vStudyFilter type", {
   )
 })
 
-test_that("Analyze_StudyKRI_PredictBoundsRefSet validates nMinDenominator", {
+test_that("Analyze_StudyKRI_PredictBoundsRefSet validates all numeric parameters", {
   dfTest <- data.frame(
     StudyID = rep("STUDY1", 30),
     GroupID = rep(paste0("Site", 1:5), each = 6),
@@ -502,138 +502,28 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet validates nMinDenominator", {
     stringsAsFactors = FALSE
   )
 
-  # Negative nMinDenominator
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nMinDenominator = -5
-    ),
-    "nMinDenominator must be a single non-negative numeric value"
-  )
-
-  # Non-numeric nMinDenominator
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nMinDenominator = "invalid"
-    ),
-    "nMinDenominator must be a single non-negative numeric value"
-  )
-
-  # Multiple values for nMinDenominator
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nMinDenominator = c(5, 10)
-    ),
-    "nMinDenominator must be a single non-negative numeric value"
-  )
-})
-
-test_that("Analyze_StudyKRI_PredictBoundsRefSet validates nBootstrapReps edge cases", {
-  dfTest <- data.frame(
-    StudyID = rep("STUDY1", 30),
-    GroupID = rep(paste0("Site", 1:5), each = 6),
-    Numerator = rep(1:6, times = 5),
-    Denominator = rep(10:15, times = 5),
-    MonthYYYYMM = rep(202301:202306, times = 5),
-    Metric = runif(30, 0.05, 0.5),
-    stringsAsFactors = FALSE
-  )
-
-  # Zero bootstrap reps
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nBootstrapReps = 0
-    ),
-    "nBootstrapReps must be a positive integer"
-  )
-
-  # Non-numeric bootstrap reps
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nBootstrapReps = "ten"
-    ),
-    "nBootstrapReps must be a positive integer"
-  )
-
-  # Multiple values
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nBootstrapReps = c(10, 20)
-    ),
-    "nBootstrapReps must be a positive integer"
-  )
-})
-
-test_that("Analyze_StudyKRI_PredictBoundsRefSet validates nConfLevel edge cases", {
-  dfTest <- data.frame(
-    StudyID = rep("STUDY1", 30),
-    GroupID = rep(paste0("Site", 1:5), each = 6),
-    Numerator = rep(1:6, times = 5),
-    Denominator = rep(10:15, times = 5),
-    MonthYYYYMM = rep(202301:202306, times = 5),
-    Metric = runif(30, 0.05, 0.5),
-    stringsAsFactors = FALSE
-  )
-
-  # nConfLevel = 0
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nConfLevel = 0
-    ),
-    "nConfLevel must be between 0 and 1"
-  )
-
-  # nConfLevel = 1
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nConfLevel = 1
-    ),
-    "nConfLevel must be between 0 and 1"
-  )
-
-  # nConfLevel < 0
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nConfLevel = -0.5
-    ),
-    "nConfLevel must be between 0 and 1"
-  )
-
-  # Non-numeric
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nConfLevel = "0.95"
-    ),
-    "nConfLevel must be between 0 and 1"
-  )
-
-  # Multiple values
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(
-      dfInput = dfTest,
-      vStudyFilter = "STUDY1",
-      nConfLevel = c(0.9, 0.95)
-    ),
-    "nConfLevel must be between 0 and 1"
+  # Use helper to test multiple parameter validations
+  test_parameter_errors(
+    fn = Analyze_StudyKRI_PredictBoundsRefSet,
+    valid_args = list(dfInput = dfTest, vStudyFilter = "STUDY1"),
+    invalid_tests = list(
+      # nMinDenominator validations
+      list(args = list(nMinDenominator = -5), error = "nMinDenominator must be a single non-negative numeric value"),
+      list(args = list(nMinDenominator = "invalid"), error = "nMinDenominator must be a single non-negative numeric value"),
+      list(args = list(nMinDenominator = c(5, 10)), error = "nMinDenominator must be a single non-negative numeric value"),
+      
+      # nBootstrapReps validations
+      list(args = list(nBootstrapReps = 0), error = "nBootstrapReps must be a positive integer"),
+      list(args = list(nBootstrapReps = "ten"), error = "nBootstrapReps must be a positive integer"),
+      list(args = list(nBootstrapReps = c(10, 20)), error = "nBootstrapReps must be a positive integer"),
+      
+      # nConfLevel validations
+      list(args = list(nConfLevel = 0), error = "nConfLevel must be between 0 and 1"),
+      list(args = list(nConfLevel = 1), error = "nConfLevel must be between 0 and 1"),
+      list(args = list(nConfLevel = -0.5), error = "nConfLevel must be between 0 and 1"),
+      list(args = list(nConfLevel = "0.95"), error = "nConfLevel must be between 0 and 1"),
+      list(args = list(nConfLevel = c(0.9, 0.95)), error = "nConfLevel must be between 0 and 1")
+    )
   )
 })
 
