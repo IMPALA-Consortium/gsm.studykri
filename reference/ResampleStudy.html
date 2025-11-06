@@ -11,7 +11,7 @@ protocol deviations) and randomizes site assignments."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,7 +21,8 @@ protocol deviations) and randomizes site assignments."></head><body>
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/Cookbook.html">Cookbook</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ContributorGuidelines.html">ContributorGuidelines</a></li>
+    <li><a class="dropdown-item" href="../articles/Cookbook.html">Cookbook</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-sample-reports" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Sample Reports</button>
@@ -60,7 +61,9 @@ protocol deviations) and randomizes site assignments.</p>
 <span>  replacement <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  strOversamplDomain <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  vOversamplQuantileRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  vSubjectIDs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"subjid"</span>, <span class="st">"subjectenrollmentnumber"</span>, <span class="st">"subject_nsv"</span><span class="op">)</span>,</span>
+<span>  vSiteIDs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"invid"</span>, <span class="st">"siteid"</span>, <span class="st">"site_num"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -106,6 +109,16 @@ oversampling. Default c(0, 1) includes all subjects</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Integer seed for reproducibility. NULL (default) uses current random state</p></dd>
 
+
+<dt id="arg-vsubjectids">vSubjectIDs<a class="anchor" aria-label="anchor" href="#arg-vsubjectids"></a></dt>
+<dd><p>Character vector defining hierarchical order for subject ID column
+lookup. Default: c("subjid", "subjectenrollmentnumber", "subject_nsv")</p></dd>
+
+
+<dt id="arg-vsiteids">vSiteIDs<a class="anchor" aria-label="anchor" href="#arg-vsiteids"></a></dt>
+<dd><p>Character vector defining hierarchical order for site ID column
+lookup. Default: c("invid", "siteid", "site_num")</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -118,7 +131,10 @@ oversampling. Default c(0, 1) includes all subjects</p></dd>
 <li><p>Randomizes site assignments by shuffling invid values (or generates new sites if TargetSiteCount specified)</p></li>
 <li><p>Updates all subject, study, and site IDs across all domains</p></li>
 <li><p>Maintains referential integrity across domains</p></li>
-</ol><p>When <code>TargetSiteCount</code> is specified:</p><ul><li><p>Generates TargetSiteCount site IDs with metadata sampled from original sites</p></li>
+</ol><p>Domains are automatically categorized by columns present:</p><ul><li><p><strong>Subject-level</strong>: Has column in vSubjectIDs → filter to sampled subjects</p></li>
+<li><p><strong>Site-level</strong>: Has column in vSiteIDs but no subject column → filter to used sites</p></li>
+<li><p><strong>Other</strong>: Neither → update studyid field only</p></li>
+</ul><p>When <code>TargetSiteCount</code> is specified:</p><ul><li><p>Generates TargetSiteCount site IDs with metadata sampled from original sites</p></li>
 <li><p>Samples patient counts per site from the distribution observed in sampled subjects</p></li>
 <li><p>Creates weighted site assignment: subjects are assigned to sites proportionally to sampled patient counts</p></li>
 <li><p>Final site count may be less than target if some sites receive no patients through sampling</p></li>

@@ -9,7 +9,7 @@ Each study is generated using ResampleStudy with configurable parameters."></hea
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,7 +19,8 @@ Each study is generated using ResampleStudy with configurable parameters."></hea
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/Cookbook.html">Cookbook</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ContributorGuidelines.html">ContributorGuidelines</a></li>
+    <li><a class="dropdown-item" href="../articles/Cookbook.html">Cookbook</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-sample-reports" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Sample Reports</button>
@@ -49,7 +50,14 @@ Each study is generated using ResampleStudy with configurable parameters.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">SimulatePortfolio</span><span class="op">(</span><span class="va">lRaw</span>, dfConfig <span class="op">=</span> <span class="cn">NULL</span>, nStudies <span class="op">=</span> <span class="fl">5</span>, seed <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">SimulatePortfolio</span><span class="op">(</span></span>
+<span>  <span class="va">lRaw</span>,</span>
+<span>  dfConfig <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  nStudies <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  vSubjectIDs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"subjid"</span>, <span class="st">"subjectenrollmentnumber"</span>, <span class="st">"subject_nsv"</span><span class="op">)</span>,</span>
+<span>  vSiteIDs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"invid"</span>, <span class="st">"siteid"</span>, <span class="st">"site_num"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -72,6 +80,16 @@ columns 'studyid' and 'nSubjects'. See Details.</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>numeric. Random seed for reproducibility. Default: NULL.</p></dd>
 
+
+<dt id="arg-vsubjectids">vSubjectIDs<a class="anchor" aria-label="anchor" href="#arg-vsubjectids"></a></dt>
+<dd><p>Character vector defining hierarchical order for subject ID column
+lookup. Default: c("subjid", "subjectenrollmentnumber", "subject_nsv")</p></dd>
+
+
+<dt id="arg-vsiteids">vSiteIDs<a class="anchor" aria-label="anchor" href="#arg-vsiteids"></a></dt>
+<dd><p>Character vector defining hierarchical order for site ID column
+lookup. Default: c("invid", "siteid", "site_num")</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -87,7 +105,10 @@ from all simulated studies row-bound together.</p>
 <li><p>vOversamplQuantileRange_min/max: (Optional) Quantile range for stratification</p></li>
 <li><p>replacement: (Optional) Sample with replacement (default TRUE)</p></li>
 </ul><p>If dfConfig is NULL, generates default configuration with random parameters.</p>
-    </div>
+<p>Domains are automatically processed based on columns present:</p><ul><li><p>Subject-level domains (have vSubjectIDs columns) are filtered to sampled subjects</p></li>
+<li><p>Site-level domains (have vSiteIDs columns but no subject columns) are filtered to used sites</p></li>
+<li><p>Other domains have studyid updated only</p></li>
+</ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

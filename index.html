@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/Cookbook.html">Cookbook</a></li>
+<li><a class="dropdown-item" href="articles/ContributorGuidelines.html">ContributorGuidelines</a></li>
+    <li><a class="dropdown-item" href="articles/Cookbook.html">Cookbook</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -151,7 +152,8 @@
 <span>  <span class="fu"><a href="reference/Transform_CumCount.html">Transform_CumCount</a></span><span class="op">(</span></span>
 <span>    nMinDenominator <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>    vBy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"StudyID"</span>, <span class="st">"BootstrapRep"</span><span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Calculate 95% confidence intervals from bootstrap distribution</span></span>
 <span><span class="va">df_Bounds</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds</a></span><span class="op">(</span></span>
@@ -168,8 +170,9 @@
 <span>    nBootstrapReps <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>    nConfLevel <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>    nMinDenominator <span class="op">=</span> <span class="fl">25</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 71</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 66</span></span>
 <span></span>
 <span><span class="co"># Plot AA-4 KRI vs reference portfolio confidence intervals</span></span>
 <span><span class="fu"><a href="reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
@@ -189,6 +192,53 @@
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
 <p>MIT © 2025 IMPALA Consortium</p>
+</div>
+<div class="section level2">
+<h2 id="sample-report">Sample Report<a class="anchor" aria-label="anchor" href="#sample-report"></a>
+</h2>
+<ul>
+<li><a href="https://impala-consortium.github.io/gsm.studykri/report_studykri_AA-1.html">Sample Report 1</a></li>
+<li><a href="https://impala-consortium.github.io/gsm.studykri/report_studykri_AA-2.html">Sample Report 2 (under-reporting study)</a></li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="quality-control">Quality Control<a class="anchor" aria-label="anchor" href="#quality-control"></a>
+</h2>
+<p>This project was developed until MVP a2d4e9d8d588e87c3708168261505ac3da52a912</p>
+<p>Since {gsm} is designed for use in a <a href="https://en.wikipedia.org/wiki/Good_clinical_practice" class="external-link">GCP</a> framework, we have since extensive quality control as part of our development process. In particular, we do the following during early development:</p>
+<ul>
+<li>
+<strong>Unit Tests</strong> - Unit tests are written for all core functions, 100% coverage required.</li>
+<li>
+<strong>Workflow Tests</strong> - Additional unit tests confirm that core workflows behave as expected.</li>
+<li>
+<strong>Function Documentation</strong> - Detailed documentation for each exported function with examples is maintained with Roxygen.</li>
+<li>
+<strong>Package Checks</strong> - Standard package checks are run using GitHub Actions and must be passing before PRs are merged.</li>
+<li>
+<strong>Continuous Integration</strong> - Continuous integration is provided via GitHub Actions.</li>
+<li>
+<strong>Code Formatting</strong> - Code is formatted with {styler} before each release.</li>
+<li>
+<strong>Contributor Guidelines</strong> - Detailed contributor guidelines including step-by-step processes for code development and releases are provided as a vignette.</li>
+<li>
+<strong>Code Demonstration</strong> - <a href="https://impala-consortium.github.io/gsm.studykri/articles/Cookbook.html">Cookbook</a> Vignette provides demos and explanations for code usage.</li>
+</ul>
+<div class="section level3">
+<h3 id="parking">Parking<a class="anchor" aria-label="anchor" href="#parking"></a>
+</h3>
+<p>As development progresses, we will also conduct the following quality control steps:</p>
+<ul>
+<li>
+<strong>Qualification Workflow</strong> - All assessments have been Qualified as described in the Qualification Workflow Vignette. A Qualification Report Vignette is generated and attached to each release.</li>
+<li>
+<strong>Code Review</strong> - Code review is conducted using GitHub Pull Requests (PRs), and a log of all PRs is included in the Qualification Report Vignette.</li>
+<li>
+<strong>Data Specifications</strong> - Machine-readable data specifications are maintained for all KRIs. Specifications are automatically added to relevant function documentation.</li>
+<li>
+<strong>Regression Testing</strong> - Extensive QC and testing is done before each release.</li>
+</ul>
+</div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">
