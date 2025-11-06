@@ -174,23 +174,10 @@ SortDf <- function(data, ...) {
 #' @return data.frame with MonthYYYYMM column
 #' @keywords internal
 generate_month_seq <- function(start_yyyymm, end_yyyymm) {
-  # Check for NA values
-  if (is.na(start_yyyymm) || is.na(end_yyyymm)) {
-    stop("Cannot generate month sequence: start or end month is NA")
-  }
-  
   start_year <- floor(start_yyyymm / 100)
   start_month <- start_yyyymm %% 100
   end_year <- floor(end_yyyymm / 100)
   end_month <- end_yyyymm %% 100
-  
-  # Validate month values
-  if (start_month < 1 || start_month > 12 || end_month < 1 || end_month > 12) {
-    stop(sprintf(
-      "Invalid month in YYYYMM format: start=%d (month=%d), end=%d (month=%d)",
-      start_yyyymm, start_month, end_yyyymm, end_month
-    ))
-  }
   
   dates <- seq(
     as.Date(paste0(start_year, "-", sprintf("%02d", start_month), "-01")),

@@ -12,8 +12,6 @@
 #' @return data.frame or tbl with MonthYYYYMM and Days columns
 #' @keywords internal
 calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGroupCols) {
-  is_lazy <- inherits(dfData, "tbl_lazy")
-
   # Create month expansion data
   dfData_expanded <- dfData %>%
     dplyr::filter(
@@ -30,41 +28,19 @@ calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGro
       end_yyyymm = .data$end_year * 100 + .data$end_month
     )
 
-  # Generate month sequence
-  if (is_lazy) {
-    # For lazy tables, collect min/max to generate sequence
-    date_range <- dfData_expanded %>%
-      dplyr::summarise(
-        min_yyyymm = min(.data$start_yyyymm, na.rm = TRUE),
-        max_yyyymm = max(.data$end_yyyymm, na.rm = TRUE)
-      ) %>%
-      dplyr::collect()
+  # Generate month sequence - unified approach works for both lazy and in-memory
+  date_range <- dfData_expanded %>%
+    dplyr::summarise(
+      min_yyyymm = min(.data$start_yyyymm, na.rm = TRUE),
+      max_yyyymm = max(.data$end_yyyymm, na.rm = TRUE)
+    ) %>%
+    dplyr::collect()
 
-    min_ym <- date_range$min_yyyymm
-    max_ym <- date_range$max_yyyymm
-  } else {
-    min_ym <- min(dfData_expanded$start_yyyymm, na.rm = TRUE)
-    max_ym <- max(dfData_expanded$end_yyyymm, na.rm = TRUE)
-  }
-
-  # Generate complete month sequence
-  min_year <- floor(min_ym / 100)
-  min_month <- min_ym %% 100
-  max_year <- floor(max_ym / 100)
-  max_month <- max_ym %% 100
-
-  date_seq <- seq(
-    as.Date(paste0(min_year, "-", sprintf("%02d", min_month), "-01")),
-    as.Date(paste0(max_year, "-", sprintf("%02d", max_month), "-01")),
-    by = "month"
-  )
-
-  dfMonths <- data.frame(
-    MonthYYYYMM = as.numeric(format(date_seq, "%Y%m"))
-  )
+  # Generate complete month sequence using helper function
+  dfMonths <- generate_month_seq(date_range$min_yyyymm, date_range$max_yyyymm)
 
   # Create month lookup table in database if lazy
-  if (is_lazy) {
+  if (inherits(dfData_expanded, "tbl_lazy")) {
     tblMonths <- expand_lazy_table(
       tblInput = dfData_expanded,
       tblExpansion = NULL,
