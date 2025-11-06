@@ -57,24 +57,23 @@
 #'
 #' dfBoundsRef <- Analyze_StudyKRI_PredictBounds(
 #'   dfInput = dfComparison,
-#'   vBy = character(0),  # Combine all studies
+#'   vBy = character(0), # Combine all studies
 #'   nConfLevel = 0.95
 #' )
 #' }
 #'
 #' @export
 Analyze_StudyKRI_PredictBounds <- function(
-  dfInput,
-  vBy = "StudyID",
-  nConfLevel = 0.95,
-  strMetricCol = "Metric",
-  strStudyMonthCol = "StudyMonth"
-) {
+    dfInput,
+    vBy = "StudyID",
+    nConfLevel = 0.95,
+    strMetricCol = "Metric",
+    strStudyMonthCol = "StudyMonth") {
   # Input validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfInput, c("data.frame", "tbl"))) {
     stop("dfInput must be a data.frame or tbl object")
   }
-  
+
   # Check required columns (use colnames for lazy table compatibility)
   required_cols <- c("BootstrapRep", strMetricCol, strStudyMonthCol)
   missing_cols <- setdiff(required_cols, colnames(dfInput))
@@ -84,7 +83,7 @@ Analyze_StudyKRI_PredictBounds <- function(
       paste(missing_cols, collapse = ", ")
     ))
   }
-  
+
   # Check vBy columns if specified
   if (length(vBy) > 0) {
     missing_by <- setdiff(vBy, colnames(dfInput))
@@ -95,24 +94,24 @@ Analyze_StudyKRI_PredictBounds <- function(
       ))
     }
   }
-  
+
   # Validate confidence level
-  if (!is.numeric(nConfLevel) || length(nConfLevel) != 1 || 
-      nConfLevel <= 0 || nConfLevel >= 1) {
+  if (!is.numeric(nConfLevel) || length(nConfLevel) != 1 ||
+    nConfLevel <= 0 || nConfLevel >= 1) {
     stop("nConfLevel must be a single numeric value between 0 and 1")
   }
-  
+
   # Calculate lower and upper percentiles based on confidence level
   lower_percentile <- (1 - nConfLevel) / 2
   upper_percentile <- 1 - lower_percentile
-  
+
   # Build grouping columns (vBy + StudyMonth)
   group_cols <- if (length(vBy) > 0) {
     c(vBy, strStudyMonthCol)
   } else {
     strStudyMonthCol
   }
-  
+
   # Calculate summary statistics across bootstrap replicates
   dfBounds <- dfInput %>%
     dplyr::summarise(
@@ -122,16 +121,10 @@ Analyze_StudyKRI_PredictBounds <- function(
       BootstrapCount = dplyr::n(),
       .by = dplyr::all_of(.env$group_cols)
     )
-  
+
   # Arrange by grouping columns and study month
   dfResult <- dfBounds %>%
-    dplyr::arrange(dplyr::across(dplyr::all_of(.env$group_cols)))
-  
-  # Return lazy table if input was lazy, data.frame otherwise
-  if (inherits(dfInput, "tbl_lazy")) {
-    return(dfResult)
-  } else {
-    return(as.data.frame(dfResult))
-  }
-}
+    SortDf(dplyr::across(dplyr::all_of(.env$group_cols)))
 
+  return(dfResult)
+}

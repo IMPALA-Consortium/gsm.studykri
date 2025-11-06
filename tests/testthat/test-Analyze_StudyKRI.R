@@ -477,4 +477,3 @@ test_that("Analyze_StudyKRI handles multiple months correctly", {
     expect_true(length(unique(rep_data$MonthYYYYMM)) > 0)
   }
 })
-

@@ -1,7 +1,7 @@
 #' Generate Bootstrap Resamples for Study-Level KRI Analysis
 #'
 #' @description
-#' Generates bootstrap resamples by resampling groups (sites/countries) with 
+#' Generates bootstrap resamples by resampling groups (sites/countries) with
 #' replacement within each study. Uses dbplyr-compatible approach with runif()
 #' for random selection. Each bootstrap replicate randomly selects groups and
 #' includes all their associated data.
@@ -64,14 +64,13 @@
 #'
 #' @export
 Analyze_StudyKRI <- function(
-  dfInput,
-  nBootstrapReps = 1000,
-  nGroups = NULL,
-  strStudyCol = "StudyID",
-  strGroupCol = "GroupID",
-  seed = NULL,
-  tblBootstrapReps = NULL
-) {
+    dfInput,
+    nBootstrapReps = 1000,
+    nGroups = NULL,
+    strStudyCol = "StudyID",
+    strGroupCol = "GroupID",
+    seed = NULL,
+    tblBootstrapReps = NULL) {
   # Input Validation
   if (!is.data.frame(dfInput) && !inherits(dfInput, "tbl_lazy")) {
     stop("dfInput must be a data frame or lazy table")
@@ -86,24 +85,19 @@ Analyze_StudyKRI <- function(
     stop("nBootstrapReps must be a single positive integer")
   }
   nBootstrapReps <- as.integer(nBootstrapReps)
-  
+
   if (!is.null(nGroups)) {
     if (!is.numeric(nGroups) || length(nGroups) != 1 || nGroups < 1) {
       stop("nGroups must be NULL or a single positive integer")
     }
     nGroups <- as.integer(nGroups)
   }
-  
+
   # Check for empty data
   if (is.data.frame(dfInput) && nrow(dfInput) == 0) {
     stop("dfInput has no rows")
   }
-  
-  # Helper to detect lazy tables
-  is_lazy_table <- function(x) {
-    inherits(x, "tbl_lazy")
-  }
-  
+
   # Set random seed if provided (only affects in-memory operations)
   if (!is.null(seed)) {
     if (!is.numeric(seed) || length(seed) != 1) {
@@ -111,17 +105,14 @@ Analyze_StudyKRI <- function(
     }
     set.seed(seed)
   }
-  
-  # Detect if working with lazy tables
-  is_lazy <- is_lazy_table(dfInput)
-  
+
   # Create replicate index
   dfReps_mem <- data.frame(
     BootstrapRep = seq_len(nBootstrapReps)
   )
-  
+
   # If lazy table, use helper function
-  if (is_lazy) {
+  if (inherits(dfInput, "tbl_lazy")) {
     dfReps <- expand_lazy_table(
       tblInput = dfInput,
       tblExpansion = tblBootstrapReps,
@@ -132,7 +123,7 @@ Analyze_StudyKRI <- function(
   } else {
     dfReps <- dfReps_mem
   }
-  
+
   # Step 1: Number each group sequentially within study (following studykri.Rmd pattern)
   dfGroupsNumbered <- dfInput %>%
     dplyr::select(dplyr::all_of(c(.env$strStudyCol, .env$strGroupCol))) %>%
@@ -141,14 +132,14 @@ Analyze_StudyKRI <- function(
       GroupNumber = dplyr::dense_rank(.data[[strGroupCol]]),
       .by = dplyr::all_of(.env$strStudyCol)
     )
-  
+
   # Calculate group counts per study
   dfGroupCounts <- dfGroupsNumbered %>%
     dplyr::summarise(
       ActualGroupCount = dplyr::n(),
       .by = dplyr::all_of(.env$strStudyCol)
     )
-  
+
   # Determine effective group count for sampling
   if (is.null(nGroups)) {
     dfGroupCounts <- dfGroupCounts %>%
@@ -157,14 +148,14 @@ Analyze_StudyKRI <- function(
     dfGroupCounts <- dfGroupCounts %>%
       dplyr::mutate(EffectiveGroupCount = .env$nGroups)
   }
-  
+
   # Step 2: Generate bootstrap selections (matching get_boot pattern)
   # Simplified: cross_join with dfGroupsNumbered creates groups × reps rows automatically!
-  
+
   if (is.null(nGroups)) {
     # Standard case: sample all groups with replacement (no positions needed!)
     dfBootstrapSelections <- dfGroupsNumbered %>%
-      dplyr::cross_join(dfReps) %>%  # Creates group_count × reps rows!
+      dplyr::cross_join(dfReps) %>% # Creates group_count × reps rows!
       dplyr::left_join(dfGroupCounts, by = strStudyCol) %>%
       dplyr::mutate(
         # runif(n()) where n() = groups (per study-rep group)
@@ -183,43 +174,29 @@ Analyze_StudyKRI <- function(
     # Note: This handles both upsampling (nGroups > actual) and downsampling
     # For lazy tables with nGroups, positions table is auto-created or user-supplied
     # This is a less common case, so positions table is acceptable
-    
+
     # Get maximum nGroups for determining positions needed
     max_effective <- if (is.data.frame(dfGroupCounts)) {
       max(dfGroupCounts$EffectiveGroupCount)
     } else {
-      nGroups  # For lazy tables, use the specified value
+      nGroups # For lazy tables, use the specified value
     }
-    
+
     dfPositions_mem <- data.frame(Position = seq_len(max_effective))
-    
-    # For lazy tables, use helper if needed
-    if (is_lazy && !is.null(tblBootstrapReps)) {
-      # User provided bootstrap reps - they might also provide positions
-      # For now, create positions in-memory since it's typically small
-      dfPositions <- dfPositions_mem
-    } else if (is_lazy) {
-      # Try to write positions to database (already have connection from reps)
-      tryCatch({
-        con <- dbplyr::remote_con(dfInput)
-        dfPositions <- dplyr::copy_to(con, dfPositions_mem, 
-                                      name = "bootstrap_positions", 
-                                      temporary = TRUE, overwrite = TRUE)
-      }, error = function(e) {
-        stop(sprintf(
-          paste0(
-            "Failed to create position indices for nGroups with lazy table.\n\n",
-            "When using nGroups with lazy tables, temp table creation is required.\n",
-            "Consider using collect() first or ensure write privileges.\n\n",
-            "Original error: %s"
-          ),
-          conditionMessage(e)
-        ), call. = FALSE)
-      })
+
+    # Convert to lazy table if needed
+    if (inherits(dfInput, "tbl_lazy")) {
+      dfPositions <- expand_lazy_table(
+        tblInput = dfInput,
+        tblExpansion = NULL,
+        dfExpansion_mem = dfPositions_mem,
+        strTempTableName = "bootstrap_positions",
+        strExpansionType = "position indices for nGroups"
+      )
     } else {
       dfPositions <- dfPositions_mem
     }
-    
+
     # Generate selections using positions for expansion
     dfBootstrapSelections <- dfGroupsNumbered %>%
       dplyr::distinct(.data[[strStudyCol]]) %>%
@@ -238,14 +215,14 @@ Analyze_StudyKRI <- function(
         "GroupNumber"
       )
   }
-  
+
   # Prepare lookup table with numbered groups
   dfLookup <- dfInput %>%
     dplyr::left_join(
       dfGroupsNumbered,
       by = c(strStudyCol, strGroupCol)
     )
-  
+
   # Step 3: Join to get actual data
   dfBootstrapData <- dfBootstrapSelections %>%
     dplyr::left_join(
@@ -254,11 +231,6 @@ Analyze_StudyKRI <- function(
       relationship = "many-to-many"
     ) %>%
     dplyr::select(-"GroupNumber")
-  
-  # Return (keeping as lazy table if input was lazy, or convert to data.frame)
-  if (inherits(dfInput, "tbl_lazy")) {
-    return(dfBootstrapData)
-  } else {
-    return(as.data.frame(dfBootstrapData))
-  }
+
+  return(dfBootstrapData)
 }

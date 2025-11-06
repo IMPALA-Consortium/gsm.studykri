@@ -4,7 +4,14 @@
 \alias{SimulatePortfolio}
 \title{Simulate a Portfolio of Studies}
 \usage{
-SimulatePortfolio(lRaw, dfConfig = NULL, nStudies = 5, seed = NULL)
+SimulatePortfolio(
+  lRaw,
+  dfConfig = NULL,
+  nStudies = 5,
+  seed = NULL,
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv"),
+  vSiteIDs = c("invid", "siteid", "site_num")
+)
 }
 \arguments{
 \item{lRaw}{list. Named list of raw data domains (must include Raw_SUBJ).}
@@ -15,6 +22,12 @@ columns 'studyid' and 'nSubjects'. See Details.}
 \item{nStudies}{numeric. Number of studies to generate if dfConfig is NULL. Default: 5.}
 
 \item{seed}{numeric. Random seed for reproducibility. Default: NULL.}
+
+\item{vSubjectIDs}{Character vector defining hierarchical order for subject ID column
+lookup. Default: c("subjid", "subjectenrollmentnumber", "subject_nsv")}
+
+\item{vSiteIDs}{Character vector defining hierarchical order for site ID column
+lookup. Default: c("invid", "siteid", "site_num")}
 }
 \value{
 list. Combined portfolio with same structure as lRaw, containing data
@@ -36,6 +49,13 @@ If dfConfig is provided, it should contain:
 }
 
 If dfConfig is NULL, generates default configuration with random parameters.
+
+Domains are automatically processed based on columns present:
+\itemize{
+\item Subject-level domains (have vSubjectIDs columns) are filtered to sampled subjects
+\item Site-level domains (have vSiteIDs columns but no subject columns) are filtered to used sites
+\item Other domains have studyid updated only
+}
 }
 \examples{
 # Simple portfolio with default parameters

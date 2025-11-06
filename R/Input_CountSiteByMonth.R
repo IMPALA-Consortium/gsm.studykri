@@ -12,8 +12,6 @@
 #' @return data.frame or tbl with MonthYYYYMM and Days columns
 #' @keywords internal
 calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGroupCols) {
-  is_lazy <- inherits(dfData, "tbl_lazy")
-  
   # Create month expansion data
   dfData_expanded <- dfData %>%
     dplyr::filter(
@@ -29,42 +27,20 @@ calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGro
       start_yyyymm = .data$start_year * 100 + .data$start_month,
       end_yyyymm = .data$end_year * 100 + .data$end_month
     )
-  
-  # Generate month sequence
-  if (is_lazy) {
-    # For lazy tables, collect min/max to generate sequence
-    date_range <- dfData_expanded %>%
-      dplyr::summarise(
-        min_yyyymm = min(.data$start_yyyymm, na.rm = TRUE),
-        max_yyyymm = max(.data$end_yyyymm, na.rm = TRUE)
-      ) %>%
-      dplyr::collect()
-    
-    min_ym <- date_range$min_yyyymm
-    max_ym <- date_range$max_yyyymm
-  } else {
-    min_ym <- min(dfData_expanded$start_yyyymm, na.rm = TRUE)
-    max_ym <- max(dfData_expanded$end_yyyymm, na.rm = TRUE)
-  }
-  
-  # Generate complete month sequence
-  min_year <- floor(min_ym / 100)
-  min_month <- min_ym %% 100
-  max_year <- floor(max_ym / 100)
-  max_month <- max_ym %% 100
-  
-  date_seq <- seq(
-    as.Date(paste0(min_year, "-", sprintf("%02d", min_month), "-01")),
-    as.Date(paste0(max_year, "-", sprintf("%02d", max_month), "-01")),
-    by = "month"
-  )
-  
-  dfMonths <- data.frame(
-    MonthYYYYMM = as.numeric(format(date_seq, "%Y%m"))
-  )
-  
+
+  # Generate month sequence - unified approach works for both lazy and in-memory
+  date_range <- dfData_expanded %>%
+    dplyr::summarise(
+      min_yyyymm = min(.data$start_yyyymm, na.rm = TRUE),
+      max_yyyymm = max(.data$end_yyyymm, na.rm = TRUE)
+    ) %>%
+    dplyr::collect()
+
+  # Generate complete month sequence using helper function
+  dfMonths <- generate_month_seq(date_range$min_yyyymm, date_range$max_yyyymm)
+
   # Create month lookup table in database if lazy
-  if (is_lazy) {
+  if (inherits(dfData_expanded, "tbl_lazy")) {
     tblMonths <- expand_lazy_table(
       tblInput = dfData_expanded,
       tblExpansion = NULL,
@@ -75,15 +51,15 @@ calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGro
   } else {
     tblMonths <- dfMonths
   }
-  
+
   # Cross join to expand records to all months, then filter to relevant range
   dfExpanded <- dfData_expanded %>%
     dplyr::cross_join(tblMonths) %>%
     dplyr::filter(
       .data$MonthYYYYMM >= .data$start_yyyymm &
-      .data$MonthYYYYMM <= .data$end_yyyymm
+        .data$MonthYYYYMM <= .data$end_yyyymm
     )
-  
+
   # Calculate days for each month
   dfDays <- dfExpanded %>%
     dplyr::mutate(
@@ -111,7 +87,7 @@ calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGro
       )
     ) %>%
     dplyr::select(dplyr::all_of(c(vGroupCols, "MonthYYYYMM", "Days")))
-  
+
   return(dfDays)
 }
 
@@ -129,7 +105,7 @@ calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGro
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data .env
 #' @importFrom lubridate year month
-#' 
+#'
 #' @param dfSubjects data.frame or tbl. Subject-level data with enrolled subjects.
 #' @param dfNumerator data.frame or tbl. Event data for numerator (e.g., adverse events).
 #' @param dfDenominator data.frame or tbl. Event data for denominator (e.g., visits).
@@ -169,30 +145,29 @@ calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGro
 #'
 #' @export
 Input_CountSiteByMonth <- function(
-  dfSubjects,
-  dfNumerator,
-  dfDenominator,
-  strStudyCol = "studyid",
-  strGroupCol = "invid",
-  strGroupLevel = "Site",
-  strSubjectCol = "subjid",
-  strNumeratorDateCol,
-  strDenominatorDateCol,
-  strDenominatorEndDateCol = NULL
-) {
+    dfSubjects,
+    dfNumerator,
+    dfDenominator,
+    strStudyCol = "studyid",
+    strGroupCol = "invid",
+    strGroupLevel = "Site",
+    strSubjectCol = "subjid",
+    strNumeratorDateCol,
+    strDenominatorDateCol,
+    strDenominatorEndDateCol = NULL) {
   # Input validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfSubjects, c("data.frame", "tbl"))) {
     stop("dfSubjects must be a data.frame or tbl object")
   }
-  
+
   if (!inherits(dfNumerator, c("data.frame", "tbl"))) {
     stop("dfNumerator must be a data.frame or tbl object")
   }
-  
+
   if (!inherits(dfDenominator, c("data.frame", "tbl"))) {
     stop("dfDenominator must be a data.frame or tbl object")
   }
-  
+
   # Validate required columns in dfSubjects (use colnames for lazy table compatibility)
   required_subj_cols <- c(strStudyCol, strGroupCol, strSubjectCol)
   missing_subj_cols <- setdiff(required_subj_cols, colnames(dfSubjects))
@@ -202,7 +177,7 @@ Input_CountSiteByMonth <- function(
       paste(missing_subj_cols, collapse = ", ")
     ))
   }
-  
+
   # Validate required columns in dfNumerator (use colnames for lazy table compatibility)
   required_num_cols <- c(strSubjectCol, strNumeratorDateCol)
   missing_num_cols <- setdiff(required_num_cols, colnames(dfNumerator))
@@ -212,7 +187,7 @@ Input_CountSiteByMonth <- function(
       paste(missing_num_cols, collapse = ", ")
     ))
   }
-  
+
   # Validate required columns in dfDenominator (use colnames for lazy table compatibility)
   required_denom_cols <- c(strSubjectCol, strDenominatorDateCol)
   if (!is.null(strDenominatorEndDateCol)) {
@@ -225,24 +200,24 @@ Input_CountSiteByMonth <- function(
       paste(missing_denom_cols, collapse = ", ")
     ))
   }
-  
+
   # Helper to detect lazy tables
   is_lazy_table <- function(x) {
     inherits(x, "tbl_lazy")
   }
-  
+
   # Filter to enrolled subjects only (use colnames for lazy table compatibility)
   if ("enrollyn" %in% colnames(dfSubjects)) {
     dfSubjects <- dfSubjects %>%
       dplyr::filter(.data$enrollyn == "Y")
   }
-  
+
   # For in-memory data frames, check for empty results
   # For lazy tables, skip this check as it would force evaluation
   if (is.data.frame(dfSubjects) && nrow(dfSubjects) == 0) {
     stop("No enrolled subjects found in dfSubjects")
   }
-  
+
   # Process numerator data
   dfNum_processed <- dfNumerator %>%
     dplyr::select(-dplyr::any_of(c(.env$strStudyCol, .env$strGroupCol))) %>%
@@ -266,7 +241,7 @@ Input_CountSiteByMonth <- function(
         )
       }
     }
-  
+
   # Count numerator events by site-month
   dfNum_counts <- dfNum_processed %>%
     dplyr::group_by(
@@ -278,7 +253,7 @@ Input_CountSiteByMonth <- function(
       Numerator = dplyr::n(),
       .groups = "drop"
     )
-  
+
   # Process denominator data - two modes: count or days
   if (is.null(strDenominatorEndDateCol)) {
     # Mode 1: Count denominator records by month (existing logic)
@@ -304,7 +279,7 @@ Input_CountSiteByMonth <- function(
           )
         }
       }
-    
+
     # Count denominator events by site-month
     dfDenom_counts <- dfDenom_processed %>%
       dplyr::group_by(
@@ -316,7 +291,6 @@ Input_CountSiteByMonth <- function(
         Denominator = dplyr::n(),
         .groups = "drop"
       )
-    
   } else {
     # Mode 2: Calculate days between start/end dates by month
     dfDenom_with_subjects <- dfDenominator %>%
@@ -325,7 +299,7 @@ Input_CountSiteByMonth <- function(
         dfSubjects %>% dplyr::select(dplyr::all_of(c(strSubjectCol, strStudyCol, strGroupCol))),
         by = stats::setNames(strSubjectCol, strSubjectCol)
       )
-    
+
     # Call helper to calculate days per month
     dfDays <- calculate_days_by_month(
       dfData = dfDenom_with_subjects,
@@ -333,7 +307,7 @@ Input_CountSiteByMonth <- function(
       strEndDateCol = strDenominatorEndDateCol,
       vGroupCols = c(strStudyCol, strGroupCol)
     )
-    
+
     # Sum days by site-month
     dfDenom_counts <- dfDays %>%
       dplyr::group_by(
@@ -346,7 +320,7 @@ Input_CountSiteByMonth <- function(
         .groups = "drop"
       )
   }
-  
+
   # Combine numerator and denominator
   dfCombined <- dfNum_counts %>%
     dplyr::full_join(
@@ -357,7 +331,7 @@ Input_CountSiteByMonth <- function(
       Numerator = dplyr::coalesce(.data$Numerator, 0L),
       Denominator = dplyr::coalesce(.data$Denominator, 0L)
     )
-  
+
   # Return monthly counts (NOT cumulative)
   # Cumulative sums will be calculated at study level in Transform_CumCount
   dfResult <- dfCombined %>%
@@ -369,7 +343,7 @@ Input_CountSiteByMonth <- function(
       ),
       GroupLevel = .env$strGroupLevel
     )
-  
+
   # Select and rename columns
   dfFinal <- dfResult %>%
     dplyr::select(
@@ -381,11 +355,6 @@ Input_CountSiteByMonth <- function(
       StudyID = dplyr::all_of(.env$strStudyCol),
       "MonthYYYYMM"
     )
-  
-  # Return lazy table if input was lazy, data.frame otherwise
-  if (inherits(dfNumerator, "tbl_lazy") || inherits(dfDenominator, "tbl_lazy") || inherits(dfSubjects, "tbl_lazy")) {
-    return(dfFinal)
-  } else {
-    return(as.data.frame(dfFinal))
-  }
+
+  return(dfFinal)
 }

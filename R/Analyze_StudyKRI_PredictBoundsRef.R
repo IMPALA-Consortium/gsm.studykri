@@ -55,7 +55,7 @@
 #' dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
 #'   dfInput = dfSiteLevel,
 #'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
-#'   nBootstrapReps = 100,  # Use small number for example
+#'   nBootstrapReps = 100, # Use small number for example
 #'   nConfLevel = 0.95,
 #'   seed = 42
 #' )
@@ -64,17 +64,16 @@
 #'
 #' @export
 Analyze_StudyKRI_PredictBoundsRefSet <- function(
-  dfInput,
-  vStudyFilter = NULL,
-  nBootstrapReps = 1000,
-  nConfLevel = 0.95,
-  strStudyCol = "StudyID",
-  strGroupCol = "GroupID",
-  strStudyMonthCol = "StudyMonth",
-  strMetricCol = "Metric",
-  nMinDenominator = 25,
-  seed = NULL
-) {
+    dfInput,
+    vStudyFilter = NULL,
+    nBootstrapReps = 1000,
+    nConfLevel = 0.95,
+    strStudyCol = "StudyID",
+    strGroupCol = "GroupID",
+    strStudyMonthCol = "StudyMonth",
+    strMetricCol = "Metric",
+    nMinDenominator = 25,
+    seed = NULL) {
   # Input Validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfInput, c("data.frame", "tbl"))) {
     stop("dfInput must be a data.frame or tbl object")
@@ -90,22 +89,13 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     ))
   }
 
-  # Helper to detect lazy tables
-  is_lazy_table <- function(x) {
-    inherits(x, "tbl_lazy")
-  }
-
   # Handle vStudyFilter - extract all studies if NULL
   if (is.null(vStudyFilter)) {
     # Extract all unique study IDs from input
-    if (is_lazy_table(dfInput)) {
-      vStudyFilter <- dfInput %>%
-        dplyr::distinct(.data[[strStudyCol]]) %>%
-        dplyr::collect() %>%
-        dplyr::pull(.data[[strStudyCol]])
-    } else {
-      vStudyFilter <- unique(dfInput[[strStudyCol]])
-    }
+    vStudyFilter <- dfInput %>%
+      dplyr::distinct(.data[[strStudyCol]]) %>%
+      dplyr::collect() %>%
+      dplyr::pull(.data[[strStudyCol]])
     message(sprintf("No vStudyFilter specified. Using all %d studies.", length(vStudyFilter)))
   }
 
@@ -146,7 +136,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 
   # Find minimum across studies
   # For lazy tables, collect just the counts
-  if (is_lazy_table(dfGroupCounts)) {
+  if (inherits(dfGroupCounts, "tbl_lazy")) {
     dfGroupCounts_mem <- dplyr::collect(dfGroupCounts)
     nMinGroups <- min(dfGroupCounts_mem$GroupCount)
   } else {
@@ -160,7 +150,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   dfBootstrapped <- Analyze_StudyKRI(
     dfInput = dfFiltered,
     nBootstrapReps = nBootstrapReps,
-    nGroups = nMinGroups,  # Key: use minimum to ensure fair comparison
+    nGroups = nMinGroups, # Key: use minimum to ensure fair comparison
     strStudyCol = strStudyCol,
     strGroupCol = strGroupCol,
     seed = seed
@@ -170,32 +160,30 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   # This combines all studies into a single distribution per bootstrap replicate
   dfStudyLevel <- Transform_CumCount(
     dfInput = dfBootstrapped,
-    vBy = "BootstrapRep",  # Critical: only group by BootstrapRep, not StudyID
+    vBy = "BootstrapRep", # Critical: only group by BootstrapRep, not StudyID
     nMinDenominator = nMinDenominator
   )
 
   # Calculate CI for the combined distribution
   dfBounds <- Analyze_StudyKRI_PredictBounds(
     dfInput = dfStudyLevel,
-    vBy = character(0),  # No additional grouping
+    vBy = character(0), # No additional grouping
     nConfLevel = nConfLevel,
     strMetricCol = strMetricCol,
     strStudyMonthCol = strStudyMonthCol
   )
 
   # Add metadata
+  # Compute scalar values before mutate to avoid SQL translation issues
+  nStudyCount <- length(vStudyFilter)
+
   dfResult <- dfBounds %>%
     dplyr::mutate(
       GroupCount = .env$nMinGroups,
-      StudyCount = length(.env$vStudyFilter)
+      StudyCount = .env$nStudyCount
     )
 
-  # Return lazy table if input was lazy, data.frame otherwise
-  if (is_lazy_table(dfInput)) {
-    return(dfResult)
-  } else {
-    return(as.data.frame(dfResult))
-  }
+  return(dfResult)
 }
 
 #' Predict Bounds for Multiple Studies Using Reference Study Mappings
@@ -254,42 +242,41 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #'
 #' @export
 Analyze_StudyKRI_PredictBoundsRef <- function(
-  dfInput,
-  dfStudyRef,
-  strStudyCol = "study",
-  strStudyRefCol = "studyref",
-  nBootstrapReps = 1000,
-  nConfLevel = 0.95,
-  strGroupCol = "GroupID",
-  strStudyMonthCol = "StudyMonth",
-  strMetricCol = "Metric",
-  nMinDenominator = 25,
-  seed = NULL
-) {
+    dfInput,
+    dfStudyRef,
+    strStudyCol = "study",
+    strStudyRefCol = "studyref",
+    nBootstrapReps = 1000,
+    nConfLevel = 0.95,
+    strGroupCol = "GroupID",
+    strStudyMonthCol = "StudyMonth",
+    strMetricCol = "Metric",
+    nMinDenominator = 25,
+    seed = NULL) {
   # Input validation
   if (!is.data.frame(dfStudyRef)) {
     stop("dfStudyRef must be a data.frame")
   }
-  
+
   if (!strStudyCol %in% colnames(dfStudyRef)) {
     stop(sprintf("Column '%s' not found in dfStudyRef", strStudyCol))
   }
-  
+
   if (!strStudyRefCol %in% colnames(dfStudyRef)) {
     stop(sprintf("Column '%s' not found in dfStudyRef", strStudyRefCol))
   }
-  
+
   # Get unique target studies
   vTargetStudies <- unique(dfStudyRef[[strStudyCol]])
-  
+
   # Initialize list to collect results
   lResults <- list()
-  
+
   # Loop over each target study
   for (study in vTargetStudies) {
     # Extract reference studies for this target study
     vRefStudies <- dfStudyRef[[strStudyRefCol]][dfStudyRef[[strStudyCol]] == study]
-    
+
     # Call the set function
     dfBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
       dfInput = dfInput,
@@ -303,18 +290,17 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       nMinDenominator = nMinDenominator,
       seed = seed
     )
-    
+
     # Add StudyID and StudyRefID columns
     dfBounds$StudyID <- study
     dfBounds$StudyRefID <- paste(vRefStudies, collapse = ", ")
-    
+
     # Store in list
     lResults[[study]] <- dfBounds
   }
-  
+
   # Bind all results
   dfResult <- dplyr::bind_rows(lResults)
-  
+
   return(as.data.frame(dfResult))
 }
-

@@ -5,4 +5,5 @@
 ^_pkgdown\.yml$
 ^[^/]+\.html$
 ^\.Renviron$
-
+^README\.Rmd$
+^docs$

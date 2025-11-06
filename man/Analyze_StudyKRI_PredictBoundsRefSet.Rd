@@ -80,7 +80,7 @@ dfSiteLevel <- data.frame(
 dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
   dfInput = dfSiteLevel,
   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
-  nBootstrapReps = 100,  # Use small number for example
+  nBootstrapReps = 100, # Use small number for example
   nConfLevel = 0.95,
   seed = 42
 )

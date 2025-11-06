@@ -20,15 +20,16 @@
 #'
 #' @export
 Report_KRI_StudyKRI <- function(
-  lCharts,
-  dfResults,
-  dfGroups,
-  dfMetrics,
-  strOutputFile,
-  strInputPath,
-  ...
-) {
-  if (!is.list(lCharts) || length(lCharts) == 0) return(character(0))
+    lCharts,
+    dfResults,
+    dfGroups,
+    dfMetrics,
+    strOutputFile,
+    strInputPath,
+    ...) {
+  if (!is.list(lCharts) || length(lCharts) == 0) {
+    return(character(0))
+  }
 
   # Extract StudyIDs from chart names formatted as "<StudyID>_<MetricID>"
   vChartNames <- names(lCharts)
@@ -78,5 +79,3 @@ Report_KRI_StudyKRI <- function(
 
   vOutFiles[nzchar(vOutFiles)]
 }
-
-

@@ -12,7 +12,9 @@ ResampleStudy(
   replacement = TRUE,
   strOversamplDomain = NULL,
   vOversamplQuantileRange = c(0, 1),
-  seed = NULL
+  seed = NULL,
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv"),
+  vSiteIDs = c("invid", "siteid", "site_num")
 )
 }
 \arguments{
@@ -38,6 +40,12 @@ NULL (default) samples from all enrolled subjects}
 oversampling. Default c(0, 1) includes all subjects}
 
 \item{seed}{Integer seed for reproducibility. NULL (default) uses current random state}
+
+\item{vSubjectIDs}{Character vector defining hierarchical order for subject ID column
+lookup. Default: c("subjid", "subjectenrollmentnumber", "subject_nsv")}
+
+\item{vSiteIDs}{Character vector defining hierarchical order for site ID column
+lookup. Default: c("invid", "siteid", "site_num")}
 }
 \value{
 Named list of resampled data domains with updated IDs
@@ -55,6 +63,13 @@ This function performs the following steps:
 \item Randomizes site assignments by shuffling invid values (or generates new sites if TargetSiteCount specified)
 \item Updates all subject, study, and site IDs across all domains
 \item Maintains referential integrity across domains
+}
+
+Domains are automatically categorized by columns present:
+\itemize{
+\item \strong{Subject-level}: Has column in vSubjectIDs → filter to sampled subjects
+\item \strong{Site-level}: Has column in vSiteIDs but no subject column → filter to used sites
+\item \strong{Other}: Neither → update studyid field only
 }
 
 When \code{TargetSiteCount} is specified:
