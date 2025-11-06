@@ -350,3 +350,143 @@ test_that("Visualize_StudyKRI works without reference bounds (dfBoundsRef = NULL
   expect_true("GeomLine" %in% layer_types)
   expect_true("GeomPoint" %in% layer_types)
 })
+
+test_that("Visualize_StudyKRI validates dfBounds columns", {
+  dfStudyKRI <- data.frame(
+    StudyMonth = 1:5,
+    Metric = c(0.10, 0.12, 0.15, 0.14, 0.13),
+    stringsAsFactors = FALSE
+  )
+
+  dfBoundsRef <- data.frame(
+    StudyMonth = 1:5,
+    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    stringsAsFactors = FALSE
+  )
+
+  # dfBounds with missing required columns
+  dfBounds_bad <- data.frame(
+    StudyMonth = 1:5,
+    MedianMetric = c(0.10, 0.12, 0.15, 0.14, 0.13)
+    # Missing LowerBound and UpperBound
+  )
+
+  expect_error(
+    Visualize_StudyKRI(
+      dfStudyKRI = dfStudyKRI,
+      dfBoundsRef = dfBoundsRef,
+      dfBounds = dfBounds_bad,
+      strStudyID = "STUDY1"
+    ),
+    "dfBounds missing required columns"
+  )
+})
+
+test_that("Visualize_StudyKRI filters dfBounds by StudyID", {
+  # Create data with multiple studies
+  dfStudyKRI <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2"), each = 5),
+    StudyMonth = rep(1:5, 2),
+    Metric = c(0.10, 0.12, 0.15, 0.14, 0.13, 0.20, 0.22, 0.25, 0.24, 0.23),
+    stringsAsFactors = FALSE
+  )
+
+  dfBoundsRef <- data.frame(
+    StudyMonth = 1:5,
+    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    stringsAsFactors = FALSE
+  )
+
+  # dfBounds with StudyID column that needs filtering
+  dfBounds <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2"), each = 5),
+    StudyMonth = rep(1:5, 2),
+    MedianMetric = rep(c(0.10, 0.12, 0.15, 0.14, 0.13), 2),
+    LowerBound = rep(c(0.08, 0.10, 0.12, 0.11, 0.10), 2),
+    UpperBound = rep(c(0.12, 0.14, 0.18, 0.17, 0.16), 2),
+    stringsAsFactors = FALSE
+  )
+
+  # Should filter to STUDY1 only
+  p <- Visualize_StudyKRI(
+    dfStudyKRI = dfStudyKRI,
+    dfBoundsRef = dfBoundsRef,
+    dfBounds = dfBounds,
+    strStudyID = "STUDY1"
+  )
+
+  expect_s3_class(p, "ggplot")
+  expect_true(length(p$layers) > 0)
+})
+
+test_that("Visualize_StudyKRI filters dfBounds by nMaxMonth", {
+  dfStudyKRI <- data.frame(
+    StudyMonth = 1:10,
+    Metric = seq(0.10, 0.19, length.out = 10),
+    stringsAsFactors = FALSE
+  )
+
+  dfBoundsRef <- data.frame(
+    StudyMonth = 1:10,
+    MedianMetric = seq(0.11, 0.20, length.out = 10),
+    LowerBound = seq(0.08, 0.17, length.out = 10),
+    UpperBound = seq(0.14, 0.23, length.out = 10),
+    stringsAsFactors = FALSE
+  )
+
+  dfBounds <- data.frame(
+    StudyMonth = 1:10,
+    MedianMetric = seq(0.10, 0.19, length.out = 10),
+    LowerBound = seq(0.08, 0.17, length.out = 10),
+    UpperBound = seq(0.12, 0.21, length.out = 10),
+    stringsAsFactors = FALSE
+  )
+
+  # Filter to first 5 months - should filter dfBounds too
+  p <- Visualize_StudyKRI(
+    dfStudyKRI = dfStudyKRI,
+    dfBoundsRef = dfBoundsRef,
+    dfBounds = dfBounds,
+    strStudyID = "STUDY1",
+    nMaxMonth = 5
+  )
+
+  expect_s3_class(p, "ggplot")
+  expect_true(length(p$layers) > 0)
+  
+  # Check that all layers have filtered data
+  study_data <- p$layers[[4]]$data # Study line layer (after ribbons)
+  expect_true(all(study_data$StudyMonth <= 5))
+})
+
+test_that("Visualize_StudyKRI handles empty dfBoundsRef after filtering", {
+  dfStudyKRI <- data.frame(
+    StudyMonth = 1:5,
+    Metric = c(0.10, 0.12, 0.15, 0.14, 0.13),
+    stringsAsFactors = FALSE
+  )
+
+  # dfBoundsRef with data only for months 6-10
+  dfBoundsRef <- data.frame(
+    StudyMonth = 6:10,
+    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    stringsAsFactors = FALSE
+  )
+
+  # Filter to months 1-5, which will empty dfBoundsRef
+  expect_error(
+    Visualize_StudyKRI(
+      dfStudyKRI = dfStudyKRI,
+      dfBoundsRef = dfBoundsRef,
+      strStudyID = "STUDY1",
+      nMaxMonth = 5
+    ),
+    "No data available for dfBoundsRef after filtering"
+  )
+})
