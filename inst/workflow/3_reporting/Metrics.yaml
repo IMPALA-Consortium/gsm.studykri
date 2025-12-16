@@ -2,6 +2,7 @@ meta:
   Type: Reporting
   ID: Metrics
   Description: Create metrics metadata from workflow definitions
+  Priority: 1
 
 steps:
   - output: dfMetrics

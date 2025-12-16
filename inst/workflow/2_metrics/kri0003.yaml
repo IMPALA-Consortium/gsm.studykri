@@ -1,16 +1,16 @@
 meta:
   Type: Analysis
-  ID: kri0002
+  ID: kri0003
   GroupLevel: Site
-  Abbreviation: AE
-  Metric: Adverse Event Rate per Days on Study
-  Numerator: Adverse Events
-  Denominator: Days on Study
+  Abbreviation: SAE
+  Metric: Serious Adverse Event Rate per Visit
+  Numerator: Serious Adverse Events
+  Denominator: Visits
   Model: Bootstrap CI
   Score: Bootstrap CI
   AnalysisType: rate
   Threshold: 0.95
-  AccrualThreshold: 180
+  AccrualThreshold: 25
   AccrualMetric: Denominator
   BootstrapReps: 1000
 spec:
@@ -19,6 +19,8 @@ spec:
       type: character
     aest_dt:
       type: Date
+    aeser:
+      type: character
   Mapped_SUBJ:
     subjid:
       type: character
@@ -26,24 +28,32 @@ spec:
       type: character
     studyid:
       type: character
-    firstparticipantdate:
-      type: Date
-    lastparticipantdate:
+  Mapped_Visit:
+    subjid:
+      type: character
+    visit_dt:
       type: Date
 steps:
+  - output: Mapped_SAE
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_AE
+      strQuery: |
+        SELECT *
+        FROM df
+        WHERE aeser = 'Y'
   - output: Analysis_Input
     name: gsm.studykri::Input_CountSiteByMonth
     params:
       dfSubjects: Mapped_SUBJ
-      dfNumerator: Mapped_AE
-      dfDenominator: Mapped_SUBJ
+      dfNumerator: Mapped_SAE
+      dfDenominator: Mapped_Visit
       strStudyCol: studyid
       strGroupCol: invid
       strGroupLevel: GroupLevel
       strSubjectCol: subjid
       strNumeratorDateCol: aest_dt
-      strDenominatorDateCol: firstparticipantdate
-      strDenominatorEndDateCol: lastparticipantdate
+      strDenominatorDateCol: visit_dt
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount
     params:
@@ -57,3 +67,8 @@ steps:
       ID: ID
       Analysis_Input: Analysis_Input
       Analysis_Transformed: Analysis_Transformed
+
+
+
+
+

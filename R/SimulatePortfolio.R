@@ -255,12 +255,11 @@ ResampleStudy <- function(
   }
 
   # ---- Create Subject Mapping ----
-  subject_mapping <- data.frame(
+  subject_mapping <- tibble::tibble(
     old_subjid = sampled_subj$subjid,
     new_subjid = sprintf("%s_%04d", strNewStudyID, seq_len(nrow(sampled_subj))),
     old_invid = sampled_subj$invid, # Already randomized
-    row_index = seq_len(nrow(sampled_subj)),
-    stringsAsFactors = FALSE
+    row_index = seq_len(nrow(sampled_subj))
   )
 
   # ---- Process All Domains ----
@@ -558,12 +557,11 @@ generate_default_config <- function(lRaw, nStudies, seed) {
 
   max_subj <- nrow(lRaw$Raw_SUBJ)
 
-  data.frame(
+  tibble::tibble(
     studyid = sprintf("PORTFOLIO%03d", seq_len(nStudies)),
     nSubjects = sample(20:min(100, max_subj), nStudies, replace = TRUE),
     TargetSiteCount = NA_integer_,
-    replacement = TRUE,
-    stringsAsFactors = FALSE
+    replacement = TRUE
   )
 }
 

@@ -1,0 +1,11 @@
+- update open issue with a summary of the relevant changes
+- the github token is in the .Renviron file load GITHUB_PAT as an evironment variable and pass it to the github API
+- make sure the clear token does not appear in any logs
+- issue must be open
+- there must be an open PR referencing the issue
+- all ci/cd checks of PR must have passed
+- relavant feature branch is checked out locally
+- there are no uncommited changes outside the .cursor folder
+- all tests are passing locally
+- only then add the summary as a new comment to the issue do not overwrite any additional text or comments
+

@@ -12,14 +12,14 @@ Analyze_StudyKRI_PredictBoundsRefSet(
   strStudyCol = "StudyID",
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
-  strMetricCol = "Metric",
   nMinDenominator = 25,
   seed = NULL
 )
 }
 \arguments{
 \item{dfInput}{data.frame or tbl_lazy. Site-level data from \code{Input_CumCountSiteByMonth}.
-Must contain columns: \code{StudyID}, \code{GroupID}, \code{Numerator}, \code{Denominator}, \code{MonthYYYYMM}.}
+Must contain columns: \code{StudyID}, \code{GroupID}, one or more \verb{Numerator_*} columns,
+\code{Denominator}, \code{MonthYYYYMM}.}
 
 \item{vStudyFilter}{character or NULL. Study IDs to include in comparison group.
 If NULL (default), uses all studies found in dfInput.
@@ -37,8 +37,6 @@ Example: \code{c("STUDY1", "STUDY2", "STUDY3")}.}
 \item{strStudyMonthCol}{character. Column name for sequential study month
 (default: "StudyMonth").}
 
-\item{strMetricCol}{character. Column name for metric (default: "Metric").}
-
 \item{nMinDenominator}{numeric. Minimum denominator for Transform_CumCount
 (default: 25).}
 
@@ -46,7 +44,7 @@ Example: \code{c("STUDY1", "STUDY2", "STUDY3")}.}
 }
 \value{
 A data.frame (or tbl_lazy if input was lazy) with confidence intervals.
-Output columns: \code{StudyMonth}, \code{MedianMetric}, \code{LowerBound}, \code{UpperBound},
+Output columns: \code{StudyMonth}, \verb{Median_*}, \verb{Lower_*}, \verb{Upper_*} for each Metric column,
 \code{BootstrapCount}, \code{GroupCount}, \code{StudyCount}.
 Note: No \code{StudyID} column as studies are intentionally combined.
 }

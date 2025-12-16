@@ -17,7 +17,8 @@
 #' @importFrom rlang .data .env
 #'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
-#'   Must contain columns: `StudyID`, `GroupID`, `Numerator`, `Denominator`, `MonthYYYYMM`.
+#'   Must contain columns: `StudyID`, `GroupID`, one or more `Numerator_*` columns,
+#'   `Denominator`, `MonthYYYYMM`.
 #' @param vStudyFilter character or NULL. Study IDs to include in comparison group.
 #'   If NULL (default), uses all studies found in dfInput.
 #'   Example: `c("STUDY1", "STUDY2", "STUDY3")`.
@@ -28,13 +29,12 @@
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
 #' @param strStudyMonthCol character. Column name for sequential study month
 #'   (default: "StudyMonth").
-#' @param strMetricCol character. Column name for metric (default: "Metric").
 #' @param nMinDenominator numeric. Minimum denominator for Transform_CumCount
 #'   (default: 25).
 #' @param seed integer or NULL. Random seed for reproducibility (default: NULL).
 #'
-#' @return A data.frame (or tbl_lazy if input was lazy) with confidence intervals.
-#'   Output columns: `StudyMonth`, `MedianMetric`, `LowerBound`, `UpperBound`,
+#' @return A tibble (or tbl_lazy if input was lazy) with confidence intervals.
+#'   Output columns: `StudyMonth`, `Median_*`, `Lower_*`, `Upper_*` for each Metric column,
 #'   `BootstrapCount`, `GroupCount`, `StudyCount`.
 #'   Note: No `StudyID` column as studies are intentionally combined.
 #'
@@ -71,7 +71,6 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
-    strMetricCol = "Metric",
     nMinDenominator = 25,
     seed = NULL) {
   # Input Validation - accept data.frame or tbl (including tbl_lazy)
@@ -79,8 +78,14 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     stop("dfInput must be a data.frame or tbl object")
   }
 
-  # Check required columns
-  required_cols <- c(strStudyCol, strGroupCol, "Numerator", "Denominator", "MonthYYYYMM")
+  # Auto-detect Numerator columns (matches both "Numerator" and "Numerator_*")
+  vNumeratorCols <- grep("^Numerator", colnames(dfInput), value = TRUE)
+  if (length(vNumeratorCols) == 0) {
+    stop("dfInput must have at least one Numerator column")
+  }
+
+  # Check other required columns
+  required_cols <- c(strStudyCol, strGroupCol, "Denominator", "MonthYYYYMM")
   missing_cols <- setdiff(required_cols, colnames(dfInput))
   if (length(missing_cols) > 0) {
     stop(sprintf(
@@ -147,7 +152,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   message(sprintf("Resampling with minimum group count: %d", nMinGroups))
 
   # Resample each study independently with nGroups = nMinGroups
-  dfBootstrapped <- Analyze_StudyKRI(
+  dfBootstrapped <- BootstrapStudyKRI(
     dfInput = dfFiltered,
     nBootstrapReps = nBootstrapReps,
     nGroups = nMinGroups, # Key: use minimum to ensure fair comparison
@@ -165,11 +170,10 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   )
 
   # Calculate CI for the combined distribution
-  dfBounds <- Analyze_StudyKRI_PredictBounds(
+  dfBounds <- CalculateStudyBounds(
     dfInput = dfStudyLevel,
     vBy = character(0), # No additional grouping
     nConfLevel = nConfLevel,
-    strMetricCol = strMetricCol,
     strStudyMonthCol = strStudyMonthCol
   )
 
@@ -197,6 +201,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' @importFrom rlang .data .env
 #'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
+#'   Must contain one or more `Numerator_*` columns, `Denominator`, `MonthYYYYMM`.
 #' @param dfStudyRef data.frame. Study-to-reference mappings with two columns specified
 #'   by `strStudyCol` and `strStudyRefCol`.
 #' @param strStudyCol character. Column name in `dfStudyRef` for target studies (default: "study").
@@ -205,12 +210,12 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' @param nConfLevel numeric. Confidence level for the bounds (default: 0.95).
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
 #' @param strStudyMonthCol character. Column name for study month (default: "StudyMonth").
-#' @param strMetricCol character. Column name for metric (default: "Metric").
 #' @param nMinDenominator numeric. Minimum denominator (default: 25).
 #' @param seed integer or NULL. Random seed (default: NULL).
 #'
-#' @return A data.frame with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
-#'   `MedianMetric`, `LowerBound`, `UpperBound`, `BootstrapCount`, `GroupCount`, `StudyCount`.
+#' @return A tibble with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
+#'   `Median_*`, `Lower_*`, `Upper_*` for each Metric column, `BootstrapCount`,
+#'   `GroupCount`, `StudyCount`.
 #'
 #' @examples
 #' # Create study reference mapping
@@ -250,7 +255,6 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     nConfLevel = 0.95,
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
-    strMetricCol = "Metric",
     nMinDenominator = 25,
     seed = NULL) {
   # Input validation
@@ -286,7 +290,6 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       strStudyCol = "StudyID",
       strGroupCol = strGroupCol,
       strStudyMonthCol = strStudyMonthCol,
-      strMetricCol = strMetricCol,
       nMinDenominator = nMinDenominator,
       seed = seed
     )
@@ -302,5 +305,5 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
   # Bind all results
   dfResult <- dplyr::bind_rows(lResults)
 
-  return(as.data.frame(dfResult))
+  return(tibble::as_tibble(dfResult))
 }

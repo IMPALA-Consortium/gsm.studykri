@@ -1,0 +1,16 @@
+meta:
+  Type: Reporting
+  ID: Input
+  Description: Bind Analysis_Input from all KRI analyses
+  Priority: 1
+steps:
+  - output: Reporting_Input
+    name: gsm.reporting::BindResults
+    params:
+      lAnalysis: lAnalyzed
+      strName: "Analysis_Input"
+
+
+
+
+

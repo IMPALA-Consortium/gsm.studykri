@@ -1,10 +1,13 @@
-#' Generate Bootstrap Resamples for Study-Level KRI Analysis
+#' Generate Bootstrap Resamples for Study-Level KRI Analysis (Internal)
 #'
 #' @description
-#' Generates bootstrap resamples by resampling groups (sites/countries) with
-#' replacement within each study. Uses dbplyr-compatible approach with runif()
-#' for random selection. Each bootstrap replicate randomly selects groups and
-#' includes all their associated data.
+#' Internal helper function that generates bootstrap resamples by resampling 
+#' groups (sites/countries) with replacement within each study. Uses dbplyr-compatible 
+#' approach with runif() for random selection. Each bootstrap replicate randomly 
+#' selects groups and includes all their associated data.
+#'
+#' This function is intended for internal use. For the main workflow, use
+#' `Analyze_StudyKRI_PredictBounds()` which calls this function internally.
 #'
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data .env
@@ -32,38 +35,9 @@
 #'   - Original data rows are replicated across bootstrap samples with groups
 #'     resampled with replacement
 #'
-#' @examples
-#' # Generate group-level data
-#' dfSubjects <- clindata::rawplus_dm
-#' dfNumerator <- clindata::rawplus_ae
-#' dfDenominator <- clindata::rawplus_visdt
-#'
-#' dfInput <- Input_CountSiteByMonth(
-#'   dfSubjects = dfSubjects,
-#'   dfNumerator = dfNumerator,
-#'   dfDenominator = dfDenominator,
-#'   strNumeratorDateCol = "aest_dt",
-#'   strDenominatorDateCol = "visit_dt"
-#' )
-#'
-#' # Generate bootstrap samples
-#' dfBootstrap <- Analyze_StudyKRI(
-#'   dfInput = dfInput,
-#'   nBootstrapReps = 100,
-#'   seed = 42
-#' )
-#'
-#' # Aggregate each bootstrap replicate to study level
-#' dfStudyLevel <- Transform_CumCount(
-#'   dfInput = dfBootstrap,
-#'   vBy = c("StudyID", "BootstrapRep"),
-#'   nMinDenominator = 25
-#' )
-#'
-#' print(head(dfStudyLevel))
-#'
-#' @export
-Analyze_StudyKRI <- function(
+#' @keywords internal
+#' @noRd
+BootstrapStudyKRI <- function(
     dfInput,
     nBootstrapReps = 1000,
     nGroups = NULL,
@@ -107,7 +81,7 @@ Analyze_StudyKRI <- function(
   }
 
   # Create replicate index
-  dfReps_mem <- data.frame(
+  dfReps_mem <- tibble::tibble(
     BootstrapRep = seq_len(nBootstrapReps)
   )
 
@@ -182,7 +156,7 @@ Analyze_StudyKRI <- function(
       nGroups # For lazy tables, use the specified value
     }
 
-    dfPositions_mem <- data.frame(Position = seq_len(max_effective))
+    dfPositions_mem <- tibble::tibble(Position = seq_len(max_effective))
 
     # Convert to lazy table if needed
     if (inherits(dfInput, "tbl_lazy")) {

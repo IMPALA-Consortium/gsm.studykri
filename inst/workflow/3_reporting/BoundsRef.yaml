@@ -1,12 +1,41 @@
 meta:
   Type: Reporting
   ID: BoundsRef
-  Description: Bind reference/group bounds from all KRI analyses
-
+  Description: Calculate reference bounds for KRIs
+  BootstrapReps: 1000
+  Threshold: 0.95
+  AccrualThreshold: 25
+  Priority: 3
+spec:
+  Reporting_Join:
+    _all:
+      required: true
+  Mapped_StudyRef:
+    study:
+      type: character
+    studyref:
+      type: character
 steps:
-  - output: lBoundsRef
-    name: gsm.reporting::BindResults
+  # Step 1: Parse reference bounds function
+  - output: PredictBoundsRef_Func
+    name: gsm.studykri::ParseFunction
     params:
-      lAnalysis: lAnalyzed
-      strName: "Analysis_BoundsRef"
+      strFunction: gsm.studykri::Analyze_StudyKRI_PredictBoundsRef
 
+  # Step 2: Calculate reference bounds (includes bootstrap internally)
+  - output: Analysis_BoundsRef_Wide
+    name: purrr::map
+    params:
+      .x: Reporting_Join
+      .f: PredictBoundsRef_Func
+      dfStudyRef: Mapped_StudyRef
+      nBootstrapReps: BootstrapReps
+      nConfLevel: Threshold
+      nMinDenominator: AccrualThreshold
+      seed: 42
+
+  # Step 3: Transform reference bounds to long format
+  - output: Reporting_BoundsRef
+    name: gsm.studykri::Transform_long
+    params:
+      lWide: Analysis_BoundsRef_Wide

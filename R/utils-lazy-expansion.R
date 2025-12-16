@@ -185,5 +185,5 @@ generate_month_seq <- function(start_yyyymm, end_yyyymm) {
     by = "month"
   )
 
-  data.frame(MonthYYYYMM = as.numeric(format(dates, "%Y%m")))
+  tibble::tibble(MonthYYYYMM = as.numeric(format(dates, "%Y%m")))
 }

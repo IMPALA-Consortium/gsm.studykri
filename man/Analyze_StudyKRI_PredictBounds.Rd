@@ -2,79 +2,93 @@
 % Please edit documentation in R/Analyze_StudyKRI_PredictBounds.R
 \name{Analyze_StudyKRI_PredictBounds}
 \alias{Analyze_StudyKRI_PredictBounds}
-\title{Calculate Confidence Intervals from Bootstrap Distribution}
+\title{Calculate Bootstrap-Based Confidence Bounds for Study-Level KRI}
 \usage{
 Analyze_StudyKRI_PredictBounds(
   dfInput,
-  vBy = "StudyID",
+  dfStudyRef = NULL,
+  nBootstrapReps = 1000,
   nConfLevel = 0.95,
-  strMetricCol = "Metric",
+  nMinDenominator = 25,
+  seed = NULL,
+  tblBootstrapReps = NULL,
+  tblMonthSequence = NULL,
+  strStudyCol = "StudyID",
+  strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth"
 )
 }
 \arguments{
-\item{dfInput}{data.frame or tbl. Bootstrapped study-level data from
-\code{Transform_CumCount} with \code{BootstrapRep} column. Must contain columns:
-\code{vBy} columns, \code{StudyMonth}, \code{Metric}, \code{BootstrapRep}.}
+\item{dfInput}{data.frame or tbl_lazy. Group-level data from \code{Input_CumCountSiteByMonth}.
+Expected columns: GroupID, one or more Numerator columns, Denominator,
+StudyID, MonthYYYYMM.}
 
-\item{vBy}{character. Vector of column names for grouping CI calculation.
-Use \code{"StudyID"} for single study analysis, \code{character(0)} for combined
-multi-study analysis. Default: \code{"StudyID"}.}
+\item{dfStudyRef}{data.frame or NULL. Optional study reference mapping. If provided,
+the unique values in the first column identify the target studies for which
+bounds will be calculated. If NULL (default), bounds are calculated for all
+studies found in dfInput.}
+
+\item{nBootstrapReps}{integer. Number of bootstrap replicates to generate.
+Default: 1000.}
 
 \item{nConfLevel}{numeric. Confidence level between 0 and 1. Default: 0.95
 (95\% confidence interval).}
 
-\item{strMetricCol}{character. Name of metric column. Default: \code{"Metric"}.}
+\item{nMinDenominator}{numeric. Minimum cumulative denominator threshold for
+Transform_CumCount filtering. Default: 25.}
 
-\item{strStudyMonthCol}{character. Name of study month column.
-Default: \code{"StudyMonth"}.}
+\item{seed}{integer or NULL. Random seed for reproducibility. Default: NULL.}
+
+\item{tblBootstrapReps}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
+Optional pre-generated bootstrap replicate indices. Default: NULL.}
+
+\item{tblMonthSequence}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
+Optional pre-generated complete month sequences. Default: NULL.}
+
+\item{strStudyCol}{character. Column name for study identifier in dfInput.
+Default: "StudyID".}
+
+\item{strGroupCol}{character. Column name for group identifier. Default: "GroupID".}
+
+\item{strStudyMonthCol}{character. Name of study month column. Default: "StudyMonth".}
 }
 \value{
-A data.frame (or tbl_lazy if input was lazy) with columns:
+A data.frame (or tbl_lazy if input was lazy) with confidence intervals:
 \itemize{
-\item \code{vBy} columns (if \code{length(vBy) > 0})
+\item \code{StudyID}: Target study identifier
 \item \code{StudyMonth}: Sequential month number
-\item \code{MedianMetric}: Median metric value across bootstrap samples
-\item \code{LowerBound}: Lower confidence bound
-\item \code{UpperBound}: Upper confidence bound
+\item \verb{Median_*}, \verb{Lower_*}, \verb{Upper_*}: Bounds for each Metric column
 \item \code{BootstrapCount}: Number of bootstrap samples used
 }
 }
 \description{
-Calculates percentile-based confidence intervals from bootstrap distributions
-of study-level KRI metrics. Returns median estimates with upper and lower
-confidence bounds for each time point. Supports both single-study and
-multi-study comparison scenarios with full dbplyr compatibility.
+Calculates confidence bounds for study-level KRI metrics using bootstrap resampling.
+This is a convenience function that orchestrates the complete workflow:
+\enumerate{
+\item Filters input data to target studies (specified in dfStudyRef or all studies if NULL)
+\item Generates bootstrap resamples via \code{BootstrapStudyKRI()}
+\item Aggregates to study level via \code{Transform_CumCount()}
+\item Calculates confidence intervals via \code{CalculateStudyBounds()}
+}
 }
 \examples{
 \dontrun{
-# Single study analysis
-dfBootstrap <- Analyze_StudyKRI(
-  dfInput = dfInput,
-  nBootstrapReps = 1000,
-  seed = 42
+# Example 1: Calculate bounds for all studies in dfInput
+Bounds_Wide <- purrr::map(
+  lJoined, 
+  ~ Analyze_StudyKRI_PredictBounds(.)
 )
 
-dfBootstrapStudy <- Transform_CumCount(
-  dfInput = dfBootstrap,
-  vBy = c("StudyID", "BootstrapRep"),
-  nMinDenominator = 25
+# Example 2: Calculate bounds for specific studies using reference mapping
+dfStudyRef <- data.frame(
+  study = c("AA-1", "AA-1", "AA-2", "AA-2"),
+  studyref = c("AA-3", "AA-4", "AA-3", "AA-5")
 )
 
-dfBounds <- Analyze_StudyKRI_PredictBounds(
-  dfInput = dfBootstrapStudy,
-  vBy = "StudyID",
-  nConfLevel = 0.95
-)
-
-# Multi-study comparison (combined)
-dfComparison <- dfBootstrapStudy \%>\%
-  dplyr::filter(StudyID \%in\% c("STUDY1", "STUDY2", "STUDY3"))
-
-dfBoundsRef <- Analyze_StudyKRI_PredictBounds(
-  dfInput = dfComparison,
-  vBy = character(0), # Combine all studies
-  nConfLevel = 0.95
+# Calculate bounds for target studies (AA-1 and AA-2) specified in first column
+Bounds_Wide <- purrr::map(
+  lJoined, 
+  ~ Analyze_StudyKRI_PredictBounds(., dfStudyRef = dfStudyRef)
 )
 }
 
