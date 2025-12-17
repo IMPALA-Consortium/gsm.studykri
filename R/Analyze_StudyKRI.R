@@ -150,13 +150,16 @@ BootstrapStudyKRI <- function(
     # This is a less common case, so positions table is acceptable
 
     # Get maximum nGroups for determining positions needed
-    max_effective <- if (is.data.frame(dfGroupCounts)) {
-      max(dfGroupCounts$EffectiveGroupCount)
-    } else {
-      nGroups # For lazy tables, use the specified value
+    # Since EffectiveGroupCount was just set to nGroups for all rows (line 123),
+    # the max is simply nGroups itself - no need to query the table
+    max_effective <- nGroups
+    
+    # Ensure max_effective is a valid positive integer
+    if (is.na(max_effective) || !is.finite(max_effective) || max_effective < 1) {
+      stop("max_effective must be a positive integer, got: ", max_effective)
     }
 
-    dfPositions_mem <- tibble::tibble(Position = seq_len(max_effective))
+    dfPositions_mem <- tibble::tibble(Position = seq_len(as.integer(max_effective)))
 
     # Convert to lazy table if needed
     if (inherits(dfInput, "tbl_lazy")) {

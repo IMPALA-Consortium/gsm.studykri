@@ -40,7 +40,17 @@ JoinKRIByDenominator <- function(dfInput, dfMetrics) {
     )
 
   # Get unique denominator types
-  vDenomTypes <- unique(dfJoined$DenominatorType)
+  # Collect if lazy table before extracting unique values
+  if (inherits(dfJoined, "tbl_lazy")) {
+    vDenomTypes <- dfJoined %>%
+      dplyr::distinct(DenominatorType) %>%
+      dplyr::collect() %>%
+      dplyr::pull(DenominatorType)
+  } else {
+    vDenomTypes <- dfJoined %>%
+      dplyr::pull(DenominatorType) %>%
+      unique()
+  }
 
   # Build output list
  lResult <- lapply(vDenomTypes, function(strDenomType) {

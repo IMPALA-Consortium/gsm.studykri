@@ -210,18 +210,21 @@ Analyze_StudyKRI_PredictBounds <- function(
       length(vTargetStudies)
     ))
   } else {
-    # Input validation for dfStudyRef
-    if (!is.data.frame(dfStudyRef)) {
-      stop("dfStudyRef must be a data.frame or NULL")
+    # Input validation for dfStudyRef - accept data.frame or tbl (including tbl_lazy)
+    if (!inherits(dfStudyRef, c("data.frame", "tbl"))) {
+      stop("dfStudyRef must be a data.frame, tbl object, or NULL")
     }
     
     if (ncol(dfStudyRef) == 0) {
       stop("dfStudyRef must have at least one column")
     }
     
-    # Extract target studies from first column of dfStudyRef
+    # Extract target studies from first column of dfStudyRef using pull() for lazy table compatibility
     strStudyRefCol <- colnames(dfStudyRef)[1]
-    vTargetStudies <- unique(dfStudyRef[[strStudyRefCol]])
+    vTargetStudies <- dfStudyRef %>%
+      dplyr::select(dplyr::all_of(.env$strStudyRefCol)) %>%
+      dplyr::distinct() %>%
+      dplyr::pull(.env$strStudyRefCol)
     
     if (length(vTargetStudies) == 0) {
       stop("No target studies found in dfStudyRef")

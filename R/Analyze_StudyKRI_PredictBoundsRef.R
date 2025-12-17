@@ -142,14 +142,30 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   # Find minimum across studies
   # For lazy tables, collect just the counts
   if (inherits(dfGroupCounts, "tbl_lazy")) {
-    dfGroupCounts_mem <- dplyr::collect(dfGroupCounts)
-    nMinGroups <- min(dfGroupCounts_mem$GroupCount)
+    dfGroupCounts_collected <- dplyr::collect(dfGroupCounts)
+    if (nrow(dfGroupCounts_collected) == 0) {
+      stop("No group counts found after collecting lazy table")
+    }
+    vGroupCounts <- dfGroupCounts_collected$GroupCount
+    if (length(vGroupCounts) == 0 || all(is.na(vGroupCounts))) {
+      stop("GroupCount column is empty or all NA")
+    }
+    nMinGroups <- min(vGroupCounts, na.rm = TRUE)
   } else {
-    nMinGroups <- min(dfGroupCounts$GroupCount)
+    vGroupCounts <- dfGroupCounts$GroupCount
+    if (length(vGroupCounts) == 0 || all(is.na(vGroupCounts))) {
+      stop("GroupCount column is empty or all NA")
+    }
+    nMinGroups <- min(vGroupCounts, na.rm = TRUE)
+  }
+  
+  # Validate result
+  if (is.na(nMinGroups) || !is.finite(nMinGroups) || nMinGroups < 1) {
+    stop("Unable to determine valid minimum group count: ", nMinGroups)
   }
 
   # Inform user
-  message(sprintf("Resampling with minimum group count: %d", nMinGroups))
+  message(sprintf("Resampling with minimum group count: %.0f", nMinGroups))
 
   # Resample each study independently with nGroups = nMinGroups
   dfBootstrapped <- BootstrapStudyKRI(
@@ -202,10 +218,9 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
 #'   Must contain one or more `Numerator_*` columns, `Denominator`, `MonthYYYYMM`.
-#' @param dfStudyRef data.frame. Study-to-reference mappings with two columns specified
-#'   by `strStudyCol` and `strStudyRefCol`.
-#' @param strStudyCol character. Column name in `dfStudyRef` for target studies (default: "study").
-#' @param strStudyRefCol character. Column name in `dfStudyRef` for reference studies (default: "studyref").
+#' @param dfStudyRef data.frame or tbl_lazy. Study-to-reference mappings with at least
+#'   two columns: first column = target studies, second column = reference studies.
+#'   Can have multiple rows per target study (one row per target-reference pair).
 #' @param nBootstrapReps integer. Number of bootstrap replicates (default: 1000).
 #' @param nConfLevel numeric. Confidence level for the bounds (default: 0.95).
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
@@ -213,7 +228,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' @param nMinDenominator numeric. Minimum denominator (default: 25).
 #' @param seed integer or NULL. Random seed (default: NULL).
 #'
-#' @return A tibble with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
+#' @return A tibble (or tbl_lazy if input was lazy) with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
 #'   `Median_*`, `Lower_*`, `Upper_*` for each Metric column, `BootstrapCount`,
 #'   `GroupCount`, `StudyCount`.
 #'
@@ -249,37 +264,42 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 Analyze_StudyKRI_PredictBoundsRef <- function(
     dfInput,
     dfStudyRef,
-    strStudyCol = "study",
-    strStudyRefCol = "studyref",
     nBootstrapReps = 1000,
     nConfLevel = 0.95,
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
     nMinDenominator = 25,
     seed = NULL) {
-  # Input validation
-  if (!is.data.frame(dfStudyRef)) {
-    stop("dfStudyRef must be a data.frame")
+  # Input validation - accept data.frame or tbl (including tbl_lazy)
+  if (!inherits(dfStudyRef, c("data.frame", "tbl"))) {
+    stop("dfStudyRef must be a data.frame or tbl object")
   }
 
-  if (!strStudyCol %in% colnames(dfStudyRef)) {
-    stop(sprintf("Column '%s' not found in dfStudyRef", strStudyCol))
+  if (ncol(dfStudyRef) < 2) {
+    stop("dfStudyRef must have at least 2 columns (target study in column 1, reference study in column 2)")
   }
 
-  if (!strStudyRefCol %in% colnames(dfStudyRef)) {
-    stop(sprintf("Column '%s' not found in dfStudyRef", strStudyRefCol))
-  }
-
+  # Collect dfStudyRef early (materialize if lazy)
+  dfStudyRefCollected <- dfStudyRef %>%
+    dplyr::distinct() %>%
+    dplyr::collect()
+  
+  # Use first column for target studies, second column for reference studies
+  strStudyCol <- colnames(dfStudyRefCollected)[1]
+  strStudyRefCol <- colnames(dfStudyRefCollected)[2]
+  
   # Get unique target studies
-  vTargetStudies <- unique(dfStudyRef[[strStudyCol]])
+  vTargetStudies <- unique(dfStudyRefCollected[[strStudyCol]])
 
   # Initialize list to collect results
   lResults <- list()
 
   # Loop over each target study
   for (study in vTargetStudies) {
-    # Extract reference studies for this target study
-    vRefStudies <- dfStudyRef[[strStudyRefCol]][dfStudyRef[[strStudyCol]] == study]
+    # Filter to get reference studies for this target study
+    vRefStudies <- dfStudyRefCollected %>%
+      dplyr::filter(.data[[strStudyCol]] == study) %>%
+      dplyr::pull(.data[[strStudyRefCol]])
 
     # Call the set function
     dfBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
@@ -294,16 +314,32 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       seed = seed
     )
 
+    # Compute constant values outside mutate to avoid SQL translation issues
+    # paste() with collapse is not supported in SQL translation
+    strStudyRefID <- paste(vRefStudies, collapse = ", ")
+    
     # Add StudyID and StudyRefID columns
-    dfBounds$StudyID <- study
-    dfBounds$StudyRefID <- paste(vRefStudies, collapse = ", ")
+    # Use dplyr::mutate for lazy table compatibility
+    dfBounds <- dfBounds %>%
+      dplyr::mutate(
+        StudyID = .env$study,
+        StudyRefID = .env$strStudyRefID
+      )
 
     # Store in list
     lResults[[study]] <- dfBounds
   }
 
-  # Bind all results
-  dfResult <- dplyr::bind_rows(lResults)
+  # Combine all results - use union_all for lazy table compatibility
+  if (length(lResults) == 0) {
+    return(tibble::tibble())
+  } else if (length(lResults) == 1) {
+    dfResult <- lResults[[1]]
+  } else {
+    # Use union_all which works with lazy tables
+    dfResult <- Reduce(dplyr::union_all, lResults)
+  }
 
-  return(tibble::as_tibble(dfResult))
+  # Return result (lazy or collected based on input)
+  return(dfResult)
 }

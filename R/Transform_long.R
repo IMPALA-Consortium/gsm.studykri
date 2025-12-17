@@ -51,8 +51,8 @@ Transform_long <- function(lWide, strDenominatorCol = "DenominatorType") {
   lLong <- lapply(names(lWide), function(strDenomType) {
     dfWide <- lWide[[strDenomType]]
 
-    if (!inherits(dfWide, "data.frame")) {
-      stop(sprintf("Element '%s' must be a data.frame", strDenomType))
+    if (!inherits(dfWide, c("data.frame", "tbl"))) {
+      stop(sprintf("Element '%s' must be a data.frame or tbl", strDenomType))
     }
 
     vCols <- colnames(dfWide)
@@ -62,7 +62,9 @@ Transform_long <- function(lWide, strDenominatorCol = "DenominatorType") {
     vWideCols <- vCols[grepl(paste(vWidePatterns, collapse = "|"), vCols)]
 
     if (length(vWideCols) == 0) {
-      dfWide[[strDenominatorCol]] <- strDenomType
+      # Use dplyr::mutate for lazy table compatibility
+      dfWide <- dfWide %>%
+        dplyr::mutate(!!strDenominatorCol := strDenomType)
       return(dfWide)
     }
 
@@ -77,28 +79,62 @@ Transform_long <- function(lWide, strDenominatorCol = "DenominatorType") {
       vMetricCols <- vWideCols[grepl(paste0("_", strMetricID, "$"), vWideCols)]
       vSelectCols <- c(vIdCols, vMetricCols)
 
-      dfSubset <- dfWide[, vSelectCols, drop = FALSE]
+      # Use dplyr::select for lazy table compatibility instead of bracket subsetting
+      dfSubset <- dfWide %>%
+        dplyr::select(dplyr::all_of(vSelectCols))
 
-      # Rename columns to remove MetricID suffix
+      # Rename columns to remove MetricID suffix using dplyr::rename for lazy table compatibility
       vNewNames <- gsub(paste0("_", strMetricID, "$"), "", vMetricCols)
-      names(dfSubset)[match(vMetricCols, names(dfSubset))] <- vNewNames
+      # Create named vector for rename: new_name = old_name
+      vRenameVec <- stats::setNames(vMetricCols, vNewNames)
+      dfSubset <- dfSubset %>%
+        dplyr::rename(!!!vRenameVec)
 
-      dfSubset$MetricID <- strMetricID
+      # Use dplyr::mutate for lazy table compatibility instead of $
+      dfSubset <- dfSubset %>%
+        dplyr::mutate(MetricID = strMetricID)
+      
       dfSubset
     })
 
-    dfLong <- dplyr::bind_rows(lPivoted)
-    dfLong[[strDenominatorCol]] <- strDenomType
+    # Use union_all for lazy table compatibility instead of bind_rows
+    if (length(lPivoted) == 0) {
+      dfLong <- NULL
+    } else if (length(lPivoted) == 1) {
+      dfLong <- lPivoted[[1]]
+    } else {
+      dfLong <- Reduce(dplyr::union_all, lPivoted)
+    }
+    
+    # Use dplyr::mutate for lazy table compatibility instead of [[ assignment
+    if (!is.null(dfLong)) {
+      dfLong <- dfLong %>%
+        dplyr::mutate(!!strDenominatorCol := strDenomType)
+    }
     dfLong
   })
 
-  dfResult <- dplyr::bind_rows(lLong)
+  # Use union_all for lazy table compatibility instead of bind_rows
+  if (length(lLong) == 0) {
+    dfResult <- tibble::tibble()
+  } else if (length(lLong) == 1) {
+    dfResult <- lLong[[1]]
+  } else {
+    dfResult <- Reduce(dplyr::union_all, lLong)
+  }
 
+  # Collect if lazy table before reordering
+  if (inherits(dfResult, "tbl_lazy")) {
+    dfResult <- dplyr::collect(dfResult)
+  }
+  
   # Reorder columns: MetricID and DenominatorType first
   vFinalCols <- colnames(dfResult)
   vPriorityCols <- c("MetricID", strDenominatorCol)
   vOtherCols <- setdiff(vFinalCols, vPriorityCols)
-  dfResult <- dfResult[, c(vPriorityCols, vOtherCols), drop = FALSE]
+  # Use dplyr::select for reordering
+  dfResult <- dfResult %>%
+    dplyr::select(dplyr::all_of(c(vPriorityCols, vOtherCols)))
 
   tibble::as_tibble(dfResult)
 }

@@ -206,9 +206,11 @@ Transform_CumCount <- function(
     dplyr::mutate(
       dplyr::across(
         .cols = dplyr::all_of(.env$vNumeratorCols),
+        # Note: .data pronoun intentionally removed from lambda function for dbplyr compatibility
+        # dbplyr cannot properly translate .data inside across() lambda functions
         .fns = ~ dplyr::if_else(
-          .data$Denominator > 0,
-          .x / .data$Denominator,
+          Denominator > 0,
+          .x / Denominator,
           NA_real_
         ),
         .names = "{gsub('^Numerator', 'Metric', .col)}"
