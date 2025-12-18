@@ -13,8 +13,6 @@
 #' @return list. Named list of ggplot objects, one per study-metric combination.
 #'   Names are in format "StudyID_MetricID" (e.g., "STUDY001_kri0001").
 #'
-#' @importFrom rlang .data
-#'
 #' @export
 MakeCharts_StudyKRI <- function(
     dfResults,

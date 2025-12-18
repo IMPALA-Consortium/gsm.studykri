@@ -13,9 +13,6 @@
 #' This enables comparing one study's KRI against expected variation from a portfolio
 #' of similar studies.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
 #'   Must contain columns: `StudyID`, `GroupID`, one or more `Numerator_*` columns,
 #'   `Denominator`, `MonthYYYYMM`.
@@ -213,9 +210,6 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' reference groups. For each study in `dfStudyRef`, calculates bounds using its
 #' mapped reference studies.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
 #'   Must contain one or more `Numerator_*` columns, `Denominator`, `MonthYYYYMM`.
 #' @param dfStudyRef data.frame or tbl_lazy. Study-to-reference mappings with at least
@@ -298,7 +292,7 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
   for (study in vTargetStudies) {
     # Filter to get reference studies for this target study
     vRefStudies <- dfStudyRefCollected %>%
-      dplyr::filter(.data[[strStudyCol]] == study) %>%
+      dplyr::filter(.data[[strStudyCol]] == .env$study) %>%
       dplyr::pull(.data[[strStudyRefCol]])
 
     # Call the set function

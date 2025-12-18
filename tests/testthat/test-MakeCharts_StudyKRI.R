@@ -15,18 +15,18 @@ test_that("MakeCharts_StudyKRI generates charts", {
     MetricID = rep("kri0001", 6),
     StudyID = rep(c("STUDY001", "STUDY002"), each = 3),
     StudyMonth = rep(1:3, 2),
-    LowerBound = 0.05,
-    UpperBound = 0.35,
-    MedianMetric = 0.20
+    Lower = 0.05,
+    Upper = 0.35,
+    Median = 0.20
   )
 
   dfBoundsRef <- data.frame(
     MetricID = rep("kri0001", 6),
     StudyID = rep(c("STUDY001", "STUDY002"), each = 3),
     StudyMonth = rep(1:3, 2),
-    LowerBound = 0.08,
-    UpperBound = 0.32,
-    MedianMetric = 0.18,
+    Lower = 0.08,
+    Upper = 0.32,
+    Median = 0.18,
     StudyRefID = rep(c("REF1, REF2", "REF2, REF3"), each = 3)
   )
 
@@ -141,9 +141,9 @@ test_that("MakeCharts_StudyKRI skips studies with no reference bounds", {
     MetricID = rep("kri0001", 6),
     StudyID = rep(c("STUDY001", "STUDY002"), each = 3),
     StudyMonth = rep(1:3, 2),
-    LowerBound = 0.05,
-    UpperBound = 0.35,
-    MedianMetric = 0.20
+    Lower = 0.05,
+    Upper = 0.35,
+    Median = 0.20
   )
 
   # Only provide reference bounds for STUDY001
@@ -151,9 +151,9 @@ test_that("MakeCharts_StudyKRI skips studies with no reference bounds", {
     MetricID = rep("kri0001", 3),
     StudyID = rep("STUDY001", 3),
     StudyMonth = 1:3,
-    LowerBound = 0.08,
-    UpperBound = 0.32,
-    MedianMetric = 0.18,
+    Lower = 0.08,
+    Upper = 0.32,
+    Median = 0.18,
     StudyRefID = "REF1, REF2"
   )
 
@@ -189,18 +189,18 @@ test_that("MakeCharts_StudyKRI uses metric_id when metric name not found", {
     MetricID = "kri0001",
     StudyID = "STUDY001",
     StudyMonth = 1:3,
-    LowerBound = 0.05,
-    UpperBound = 0.35,
-    MedianMetric = 0.20
+    Lower = 0.05,
+    Upper = 0.35,
+    Median = 0.20
   )
 
   dfBoundsRef <- data.frame(
     MetricID = "kri0001",
     StudyID = "STUDY001",
     StudyMonth = 1:3,
-    LowerBound = 0.08,
-    UpperBound = 0.32,
-    MedianMetric = 0.18,
+    Lower = 0.08,
+    Upper = 0.32,
+    Median = 0.18,
     StudyRefID = "REF1"
   )
 
@@ -237,18 +237,18 @@ test_that("MakeCharts_StudyKRI uses metric_id when Metric column missing", {
     MetricID = "kri0001",
     StudyID = "STUDY001",
     StudyMonth = 1:3,
-    LowerBound = 0.05,
-    UpperBound = 0.35,
-    MedianMetric = 0.20
+    Lower = 0.05,
+    Upper = 0.35,
+    Median = 0.20
   )
 
   dfBoundsRef <- data.frame(
     MetricID = "kri0001",
     StudyID = "STUDY001",
     StudyMonth = 1:3,
-    LowerBound = 0.08,
-    UpperBound = 0.32,
-    MedianMetric = 0.18,
+    Lower = 0.08,
+    Upper = 0.32,
+    Median = 0.18,
     StudyRefID = "REF1"
   )
 
@@ -284,18 +284,18 @@ test_that("MakeCharts_StudyKRI respects nMaxMonth parameter", {
     MetricID = "kri0001",
     StudyID = "STUDY001",
     StudyMonth = 1:6,
-    LowerBound = 0.05,
-    UpperBound = 0.35,
-    MedianMetric = 0.20
+    Lower = 0.05,
+    Upper = 0.35,
+    Median = 0.20
   )
 
   dfBoundsRef <- data.frame(
     MetricID = "kri0001",
     StudyID = "STUDY001",
     StudyMonth = 1:6,
-    LowerBound = 0.08,
-    UpperBound = 0.32,
-    MedianMetric = 0.18,
+    Lower = 0.08,
+    Upper = 0.32,
+    Median = 0.18,
     StudyRefID = "REF1"
   )
 
@@ -335,18 +335,18 @@ test_that("MakeCharts_StudyKRI handles errors in Visualize_StudyKRI", {
     MetricID = "kri0001",
     StudyID = "STUDY001",
     StudyMonth = 1:3,
-    LowerBound = 0.05,
-    UpperBound = 0.35,
-    MedianMetric = 0.20
+    Lower = 0.05,
+    Upper = 0.35,
+    Median = 0.20
   )
 
   dfBoundsRef <- data.frame(
     MetricID = "kri0001",
     StudyID = "STUDY001",
     StudyMonth = 1:3,
-    LowerBound = 0.08,
-    UpperBound = 0.32,
-    MedianMetric = 0.18,
+    Lower = 0.08,
+    Upper = 0.32,
+    Median = 0.18,
     StudyRefID = "REF1"
   )
 
@@ -390,18 +390,18 @@ test_that("MakeCharts_StudyKRI handles multiple metrics per study", {
     MetricID = rep(c("kri0001", "kri0002"), each = 3),
     StudyID = rep("STUDY001", 6),
     StudyMonth = rep(1:3, 2),
-    LowerBound = 0.05,
-    UpperBound = 0.35,
-    MedianMetric = 0.20
+    Lower = 0.05,
+    Upper = 0.35,
+    Median = 0.20
   )
 
   dfBoundsRef <- data.frame(
     MetricID = rep(c("kri0001", "kri0002"), each = 3),
     StudyID = rep("STUDY001", 6),
     StudyMonth = rep(1:3, 2),
-    LowerBound = 0.08,
-    UpperBound = 0.32,
-    MedianMetric = 0.18,
+    Lower = 0.08,
+    Upper = 0.32,
+    Median = 0.18,
     StudyRefID = "REF1"
   )
 

@@ -10,9 +10,6 @@
 #' @return Named list with one tibble per denominator type. Each tibble
 #'   has common columns plus Numerator columns renamed by MetricID.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#'
 #' @examples
 #' dfInput <- data.frame(
 #'   MetricID = c("kri0001", "kri0001", "kri0003", "kri0003"),
@@ -43,12 +40,12 @@ JoinKRIByDenominator <- function(dfInput, dfMetrics) {
   # Collect if lazy table before extracting unique values
   if (inherits(dfJoined, "tbl_lazy")) {
     vDenomTypes <- dfJoined %>%
-      dplyr::distinct(DenominatorType) %>%
+      dplyr::distinct(.data$DenominatorType) %>%
       dplyr::collect() %>%
-      dplyr::pull(DenominatorType)
+      dplyr::pull(.data$DenominatorType)
   } else {
     vDenomTypes <- dfJoined %>%
-      dplyr::pull(DenominatorType) %>%
+      dplyr::pull(.data$DenominatorType) %>%
       unique()
   }
 
@@ -66,7 +63,8 @@ JoinKRIByDenominator <- function(dfInput, dfMetrics) {
         names_prefix = "Numerator_"
       )
 
-    tibble::as_tibble(dfWide)
+    # Return dfWide directly to preserve lazy evaluation when input is lazy
+    dfWide
   })
 
   names(lResult) <- vDenomTypes

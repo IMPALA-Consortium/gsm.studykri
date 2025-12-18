@@ -27,12 +27,12 @@ Must contain columns specified by \code{strStudyMonthCol} and \code{strMetricCol
 If a \code{StudyID} column exists, data will be automatically filtered to \code{strStudyID}.}
 
 \item{dfBoundsRef}{data.frame or NULL. Portfolio/comparison group confidence intervals
-from \code{Analyze_StudyKRI_PredictBoundsRef} or \code{Transform_long} (optional, default: NULL).
+from \code{Analyze_StudyKRI_PredictBoundsRef} or \code{Transform_Long} (optional, default: NULL).
 If provided, must contain: \code{StudyMonth} and columns specified by \code{strMedianCol},
 \code{strLowerCol}, \code{strUpperCol}. If NULL, plot will show only study data without reference comparison.}
 
 \item{dfBounds}{data.frame or NULL. Individual study confidence intervals
-from \code{Analyze_StudyKRI_PredictBounds} or \code{Transform_long} (optional). If a \code{StudyID} column exists,
+from \code{Analyze_StudyKRI_PredictBounds} or \code{Transform_Long} (optional). If a \code{StudyID} column exists,
 data will be automatically filtered to \code{strStudyID}. If provided, must contain:
 \code{StudyMonth} and columns specified by \code{strMedianCol}, \code{strLowerCol}, \code{strUpperCol}.}
 
@@ -76,7 +76,7 @@ This visualization helps identify when a study's performance deviates from
 expected portfolio norms.
 }
 \examples{
-# Example 1: Using Transform_long output (default column names)
+# Example 1: Using Transform_Long output (default column names)
 dfStudyKRI <- data.frame(
   StudyID = rep("STUDY1", 5),
   StudyMonth = 1:5,

@@ -11,10 +11,6 @@
 #' This function is intended for internal use. For the main workflow, use
 #' `Analyze_StudyKRI_PredictBounds()` which calls this function internally.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#' @importFrom stats quantile median
-#'
 #' @param dfInput data.frame or tbl. Bootstrapped study-level data from
 #'   `Transform_CumCount` with `BootstrapRep` column. Must contain columns:
 #'   `vBy` columns, `StudyMonth`, one or more `Metric_*` columns, `BootstrapRep`.
@@ -125,9 +121,6 @@ CalculateStudyBounds <- function(
 #'   \item Aggregates to study level via `Transform_CumCount()`
 #'   \item Calculates confidence intervals via `CalculateStudyBounds()`
 #' }
-#'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
 #'
 #' @param dfInput data.frame or tbl_lazy. Group-level data from `Input_CumCountSiteByMonth`.
 #'   Expected columns: GroupID, one or more Numerator columns, Denominator, 

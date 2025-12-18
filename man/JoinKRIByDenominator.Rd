@@ -12,7 +12,7 @@ JoinKRIByDenominator(dfInput, dfMetrics)
 \item{dfMetrics}{data.frame. Metrics metadata from MakeMetric.}
 }
 \value{
-Named list with one dataframe per denominator type. Each dataframe
+Named list with one tibble per denominator type. Each tibble
 has common columns plus Numerator columns renamed by MetricID.
 }
 \description{

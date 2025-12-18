@@ -53,7 +53,7 @@ Default: "StudyID".}
 \item{strStudyMonthCol}{character. Name of study month column. Default: "StudyMonth".}
 }
 \value{
-A data.frame (or tbl_lazy if input was lazy) with confidence intervals:
+A tibble (or tbl_lazy if input was lazy) with confidence intervals:
 \itemize{
 \item \code{StudyID}: Target study identifier
 \item \code{StudyMonth}: Sequential month number

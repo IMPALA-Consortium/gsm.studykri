@@ -12,18 +12,15 @@
 #' This visualization helps identify when a study's performance deviates from
 #' expected portfolio norms.
 #'
-#' @importFrom ggplot2 ggplot aes geom_ribbon geom_line geom_point labs theme_minimal theme element_text element_blank
-#' @importFrom rlang .data
-#'
 #' @param dfStudyKRI data.frame. Actual study-level metric data from `Transform_CumCount`.
 #'   Must contain columns specified by `strStudyMonthCol` and `strMetricCol`.
 #'   If a `StudyID` column exists, data will be automatically filtered to `strStudyID`.
 #' @param dfBoundsRef data.frame or NULL. Portfolio/comparison group confidence intervals
-#'   from `Analyze_StudyKRI_PredictBoundsRef` or `Transform_long` (optional, default: NULL).
+#'   from `Analyze_StudyKRI_PredictBoundsRef` or `Transform_Long` (optional, default: NULL).
 #'   If provided, must contain: `StudyMonth` and columns specified by `strMedianCol`,
 #'   `strLowerCol`, `strUpperCol`. If NULL, plot will show only study data without reference comparison.
 #' @param dfBounds data.frame or NULL. Individual study confidence intervals
-#'   from `Analyze_StudyKRI_PredictBounds` or `Transform_long` (optional). If a `StudyID` column exists,
+#'   from `Analyze_StudyKRI_PredictBounds` or `Transform_Long` (optional). If a `StudyID` column exists,
 #'   data will be automatically filtered to `strStudyID`. If provided, must contain:
 #'   `StudyMonth` and columns specified by `strMedianCol`, `strLowerCol`, `strUpperCol`.
 #' @param strStudyID character. Study ID to filter data and display in title/subtitle.
@@ -43,7 +40,7 @@
 #' @return A ggplot2 object that can be displayed, saved, or further customized.
 #'
 #' @examples
-#' # Example 1: Using Transform_long output (default column names)
+#' # Example 1: Using Transform_Long output (default column names)
 #' dfStudyKRI <- data.frame(
 #'   StudyID = rep("STUDY1", 5),
 #'   StudyMonth = 1:5,

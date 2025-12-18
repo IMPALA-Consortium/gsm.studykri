@@ -36,6 +36,6 @@ steps:
 
   # Step 3: Transform bounds to long format
   - output: Reporting_Bounds
-    name: gsm.studykri::Transform_long
+    name: gsm.studykri::Transform_Long
     params:
       lWide: Analysis_Bounds_Wide

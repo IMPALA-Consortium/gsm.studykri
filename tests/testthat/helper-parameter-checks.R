@@ -62,9 +62,9 @@ create_minimal_input_data <- function() {
   )
 }
 
-#' Create minimal test data for Analyze_StudyKRI
+#' Create minimal test data for BootstrapStudyKRI
 #'
-#' @return Data frame suitable for Analyze_StudyKRI
+#' @return Data frame suitable for BootstrapStudyKRI
 create_minimal_analyze_data <- function() {
   data.frame(
     GroupID = c("SiteA", "SiteB"),

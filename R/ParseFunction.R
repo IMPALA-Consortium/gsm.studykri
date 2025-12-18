@@ -3,7 +3,7 @@
 #' @description
 #' Converts a character string representing a function name into an actual function object.
 #' Supports both simple function names (e.g., "mean") and package-qualified names
-#' (e.g., "gsm.studykri::Transform_long"). This is particularly useful in YAML workflows
+#' (e.g., "gsm.studykri::Transform_Long"). This is particularly useful in YAML workflows
 #' where function references need to be stored as strings and later resolved.
 #'
 #' @param strFunction `character` A single character string representing a function name.
@@ -23,7 +23,7 @@
 #' func(1:10)
 #'
 #' # Parse a package-qualified function
-#' func <- ParseFunction("gsm.studykri::Transform_long")
+#' func <- ParseFunction("gsm.studykri::Transform_Long")
 #'
 #' \dontrun{
 #' # Use in YAML workflow pattern:
@@ -45,14 +45,16 @@
 ParseFunction <- function(strFunction) {
   # Validate input
   if (!is.character(strFunction)) {
-    cli::cli_abort(
-      "{.arg strFunction} must be a character string, not {.cls {class(strFunction)}}."
+    stop(
+      "strFunction must be a character string, not ", class(strFunction)[1], ".",
+      call. = FALSE
     )
   }
 
   if (length(strFunction) != 1) {
-    cli::cli_abort(
-      "{.arg strFunction} must be a single character string, not a vector of length {length(strFunction)}."
+    stop(
+      "strFunction must be a single character string, not a vector of length ", length(strFunction), ".",
+      call. = FALSE
     )
   }
 
@@ -60,19 +62,18 @@ ParseFunction <- function(strFunction) {
   func <- tryCatch(
     eval(parse(text = strFunction)),
     error = function(e) {
-      cli::cli_abort(
-        c(
-          "Failed to parse {.val {strFunction}} as a function.",
-          "x" = "Error: {e$message}"
-        )
+      stop(
+        "Failed to parse '", strFunction, "' as a function. Error: ", e$message,
+        call. = FALSE
       )
     }
   )
 
   # Verify the result is a function
   if (!is.function(func)) {
-    cli::cli_abort(
-      "{.val {strFunction}} resolved to {.cls {class(func)}}, not a function."
+    stop(
+      "'", strFunction, "' resolved to ", class(func)[1], ", not a function.",
+      call. = FALSE
     )
   }
 

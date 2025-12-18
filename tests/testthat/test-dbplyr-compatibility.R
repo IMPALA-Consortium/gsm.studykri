@@ -250,14 +250,13 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet works with lazy tables", {
     )
   })
 
-  # Collect if lazy
-  if (inherits(result, "tbl_lazy")) {
-    result <- dplyr::collect(result)
-  }
-
-  expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) > 0)
-  expect_equal(unique(result$StudyCount), 2)
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+  
+  # Collect to verify data properties
+  result_collected <- dplyr::collect(result)
+  expect_true(nrow(result_collected) > 0)
+  expect_equal(unique(result_collected$StudyCount), 2)
 
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
@@ -301,13 +300,12 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet with lazy table and NULL vStudyF
     "No vStudyFilter specified. Using all 3 studies."
   )
 
-  # Collect if lazy
-  if (inherits(result, "tbl_lazy")) {
-    result <- dplyr::collect(result)
-  }
-
-  expect_s3_class(result, "data.frame")
-  expect_equal(unique(result$StudyCount), 3)
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+  
+  # Collect to verify data properties
+  result_collected <- dplyr::collect(result)
+  expect_equal(unique(result_collected$StudyCount), 3)
 
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
@@ -364,12 +362,10 @@ test_that("Input_CountSiteByMonth works with lazy tables", {
   # Verify returns lazy table
   expect_s3_class(result, "tbl_lazy")
 
-  # Collect results
-  result <- dplyr::collect(result)
-
-  expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) > 0)
-  expect_true(all(c("GroupID", "Numerator", "Denominator", "MonthYYYYMM") %in% names(result)))
+  # Collect results to verify data properties
+  result_collected <- dplyr::collect(result)
+  expect_true(nrow(result_collected) > 0)
+  expect_true(all(c("GroupID", "Numerator", "Denominator", "MonthYYYYMM") %in% names(result_collected)))
 
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
@@ -428,11 +424,9 @@ test_that("calculate_days_by_month works with lazy tables", {
   # Verify returns lazy table
   expect_s3_class(result, "tbl_lazy")
 
-  # Collect results
-  result <- dplyr::collect(result)
-
-  expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) > 0)
+  # Collect results to verify data properties
+  result_collected <- dplyr::collect(result)
+  expect_true(nrow(result_collected) > 0)
 
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
@@ -476,14 +470,13 @@ test_that("Analyze_StudyKRI_PredictBounds returns lazy table with lazy input", {
     )
   })
 
-  # Collect if lazy
-  if (inherits(result, "tbl_lazy")) {
-    result <- dplyr::collect(result)
-  }
-
-  expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) > 0)
-  expect_true(all(c("StudyID", "StudyMonth", "Median", "Lower", "Upper") %in% names(result)))
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+  
+  # Collect to verify data properties
+  result_collected <- dplyr::collect(result)
+  expect_true(nrow(result_collected) > 0)
+  expect_true(all(c("StudyID", "StudyMonth", "Median", "Lower", "Upper") %in% names(result_collected)))
 
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
@@ -538,17 +531,16 @@ test_that("Analyze_StudyKRI_PredictBounds works with lazy dfStudyRef", {
     )
   })
 
-  # Collect if lazy
-  if (inherits(result, "tbl_lazy")) {
-    result <- dplyr::collect(result)
-  }
-
-  expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) > 0)
-  expect_true(all(c("StudyID", "StudyMonth", "Median", "Lower", "Upper") %in% names(result)))
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+  
+  # Collect to verify data properties
+  result_collected <- dplyr::collect(result)
+  expect_true(nrow(result_collected) > 0)
+  expect_true(all(c("StudyID", "StudyMonth", "Median", "Lower", "Upper") %in% names(result_collected)))
   
   # Should only have STUDY1 and STUDY2 (not STUDY3)
-  expect_equal(sort(unique(result$StudyID)), c("STUDY1", "STUDY2"))
+  expect_equal(sort(unique(result_collected$StudyID)), c("STUDY1", "STUDY2"))
 
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
@@ -658,15 +650,15 @@ test_that("JoinKRIByDenominator works with lazy tables", {
   expect_true(length(result) > 0)
   expect_true("Visits" %in% names(result))
 
-  # Each element should be a data.frame (collected or lazy)
-  expect_true(inherits(result[[1]], c("data.frame", "tbl")))
+  # Each element should be a lazy table when inputs are lazy
+  expect_s3_class(result[[1]], "tbl_lazy")
 
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
 })
 
-# Test 12: Transform_long with lazy tables in list
-test_that("Transform_long works with lazy tables in list", {
+# Test 12: Transform_Long with lazy tables in list
+test_that("Transform_Long works with lazy tables in list", {
   skip_if_not_installed("dbplyr")
   skip_if_not_installed("duckdb")
 
@@ -697,13 +689,17 @@ test_that("Transform_long works with lazy tables in list", {
   lWide <- list(Visits = tblWide)
 
   # Test with lazy table in list
-  result <- Transform_long(lWide)
+  result <- Transform_Long(lWide)
 
-  # Should return a data.frame
-  expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) > 0)
-  expect_true(all(c("MetricID", "DenominatorType", "StudyID", "Median", "Lower", "Upper") %in% names(result)))
-  expect_equal(length(unique(result$MetricID)), 2)
+  # Should return lazy table when input is lazy
+  expect_s3_class(result, "tbl_lazy")
+
+  # Collect and verify structure
+  result_collected <- dplyr::collect(result)
+  expect_s3_class(result_collected, "data.frame")
+  expect_true(nrow(result_collected) > 0)
+  expect_true(all(c("MetricID", "DenominatorType", "StudyID", "Median", "Lower", "Upper") %in% names(result_collected)))
+  expect_equal(length(unique(result_collected$MetricID)), 2)
 
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)

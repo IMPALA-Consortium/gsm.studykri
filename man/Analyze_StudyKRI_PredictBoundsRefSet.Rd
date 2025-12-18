@@ -43,7 +43,7 @@ Example: \code{c("STUDY1", "STUDY2", "STUDY3")}.}
 \item{seed}{integer or NULL. Random seed for reproducibility (default: NULL).}
 }
 \value{
-A data.frame (or tbl_lazy if input was lazy) with confidence intervals.
+A tibble (or tbl_lazy if input was lazy) with confidence intervals.
 Output columns: \code{StudyMonth}, \verb{Median_*}, \verb{Lower_*}, \verb{Upper_*} for each Metric column,
 \code{BootstrapCount}, \code{GroupCount}, \code{StudyCount}.
 Note: No \code{StudyID} column as studies are intentionally combined.

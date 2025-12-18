@@ -1,6 +1,8 @@
-# Test Analyze_StudyKRI_PredictBounds
+# Test CalculateStudyBounds (internal function)
 
-test_that("Analyze_StudyKRI_PredictBounds calculates confidence intervals with single study grouping", {
+test_that("CalculateStudyBounds calculates confidence intervals with single study grouping", {
+  CalculateStudyBounds <- gsm.studykri:::CalculateStudyBounds
+  CalculateStudyBounds <- gsm.studykri:::CalculateStudyBounds
   # Create test data with known bootstrap distribution
   dfTest <- data.frame(
     StudyID = rep("STUDY1", 30),
@@ -18,7 +20,7 @@ test_that("Analyze_StudyKRI_PredictBounds calculates confidence intervals with s
   )
 
   # Calculate confidence intervals (95%)
-  result <- Analyze_StudyKRI_PredictBounds(
+  result <- CalculateStudyBounds(
     dfInput = dfTest,
     vBy = "StudyID",
     nConfLevel = 0.95
@@ -26,22 +28,23 @@ test_that("Analyze_StudyKRI_PredictBounds calculates confidence intervals with s
 
   # Check structure
   expect_s3_class(result, "data.frame")
-  expect_named(result, c("StudyID", "StudyMonth", "MedianMetric", "LowerBound", "UpperBound", "BootstrapCount"))
+  expect_named(result, c("StudyID", "StudyMonth", "Median", "Lower", "Upper", "BootstrapCount"))
   expect_equal(nrow(result), 3)
 
   # Check values for Month 1
   month1 <- result[result$StudyMonth == 1, ]
   expect_equal(month1$StudyID, "STUDY1")
-  expect_equal(month1$MedianMetric, 0.55, tolerance = 0.01)
-  expect_true(month1$LowerBound < month1$MedianMetric)
-  expect_true(month1$UpperBound > month1$MedianMetric)
+  expect_equal(month1$Median, 0.55, tolerance = 0.01)
+  expect_true(month1$Lower < month1$Median)
+  expect_true(month1$Upper > month1$Median)
   expect_equal(month1$BootstrapCount, 10)
 
   # Check ordering
   expect_true(all(diff(result$StudyMonth) > 0))
 })
 
-test_that("Analyze_StudyKRI_PredictBounds works with no grouping (multi-study combined)", {
+test_that("CalculateStudyBounds works with no grouping (multi-study combined)", {
+  CalculateStudyBounds <- gsm.studykri:::CalculateStudyBounds
   # Create test data from multiple studies
   dfTest <- data.frame(
     StudyID = rep(c("STUDY1", "STUDY2"), each = 20),
@@ -52,7 +55,7 @@ test_that("Analyze_StudyKRI_PredictBounds works with no grouping (multi-study co
   )
 
   # Calculate combined confidence intervals (no StudyID grouping)
-  result <- Analyze_StudyKRI_PredictBounds(
+  result <- CalculateStudyBounds(
     dfInput = dfTest,
     vBy = character(0),
     nConfLevel = 0.95
@@ -60,7 +63,7 @@ test_that("Analyze_StudyKRI_PredictBounds works with no grouping (multi-study co
 
   # Check structure - should not have StudyID column
   expect_s3_class(result, "data.frame")
-  expect_named(result, c("StudyMonth", "MedianMetric", "LowerBound", "UpperBound", "BootstrapCount"))
+  expect_named(result, c("StudyMonth", "Median", "Lower", "Upper", "BootstrapCount"))
   expect_equal(nrow(result), 2) # Only 2 months, combined across studies
 
   # Check bootstrap count (should be 20 per month: 2 studies × 10 reps)
@@ -68,7 +71,8 @@ test_that("Analyze_StudyKRI_PredictBounds works with no grouping (multi-study co
   expect_equal(result$BootstrapCount[2], 20)
 })
 
-test_that("Analyze_StudyKRI_PredictBounds handles different confidence levels", {
+test_that("CalculateStudyBounds handles different confidence levels", {
+  CalculateStudyBounds <- gsm.studykri:::CalculateStudyBounds
   # Create test data
   dfTest <- data.frame(
     StudyID = rep("STUDY1", 100),
@@ -79,43 +83,44 @@ test_that("Analyze_StudyKRI_PredictBounds handles different confidence levels", 
   )
 
   # Test 90% CI
-  result_90 <- Analyze_StudyKRI_PredictBounds(
+  result_90 <- CalculateStudyBounds(
     dfInput = dfTest,
     vBy = "StudyID",
     nConfLevel = 0.90
   )
 
   # Test 95% CI
-  result_95 <- Analyze_StudyKRI_PredictBounds(
+  result_95 <- CalculateStudyBounds(
     dfInput = dfTest,
     vBy = "StudyID",
     nConfLevel = 0.95
   )
 
   # Test 99% CI
-  result_99 <- Analyze_StudyKRI_PredictBounds(
+  result_99 <- CalculateStudyBounds(
     dfInput = dfTest,
     vBy = "StudyID",
     nConfLevel = 0.99
   )
 
   # 99% CI should be wider than 95% CI, which should be wider than 90% CI
-  expect_true(result_99$UpperBound - result_99$LowerBound >
-    result_95$UpperBound - result_95$LowerBound)
-  expect_true(result_95$UpperBound - result_95$LowerBound >
-    result_90$UpperBound - result_90$LowerBound)
+  expect_true(result_99$Upper - result_99$Lower >
+    result_95$Upper - result_95$Lower)
+  expect_true(result_95$Upper - result_95$Lower >
+    result_90$Upper - result_90$Lower)
 
   # All should have same median
-  expect_equal(result_90$MedianMetric, result_95$MedianMetric)
-  expect_equal(result_95$MedianMetric, result_99$MedianMetric)
+  expect_equal(result_90$Median, result_95$Median)
+  expect_equal(result_95$Median, result_99$Median)
 
   # Check approximate percentiles for uniform distribution
   # 95% CI: 2.5th to 97.5th percentile
-  expect_equal(result_95$LowerBound, 0.025, tolerance = 0.02)
-  expect_equal(result_95$UpperBound, 0.975, tolerance = 0.02)
+  expect_equal(result_95$Lower, 0.025, tolerance = 0.02)
+  expect_equal(result_95$Upper, 0.975, tolerance = 0.02)
 })
 
-test_that("Analyze_StudyKRI_PredictBounds works with multiple grouping columns", {
+test_that("CalculateStudyBounds works with multiple grouping columns", {
+  CalculateStudyBounds <- gsm.studykri:::CalculateStudyBounds
   # Create test data with StudyID and Country
   dfTest <- data.frame(
     StudyID = rep(c("STUDY1", "STUDY1"), each = 20),
@@ -127,7 +132,7 @@ test_that("Analyze_StudyKRI_PredictBounds works with multiple grouping columns",
   )
 
   # Calculate CI grouped by StudyID and Country
-  result <- Analyze_StudyKRI_PredictBounds(
+  result <- CalculateStudyBounds(
     dfInput = dfTest,
     vBy = c("StudyID", "Country"),
     nConfLevel = 0.95
@@ -144,7 +149,8 @@ test_that("Analyze_StudyKRI_PredictBounds works with multiple grouping columns",
   expect_equal(nrow(unique(result[, c("StudyID", "Country")])), 2)
 })
 
-test_that("Analyze_StudyKRI_PredictBounds validates input", {
+test_that("CalculateStudyBounds validates input", {
+  CalculateStudyBounds <- gsm.studykri:::CalculateStudyBounds
   # Create valid test data
   dfValid <- data.frame(
     StudyID = rep("STUDY1", 10),
@@ -156,7 +162,7 @@ test_that("Analyze_StudyKRI_PredictBounds validates input", {
 
   # Test: Not a data frame
   expect_error(
-    Analyze_StudyKRI_PredictBounds(
+    CalculateStudyBounds(
       dfInput = list(a = 1),
       vBy = "StudyID",
       nConfLevel = 0.95
@@ -167,7 +173,7 @@ test_that("Analyze_StudyKRI_PredictBounds validates input", {
   # Test: Missing required column (BootstrapRep)
   dfMissing <- dfValid[, -which(names(dfValid) == "BootstrapRep")]
   expect_error(
-    Analyze_StudyKRI_PredictBounds(
+    CalculateStudyBounds(
       dfInput = dfMissing,
       vBy = "StudyID",
       nConfLevel = 0.95
@@ -177,7 +183,7 @@ test_that("Analyze_StudyKRI_PredictBounds validates input", {
 
   # Test: Missing vBy column
   expect_error(
-    Analyze_StudyKRI_PredictBounds(
+    CalculateStudyBounds(
       dfInput = dfValid,
       vBy = "NonExistentColumn",
       nConfLevel = 0.95
@@ -187,7 +193,7 @@ test_that("Analyze_StudyKRI_PredictBounds validates input", {
 
   # Test: Invalid confidence level (too low)
   expect_error(
-    Analyze_StudyKRI_PredictBounds(
+    CalculateStudyBounds(
       dfInput = dfValid,
       vBy = "StudyID",
       nConfLevel = 0
@@ -197,7 +203,7 @@ test_that("Analyze_StudyKRI_PredictBounds validates input", {
 
   # Test: Invalid confidence level (too high)
   expect_error(
-    Analyze_StudyKRI_PredictBounds(
+    CalculateStudyBounds(
       dfInput = dfValid,
       vBy = "StudyID",
       nConfLevel = 1
@@ -207,7 +213,7 @@ test_that("Analyze_StudyKRI_PredictBounds validates input", {
 
   # Test: Invalid confidence level (not numeric)
   expect_error(
-    Analyze_StudyKRI_PredictBounds(
+    CalculateStudyBounds(
       dfInput = dfValid,
       vBy = "StudyID",
       nConfLevel = "0.95"
@@ -216,34 +222,35 @@ test_that("Analyze_StudyKRI_PredictBounds validates input", {
   )
 })
 
-test_that("Analyze_StudyKRI_PredictBounds handles custom column names", {
+test_that("CalculateStudyBounds handles custom column names", {
+  CalculateStudyBounds <- gsm.studykri:::CalculateStudyBounds
   # Create test data with custom column names (must have BootstrapRep)
   dfTest <- data.frame(
     StudyID = rep("STUDY1", 10),
     TimePoint = rep(1, 10),
     BootstrapRep = 1:10,
-    Value = runif(10, 0.1, 1.0),
+    Metric = runif(10, 0.1, 1.0),
     stringsAsFactors = FALSE
   )
 
   # Calculate CI with custom column names
-  result <- Analyze_StudyKRI_PredictBounds(
+  result <- CalculateStudyBounds(
     dfInput = dfTest,
     vBy = "StudyID",
     nConfLevel = 0.95,
-    strMetricCol = "Value",
     strStudyMonthCol = "TimePoint"
   )
 
   # Check that custom columns were used
   expect_s3_class(result, "data.frame")
   expect_true("TimePoint" %in% names(result))
-  expect_true(all(!is.na(result$MedianMetric)))
+  expect_true(all(!is.na(result$Median)))
   expect_equal(result$TimePoint, 1)
   expect_equal(result$BootstrapCount, 10)
 })
 
-test_that("Analyze_StudyKRI_PredictBounds handles NA values correctly", {
+test_that("CalculateStudyBounds handles NA values correctly", {
+  CalculateStudyBounds <- gsm.studykri:::CalculateStudyBounds
   # Create test data with some NA values
   dfTest <- data.frame(
     StudyID = rep("STUDY1", 12),
@@ -254,7 +261,7 @@ test_that("Analyze_StudyKRI_PredictBounds handles NA values correctly", {
   )
 
   # Calculate CI (should handle NAs)
-  result <- Analyze_StudyKRI_PredictBounds(
+  result <- CalculateStudyBounds(
     dfInput = dfTest,
     vBy = "StudyID",
     nConfLevel = 0.95
@@ -263,13 +270,14 @@ test_that("Analyze_StudyKRI_PredictBounds handles NA values correctly", {
   # Should still return results (NAs removed)
   expect_s3_class(result, "data.frame")
   expect_equal(nrow(result), 1)
-  expect_false(is.na(result$MedianMetric))
-  expect_false(is.na(result$LowerBound))
-  expect_false(is.na(result$UpperBound))
+  expect_false(is.na(result$Median))
+  expect_false(is.na(result$Lower))
+  expect_false(is.na(result$Upper))
   expect_equal(result$BootstrapCount, 12) # Count includes all rows
 })
 
-test_that("Analyze_StudyKRI_PredictBounds integration with full workflow", {
+test_that("CalculateStudyBounds integration with full workflow", {
+  CalculateStudyBounds <- gsm.studykri:::CalculateStudyBounds
   # Skip if required packages not available
   skip_if_not_installed("clindata")
 
@@ -313,7 +321,7 @@ test_that("Analyze_StudyKRI_PredictBounds integration with full workflow", {
   )
 
   # Generate bootstrap samples (small number for speed)
-  dfBootstrap <- Analyze_StudyKRI(
+  dfBootstrap <- BootstrapStudyKRI(
     dfInput = dfInput,
     nBootstrapReps = 10,
     strStudyCol = "StudyID",
@@ -329,7 +337,7 @@ test_that("Analyze_StudyKRI_PredictBounds integration with full workflow", {
   )
 
   # Calculate confidence intervals
-  dfBounds <- Analyze_StudyKRI_PredictBounds(
+  dfBounds <- CalculateStudyBounds(
     dfInput = dfBootstrapStudy,
     vBy = "StudyID",
     nConfLevel = 0.95
@@ -338,17 +346,185 @@ test_that("Analyze_StudyKRI_PredictBounds integration with full workflow", {
   # Validate output
   expect_s3_class(dfBounds, "data.frame")
   expect_true(all(c(
-    "StudyID", "StudyMonth", "MedianMetric", "LowerBound",
-    "UpperBound", "BootstrapCount"
+    "StudyID", "StudyMonth", "Median", "Lower",
+    "Upper", "BootstrapCount"
   ) %in% names(dfBounds)))
   expect_true(nrow(dfBounds) > 0)
   expect_equal(unique(dfBounds$StudyID), "STUDY1")
 
   # Check bounds are sensible
-  expect_true(all(dfBounds$LowerBound <= dfBounds$MedianMetric))
-  expect_true(all(dfBounds$MedianMetric <= dfBounds$UpperBound))
+  expect_true(all(dfBounds$Lower <= dfBounds$Median))
+  expect_true(all(dfBounds$Median <= dfBounds$Upper))
 
   # BootstrapCount should be positive (might vary by month due to filtering)
   expect_true(all(dfBounds$BootstrapCount > 0))
   expect_true(all(dfBounds$BootstrapCount <= 10))
+})
+
+# Tests for Analyze_StudyKRI_PredictBounds (main wrapper function)
+
+test_that("Analyze_StudyKRI_PredictBounds works with NULL dfStudyRef (all studies)", {
+  # Create test data for multiple studies
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2"), each = 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6, times = 2),
+    Numerator = sample(0:5, 60, replace = TRUE),
+    Denominator = sample(10:20, 60, replace = TRUE),
+    MonthYYYYMM = rep(rep(202301:202303, each = 10), times = 2),
+    Metric = runif(60, 0.1, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Test with NULL dfStudyRef - should use all studies
+  expect_message(
+    result <- Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      dfStudyRef = NULL,
+      nBootstrapReps = 10,
+      nConfLevel = 0.95,
+      nMinDenominator = 10,
+      seed = 123
+    ),
+    "Using all 2 studies found in dfInput"
+  )
+
+  # Validate output
+  expect_s3_class(result, "data.frame")
+  expect_true("StudyID" %in% names(result))
+  expect_equal(sort(unique(result$StudyID)), sort(c("STUDY1", "STUDY2")))
+  expect_true(all(c("StudyMonth", "Median", "Lower", "Upper") %in% names(result)))
+})
+
+test_that("Analyze_StudyKRI_PredictBounds uses first column of dfStudyRef", {
+  # Create test data
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2", "STUDY3"), each = 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6, times = 3),
+    Numerator = sample(0:5, 90, replace = TRUE),
+    Denominator = sample(10:20, 90, replace = TRUE),
+    MonthYYYYMM = rep(rep(202301:202303, each = 10), times = 3),
+    Metric = runif(90, 0.1, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Create study reference with custom column names
+  # First column should be used for target studies
+  dfStudyRef <- data.frame(
+    target_study = c("STUDY1", "STUDY2"),
+    reference_study = c("STUDY3", "STUDY3"),
+    stringsAsFactors = FALSE
+  )
+
+  # Should use first column (target_study) regardless of column name
+  result <- Analyze_StudyKRI_PredictBounds(
+    dfInput = dfTest,
+    dfStudyRef = dfStudyRef,
+    nBootstrapReps = 10,
+    nConfLevel = 0.95,
+    nMinDenominator = 10,
+    seed = 456
+  )
+
+  # Should only include STUDY1 and STUDY2 (from first column)
+  expect_s3_class(result, "data.frame")
+  expect_equal(sort(unique(result$StudyID)), sort(c("STUDY1", "STUDY2")))
+  expect_false("STUDY3" %in% result$StudyID)
+})
+
+test_that("Analyze_StudyKRI_PredictBounds validates dfStudyRef type", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6),
+    Numerator = sample(0:5, 30, replace = TRUE),
+    Denominator = sample(10:20, 30, replace = TRUE),
+    MonthYYYYMM = rep(202301:202303, each = 10),
+    Metric = runif(30, 0.1, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # dfStudyRef must be data.frame or NULL
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      dfStudyRef = list(study = "STUDY1"),
+      nBootstrapReps = 10
+    ),
+    "dfStudyRef must be a data.frame, tbl object, or NULL"
+  )
+
+  # dfStudyRef must have at least one column
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      dfStudyRef = data.frame(),
+      nBootstrapReps = 10
+    ),
+    "dfStudyRef must have at least one column"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBounds handles empty studies in dfStudyRef", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6),
+    Numerator = sample(0:5, 30, replace = TRUE),
+    Denominator = sample(10:20, 30, replace = TRUE),
+    MonthYYYYMM = rep(202301:202303, each = 10),
+    Metric = runif(30, 0.1, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Empty first column should error
+  dfStudyRef <- data.frame(
+    study = character(0),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      dfStudyRef = dfStudyRef,
+      nBootstrapReps = 10
+    ),
+    "No target studies found in dfStudyRef"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBounds with dfStudyRef filters correctly", {
+  # Create data with 3 studies
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2", "STUDY3"), each = 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6, times = 3),
+    Numerator = sample(0:5, 90, replace = TRUE),
+    Denominator = sample(10:20, 90, replace = TRUE),
+    MonthYYYYMM = rep(rep(202301:202303, each = 10), times = 3),
+    Metric = runif(90, 0.1, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Only target STUDY1
+  dfStudyRef <- data.frame(
+    study = "STUDY1",
+    studyref = "STUDY2",
+    stringsAsFactors = FALSE
+  )
+
+  result <- Analyze_StudyKRI_PredictBounds(
+    dfInput = dfTest,
+    dfStudyRef = dfStudyRef,
+    nBootstrapReps = 10,
+    nConfLevel = 0.95,
+    nMinDenominator = 10,
+    seed = 789
+  )
+
+  # Should only include STUDY1
+  expect_equal(unique(result$StudyID), "STUDY1")
+  expect_false("STUDY2" %in% result$StudyID)
+  expect_false("STUDY3" %in% result$StudyID)
 })

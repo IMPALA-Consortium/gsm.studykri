@@ -242,15 +242,6 @@ https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/.github/workflows/pk
 https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/_pkgdown.yml 
 
 
-Code Coverage
-- Code Coverage needs to be 100%
-
-Sys.setenv(NOT_CRAN = "true")
-cov <- covr::package_coverage()
-cov
-covr::file_report(cov, "R/filename.R")
-
-
 lazy tables:
 - do not create separate if else logic that checks for dataframe or lazy table in the user facing functions
 - create separate helper functions for these cases for example:
@@ -307,7 +298,7 @@ copy the existing KRI yaml and add the following step:
 
 only keep Analysis_Input and Analysis_Transformed steps
 
-## bootstrap.yaml (reporting workflow)
+## reporting workflow
 
 1. use results from Results.yaml, so that all the individual dataframes have been concatenated into one dataframe with a new column for the KRI ID. There should be a list with one dataframe each for Analysis_Input and Analysis_Transformed
 
@@ -333,3 +324,21 @@ transform all dataframes from the _Wide steps back into long format. The result 
 
 
 
+# Optimize Unit Tests
+
+Code Coverage
+- Code Coverage needs to be 100%
+
+Sys.setenv(NOT_CRAN = "true")
+cov <- covr::package_coverage()
+cov
+covr::file_report(cov, "R/filename.R")
+
+
+## test-dbplyr-compatibility
+
+Here we need to prove that each of the user facing funtions works with lazy tables as input.
+
+If it returns a table the table must be returned in lazy table format.
+
+There should be no unit tests testing lazy tables outside this file.

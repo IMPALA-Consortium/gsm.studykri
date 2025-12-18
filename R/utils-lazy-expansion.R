@@ -6,9 +6,6 @@
 #' 2. Attempt to write temp table to database
 #' 3. Throw expressive error if write fails
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#'
 #' @param tblInput tbl_lazy. The lazy table context (for extracting connection)
 #' @param tblExpansion tbl_lazy, data.frame, or NULL. User-supplied expansion
 #' @param dfExpansion_mem data.frame. In-memory expansion data for auto-generation

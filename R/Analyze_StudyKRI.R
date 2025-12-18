@@ -9,10 +9,6 @@
 #' This function is intended for internal use. For the main workflow, use
 #' `Analyze_StudyKRI_PredictBounds()` which calls this function internally.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#' @importFrom stats runif
-#'
 #' @param dfInput data.frame or tbl_lazy. Group-level data from `Input_CumCountSiteByMonth`.
 #'   Expected columns: GroupID, GroupLevel, Numerator, Denominator, Metric,
 #'   StudyID, MonthYYYYMM (or custom column names specified in parameters).

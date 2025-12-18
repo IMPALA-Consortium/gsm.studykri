@@ -5,9 +5,6 @@
 #' format with standard columns (`MetricID`, `Numerator`, `Metric`, etc.).
 #' Auto-detects column patterns and extracts MetricID from suffixes.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#'
 #' @param lWide list. Named list of wide-format dataframes keyed by denominator
 #'   type (e.g., "Visits", "Days"). Each dataframe contains columns with
 #'   MetricID suffixes (e.g., `Median_kri0001`, `Lower_kri0001`).
@@ -35,11 +32,11 @@
 #' )
 #'
 #' lWide <- list(Visits = dfWide)
-#' dfLong <- Transform_long(lWide)
+#' dfLong <- Transform_Long(lWide)
 #' print(dfLong)
 #'
 #' @export
-Transform_long <- function(lWide, strDenominatorCol = "DenominatorType") {
+Transform_Long <- function(lWide, strDenominatorCol = "DenominatorType") {
   if (!is.list(lWide) || length(lWide) == 0) {
     stop("lWide must be a non-empty named list")
   }
@@ -64,7 +61,7 @@ Transform_long <- function(lWide, strDenominatorCol = "DenominatorType") {
     if (length(vWideCols) == 0) {
       # Use dplyr::mutate for lazy table compatibility
       dfWide <- dfWide %>%
-        dplyr::mutate(!!strDenominatorCol := strDenomType)
+        dplyr::mutate("{strDenominatorCol}" := strDenomType)
       return(dfWide)
     }
 
@@ -109,7 +106,7 @@ Transform_long <- function(lWide, strDenominatorCol = "DenominatorType") {
     # Use dplyr::mutate for lazy table compatibility instead of [[ assignment
     if (!is.null(dfLong)) {
       dfLong <- dfLong %>%
-        dplyr::mutate(!!strDenominatorCol := strDenomType)
+        dplyr::mutate("{strDenominatorCol}" := strDenomType)
     }
     dfLong
   })
@@ -123,11 +120,6 @@ Transform_long <- function(lWide, strDenominatorCol = "DenominatorType") {
     dfResult <- Reduce(dplyr::union_all, lLong)
   }
 
-  # Collect if lazy table before reordering
-  if (inherits(dfResult, "tbl_lazy")) {
-    dfResult <- dplyr::collect(dfResult)
-  }
-  
   # Reorder columns: MetricID and DenominatorType first
   vFinalCols <- colnames(dfResult)
   vPriorityCols <- c("MetricID", strDenominatorCol)
@@ -136,6 +128,10 @@ Transform_long <- function(lWide, strDenominatorCol = "DenominatorType") {
   dfResult <- dfResult %>%
     dplyr::select(dplyr::all_of(c(vPriorityCols, vOtherCols)))
 
+  # Return lazy table as-is, only convert regular data frames to tibble
+  if (inherits(dfResult, "tbl_lazy")) {
+    return(dfResult)
+  }
+  
   tibble::as_tibble(dfResult)
 }
-

@@ -324,8 +324,8 @@ Using the study references we can calculate the bootstrapped confidence interval
 Bounds_Wide <- purrr::map(lJoined, ~ Analyze_StudyKRI_PredictBounds(., dfStudyRef))
 BoundsRef_Wide <- purrr::map(lJoined, ~ Analyze_StudyKRI_PredictBoundsRef(., dfStudyRef))
 
-dfBounds <- Transform_long(Bounds_Wide)
-dfBoundsRef <- Transform_long(BoundsRef_Wide)
+dfBounds <- Transform_Long(Bounds_Wide)
+dfBoundsRef <- Transform_Long(BoundsRef_Wide)
 ```
 
 ```{r}

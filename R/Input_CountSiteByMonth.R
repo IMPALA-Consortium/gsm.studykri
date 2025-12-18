@@ -102,10 +102,6 @@ calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGro
 #' is performed at the study level in Transform_CumCount.
 #' Supports both in-memory data frames and dbplyr lazy tables.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#' @importFrom lubridate year month
-#'
 #' @param dfSubjects data.frame or tbl. Subject-level data with enrolled subjects.
 #' @param dfNumerator data.frame or tbl. Event data for numerator (e.g., adverse events).
 #' @param dfDenominator data.frame or tbl. Event data for denominator (e.g., visits).

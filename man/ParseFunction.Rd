@@ -16,7 +16,7 @@ A function object resolved from the input string.
 \description{
 Converts a character string representing a function name into an actual function object.
 Supports both simple function names (e.g., "mean") and package-qualified names
-(e.g., "gsm.studykri::Transform_long"). This is particularly useful in YAML workflows
+(e.g., "gsm.studykri::Transform_Long"). This is particularly useful in YAML workflows
 where function references need to be stored as strings and later resolved.
 }
 \details{
@@ -31,7 +31,7 @@ func <- ParseFunction("mean")
 func(1:10)
 
 # Parse a package-qualified function
-func <- ParseFunction("gsm.studykri::Transform_long")
+func <- ParseFunction("gsm.studykri::Transform_Long")
 
 \dontrun{
 # Use in YAML workflow pattern:

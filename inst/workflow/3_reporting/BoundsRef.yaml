@@ -36,6 +36,6 @@ steps:
 
   # Step 3: Transform reference bounds to long format
   - output: Reporting_BoundsRef
-    name: gsm.studykri::Transform_long
+    name: gsm.studykri::Transform_Long
     params:
       lWide: Analysis_BoundsRef_Wide

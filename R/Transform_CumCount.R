@@ -7,10 +7,6 @@
 #' Supports both in-memory data frames and dbplyr lazy tables.
 #' Handles multiple Numerator columns (e.g., Numerator_kri0001, Numerator_kri0003).
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#' @importFrom tidyr unnest
-#'
 #' @param dfInput data.frame or tbl. Output from Input_CountSiteByMonth with columns:
 #'   GroupID, GroupLevel, Numerator (or Numerator_*), Denominator, StudyID, MonthYYYYMM.
 #'   Note: Input should contain monthly (not cumulative) counts. This function

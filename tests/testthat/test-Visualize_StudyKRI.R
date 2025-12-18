@@ -9,18 +9,18 @@ test_that("Visualize_StudyKRI creates plot with all inputs", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
     StudyCount = rep(3, 5),
     stringsAsFactors = FALSE
   )
 
   dfBounds <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.10, 0.12, 0.15, 0.14, 0.13),
-    LowerBound = c(0.08, 0.10, 0.12, 0.11, 0.10),
-    UpperBound = c(0.12, 0.14, 0.18, 0.17, 0.16),
+    Median = c(0.10, 0.12, 0.15, 0.14, 0.13),
+    Lower = c(0.08, 0.10, 0.12, 0.11, 0.10),
+    Upper = c(0.12, 0.14, 0.18, 0.17, 0.16),
     stringsAsFactors = FALSE
   )
 
@@ -48,9 +48,9 @@ test_that("Visualize_StudyKRI works without individual study bounds", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
     StudyCount = rep(3, 5),
     stringsAsFactors = FALSE
   )
@@ -76,9 +76,9 @@ test_that("Visualize_StudyKRI filters to nMaxMonth correctly", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 1:10,
-    MedianMetric = seq(0.11, 0.20, length.out = 10),
-    LowerBound = seq(0.08, 0.17, length.out = 10),
-    UpperBound = seq(0.14, 0.23, length.out = 10),
+    Median = seq(0.11, 0.20, length.out = 10),
+    Lower = seq(0.08, 0.17, length.out = 10),
+    Upper = seq(0.14, 0.23, length.out = 10),
     stringsAsFactors = FALSE
   )
 
@@ -107,9 +107,9 @@ test_that("Visualize_StudyKRI validates input types", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
     stringsAsFactors = FALSE
   )
 
@@ -176,9 +176,9 @@ test_that("Visualize_StudyKRI validates required columns", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
     stringsAsFactors = FALSE
   )
 
@@ -200,8 +200,8 @@ test_that("Visualize_StudyKRI validates required columns", {
 
   dfBoundsRef_bad <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    # Missing LowerBound and UpperBound
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    # Missing Lower and Upper
     stringsAsFactors = FALSE
   )
 
@@ -224,9 +224,9 @@ test_that("Visualize_StudyKRI handles empty data after filtering", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 6:10,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
     stringsAsFactors = FALSE
   )
 
@@ -251,9 +251,9 @@ test_that("Visualize_StudyKRI uses custom labels", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
     stringsAsFactors = FALSE
   )
 
@@ -290,9 +290,9 @@ test_that("Visualize_StudyKRI works with custom column names", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
     stringsAsFactors = FALSE
   )
 
@@ -317,9 +317,9 @@ test_that("Visualize_StudyKRI works without reference bounds (dfBoundsRef = NULL
 
   dfBounds <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.10, 0.12, 0.15, 0.14, 0.13),
-    LowerBound = c(0.08, 0.10, 0.12, 0.11, 0.10),
-    UpperBound = c(0.12, 0.14, 0.18, 0.17, 0.16),
+    Median = c(0.10, 0.12, 0.15, 0.14, 0.13),
+    Lower = c(0.08, 0.10, 0.12, 0.11, 0.10),
+    Upper = c(0.12, 0.14, 0.18, 0.17, 0.16),
     stringsAsFactors = FALSE
   )
 
@@ -360,17 +360,17 @@ test_that("Visualize_StudyKRI validates dfBounds columns", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
     stringsAsFactors = FALSE
   )
 
   # dfBounds with missing required columns
   dfBounds_bad <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.10, 0.12, 0.15, 0.14, 0.13)
-    # Missing LowerBound and UpperBound
+    Median = c(0.10, 0.12, 0.15, 0.14, 0.13)
+    # Missing Lower and Upper
   )
 
   expect_error(
@@ -395,9 +395,9 @@ test_that("Visualize_StudyKRI filters dfBounds by StudyID", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 1:5,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
     stringsAsFactors = FALSE
   )
 
@@ -405,9 +405,9 @@ test_that("Visualize_StudyKRI filters dfBounds by StudyID", {
   dfBounds <- data.frame(
     StudyID = rep(c("STUDY1", "STUDY2"), each = 5),
     StudyMonth = rep(1:5, 2),
-    MedianMetric = rep(c(0.10, 0.12, 0.15, 0.14, 0.13), 2),
-    LowerBound = rep(c(0.08, 0.10, 0.12, 0.11, 0.10), 2),
-    UpperBound = rep(c(0.12, 0.14, 0.18, 0.17, 0.16), 2),
+    Median = rep(c(0.10, 0.12, 0.15, 0.14, 0.13), 2),
+    Lower = rep(c(0.08, 0.10, 0.12, 0.11, 0.10), 2),
+    Upper = rep(c(0.12, 0.14, 0.18, 0.17, 0.16), 2),
     stringsAsFactors = FALSE
   )
 
@@ -432,17 +432,17 @@ test_that("Visualize_StudyKRI filters dfBounds by nMaxMonth", {
 
   dfBoundsRef <- data.frame(
     StudyMonth = 1:10,
-    MedianMetric = seq(0.11, 0.20, length.out = 10),
-    LowerBound = seq(0.08, 0.17, length.out = 10),
-    UpperBound = seq(0.14, 0.23, length.out = 10),
+    Median = seq(0.11, 0.20, length.out = 10),
+    Lower = seq(0.08, 0.17, length.out = 10),
+    Upper = seq(0.14, 0.23, length.out = 10),
     stringsAsFactors = FALSE
   )
 
   dfBounds <- data.frame(
     StudyMonth = 1:10,
-    MedianMetric = seq(0.10, 0.19, length.out = 10),
-    LowerBound = seq(0.08, 0.17, length.out = 10),
-    UpperBound = seq(0.12, 0.21, length.out = 10),
+    Median = seq(0.10, 0.19, length.out = 10),
+    Lower = seq(0.08, 0.17, length.out = 10),
+    Upper = seq(0.12, 0.21, length.out = 10),
     stringsAsFactors = FALSE
   )
 
@@ -473,9 +473,9 @@ test_that("Visualize_StudyKRI handles empty dfBoundsRef after filtering", {
   # dfBoundsRef with data only for months 6-10
   dfBoundsRef <- data.frame(
     StudyMonth = 6:10,
-    MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-    LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-    UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
     stringsAsFactors = FALSE
   )
 

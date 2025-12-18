@@ -7,8 +7,6 @@
 Analyze_StudyKRI_PredictBoundsRef(
   dfInput,
   dfStudyRef,
-  strStudyCol = "study",
-  strStudyRefCol = "studyref",
   nBootstrapReps = 1000,
   nConfLevel = 0.95,
   strGroupCol = "GroupID",
@@ -21,12 +19,9 @@ Analyze_StudyKRI_PredictBoundsRef(
 \item{dfInput}{data.frame or tbl_lazy. Site-level data from \code{Input_CumCountSiteByMonth}.
 Must contain one or more \verb{Numerator_*} columns, \code{Denominator}, \code{MonthYYYYMM}.}
 
-\item{dfStudyRef}{data.frame. Study-to-reference mappings with two columns specified
-by \code{strStudyCol} and \code{strStudyRefCol}.}
-
-\item{strStudyCol}{character. Column name in \code{dfStudyRef} for target studies (default: "study").}
-
-\item{strStudyRefCol}{character. Column name in \code{dfStudyRef} for reference studies (default: "studyref").}
+\item{dfStudyRef}{data.frame or tbl_lazy. Study-to-reference mappings with at least
+two columns: first column = target studies, second column = reference studies.
+Can have multiple rows per target study (one row per target-reference pair).}
 
 \item{nBootstrapReps}{integer. Number of bootstrap replicates (default: 1000).}
 
@@ -41,7 +36,7 @@ by \code{strStudyCol} and \code{strStudyRefCol}.}
 \item{seed}{integer or NULL. Random seed (default: NULL).}
 }
 \value{
-A data.frame with columns: \code{StudyID}, \code{StudyRefID}, \code{StudyMonth},
+A tibble (or tbl_lazy if input was lazy) with columns: \code{StudyID}, \code{StudyRefID}, \code{StudyMonth},
 \verb{Median_*}, \verb{Lower_*}, \verb{Upper_*} for each Metric column, \code{BootstrapCount},
 \code{GroupCount}, \code{StudyCount}.
 }
