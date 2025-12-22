@@ -223,6 +223,19 @@ test_that("Transform_CumCount validates dfInput parameter", {
     Transform_CumCount(dfInput = dfInput, vBy = "StudyID"),
     "dfInput missing required columns"
   )
+
+  # dfInput without Numerator column
+  dfNoNumerator <- data.frame(
+    StudyID = "STUDY001",
+    GroupID = "SITE01",
+    MonthYYYYMM = 202301,
+    Denominator = 20
+  )
+
+  expect_error(
+    Transform_CumCount(dfInput = dfNoNumerator, vBy = "StudyID"),
+    "dfInput must have at least one Numerator column"
+  )
 })
 
 test_that("Transform_CumCount validates vBy parameter", {

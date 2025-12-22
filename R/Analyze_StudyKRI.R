@@ -150,11 +150,6 @@ BootstrapStudyKRI <- function(
     # the max is simply nGroups itself - no need to query the table
     max_effective <- nGroups
     
-    # Ensure max_effective is a valid positive integer
-    if (is.na(max_effective) || !is.finite(max_effective) || max_effective < 1) {
-      stop("max_effective must be a positive integer, got: ", max_effective)
-    }
-
     dfPositions_mem <- tibble::tibble(Position = seq_len(as.integer(max_effective)))
 
     # Convert to lazy table if needed

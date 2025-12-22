@@ -528,3 +528,17 @@ test_that("Analyze_StudyKRI_PredictBounds with dfStudyRef filters correctly", {
   expect_false("STUDY2" %in% result$StudyID)
   expect_false("STUDY3" %in% result$StudyID)
 })
+
+test_that("CalculateStudyBounds errors when no Metric column found", {
+  CalculateStudyBounds <- gsm.studykri:::CalculateStudyBounds
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 10),
+    StudyMonth = rep(1, 10),
+    BootstrapRep = 1:10,
+    SomeOtherColumn = runif(10)
+  )
+  expect_error(
+    CalculateStudyBounds(dfTest, vBy = "StudyID"),
+    "dfInput must have at least one Metric column"
+  )
+})

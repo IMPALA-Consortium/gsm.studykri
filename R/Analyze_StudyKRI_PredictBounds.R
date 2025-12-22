@@ -192,11 +192,7 @@ Analyze_StudyKRI_PredictBounds <- function(
     vTargetStudies <- dfInput %>%
       dplyr::select(dplyr::all_of(.env$strStudyCol)) %>%
       dplyr::distinct() %>%
-      dplyr::pull(.env$strStudyCol)
-    
-    if (length(vTargetStudies) == 0) {
-      stop("No studies found in dfInput")
-    }
+      dplyr::pull(.env$strStudyCol)    
     
     message(sprintf(
       "Using all %d studies found in dfInput",
