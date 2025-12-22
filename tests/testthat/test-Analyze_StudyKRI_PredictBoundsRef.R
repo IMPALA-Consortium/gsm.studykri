@@ -194,6 +194,30 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet validates input", {
   )
 })
 
+test_that("Analyze_StudyKRI_PredictBoundsRefSet validates required columns", {
+  dfTest <- data.frame(
+    StudyID = "STUDY1",
+    GroupID = "Site1",
+    Numerator = 1,
+    Denominator = 10,
+    MonthYYYYMM = 202301
+  )
+
+  # Missing Denominator
+  dfBad <- dfTest[, setdiff(names(dfTest), "Denominator")]
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfBad, vStudyFilter = "STUDY1"),
+    "dfInput missing required columns.*Denominator"
+  )
+
+  # Missing multiple columns
+  dfBad <- dfTest[, c("Numerator", "Denominator")]
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfBad, vStudyFilter = "STUDY1"),
+    "dfInput missing required columns"
+  )
+})
+
 test_that("Analyze_StudyKRI_PredictBoundsRefSet integration with full workflow", {
   # Create realistic test data
   set.seed(789)

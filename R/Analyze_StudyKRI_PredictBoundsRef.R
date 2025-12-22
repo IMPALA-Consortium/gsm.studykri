@@ -129,37 +129,15 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     stop("No data found for specified studies in vStudyFilter")
   }
 
-  # Count unique groups per study
+  # Count unique groups per study and find minimum
   dfGroupCounts <- dfFiltered %>%
     dplyr::summarise(
       GroupCount = dplyr::n_distinct(.data[[strGroupCol]]),
       .by = dplyr::all_of(.env$strStudyCol)
-    )
+    ) %>%
+    dplyr::collect()
 
-  # Find minimum across studies
-  # For lazy tables, collect just the counts
-  if (inherits(dfGroupCounts, "tbl_lazy")) {
-    dfGroupCounts_collected <- dplyr::collect(dfGroupCounts)
-    if (nrow(dfGroupCounts_collected) == 0) {
-      stop("No group counts found after collecting lazy table")
-    }
-    vGroupCounts <- dfGroupCounts_collected$GroupCount
-    if (length(vGroupCounts) == 0 || all(is.na(vGroupCounts))) {
-      stop("GroupCount column is empty or all NA")
-    }
-    nMinGroups <- min(vGroupCounts, na.rm = TRUE)
-  } else {
-    vGroupCounts <- dfGroupCounts$GroupCount
-    if (length(vGroupCounts) == 0 || all(is.na(vGroupCounts))) {
-      stop("GroupCount column is empty or all NA")
-    }
-    nMinGroups <- min(vGroupCounts, na.rm = TRUE)
-  }
-  
-  # Validate result
-  if (is.na(nMinGroups) || !is.finite(nMinGroups) || nMinGroups < 1) {
-    stop("Unable to determine valid minimum group count: ", nMinGroups)
-  }
+  nMinGroups <- min(dfGroupCounts$GroupCount)
 
   # Inform user
   message(sprintf("Resampling with minimum group count: %.0f", nMinGroups))
@@ -325,14 +303,7 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
   }
 
   # Combine all results - use union_all for lazy table compatibility
-  if (length(lResults) == 0) {
-    return(tibble::tibble())
-  } else if (length(lResults) == 1) {
-    dfResult <- lResults[[1]]
-  } else {
-    # Use union_all which works with lazy tables
-    dfResult <- Reduce(dplyr::union_all, lResults)
-  }
+  dfResult <- Reduce(dplyr::union_all, lResults)
 
   # Return result (lazy or collected based on input)
   return(dfResult)
