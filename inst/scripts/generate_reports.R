@@ -31,7 +31,7 @@ lRaw <- SimulatePortfolio(
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4", "AA-5", "AA-6"),
     nSubjects = c(500, 750, 150, 200, 250, 300),
-    strOversamplDomain = rep("Raw_AE", 6),
+    strOversampleDomain = rep("Raw_AE", 6),
     vOversamplQuantileRange_min = c(0, 0, 0, 0, 0, 0),
     vOversamplQuantileRange_max = c(1, 0.75, 1, 1, 0.95, 0.9)
   )

@@ -19,7 +19,7 @@
 #' @return Named character vector of output file paths (names are StudyIDs).
 #'
 #' @export
-Report_KRI_StudyKRI <- function(
+Report_StudyKRI <- function(
     lCharts,
     dfResults,
     dfGroups,

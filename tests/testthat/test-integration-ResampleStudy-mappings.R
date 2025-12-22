@@ -106,7 +106,7 @@ test_that("ResampleStudy with oversampling works with mapping workflows", {
       lRaw,
       strNewStudyID = "HIGHAE001",
       nSubjects = 50,
-      strOversamplDomain = "Raw_AE",
+      strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.75, 1.0),
       seed = 999
     )

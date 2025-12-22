@@ -11,7 +11,7 @@
 #'
 #' @return data.frame or tbl with MonthYYYYMM and Days columns
 #' @keywords internal
-calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGroupCols) {
+CalculateDaysByMonth <- function(dfData, strStartDateCol, strEndDateCol, vGroupCols) {
   # Create month expansion data
   dfData_expanded <- dfData %>%
     dplyr::filter(
@@ -37,11 +37,11 @@ calculate_days_by_month <- function(dfData, strStartDateCol, strEndDateCol, vGro
     dplyr::collect()
 
   # Generate complete month sequence using helper function
-  dfMonths <- generate_month_seq(date_range$min_yyyymm, date_range$max_yyyymm)
+  dfMonths <- GenerateMonthSeq(date_range$min_yyyymm, date_range$max_yyyymm)
 
   # Create month lookup table in database if lazy
   if (inherits(dfData_expanded, "tbl_lazy")) {
-    tblMonths <- expand_lazy_table(
+    tblMonths <- ExpandLazyTable(
       tblInput = dfData_expanded,
       tblExpansion = NULL,
       dfExpansion_mem = dfMonths,
@@ -297,7 +297,7 @@ Input_CountSiteByMonth <- function(
       )
 
     # Call helper to calculate days per month
-    dfDays <- calculate_days_by_month(
+    dfDays <- CalculateDaysByMonth(
       dfData = dfDenom_with_subjects,
       strStartDateCol = strDenominatorDateCol,
       strEndDateCol = strDenominatorEndDateCol,

@@ -1,3 +1,68 @@
+# Local test helper - validates month sequences have no gaps
+# (Not exported from package, used only in tests)
+validate_month_sequence <- function(tblMonthSeq, vGroupCols) {
+  # Collect to check (small sample if large)
+  sample <- tblMonthSeq %>%
+    dplyr::collect()
+
+  if (nrow(sample) == 0) {
+    stop("Month sequence table is empty")
+  }
+
+  # Check required columns BEFORE trying to sort
+  if (!"MonthYYYYMM" %in% names(sample)) {
+    stop("Month sequence must have 'MonthYYYYMM' column")
+  }
+
+  for (col in vGroupCols) {
+    if (!col %in% names(sample)) {
+      stop(sprintf("Month sequence must have '%s' column", col))
+    }
+  }
+
+  # Now we can safely sort
+  sample <- sample %>%
+    SortDf(dplyr::across(dplyr::all_of(vGroupCols)), .data$MonthYYYYMM)
+
+  # Generate expected sequence helper
+  generate_month_seq_local <- function(start_yyyymm, end_yyyymm) {
+    start_year <- floor(start_yyyymm / 100)
+    start_month <- start_yyyymm %% 100
+    end_year <- floor(end_yyyymm / 100)
+    end_month <- end_yyyymm %% 100
+
+    dates <- seq(
+      as.Date(paste0(start_year, "-", sprintf("%02d", start_month), "-01")),
+      as.Date(paste0(end_year, "-", sprintf("%02d", end_month), "-01")),
+      by = "month"
+    )
+
+    as.numeric(format(dates, "%Y%m"))
+  }
+
+  # For each group, verify no gaps
+  for (grp_val in unique(sample[[vGroupCols[1]]])) {
+    grp_data <- sample %>% dplyr::filter(.data[[vGroupCols[1]]] == grp_val)
+    months <- sort(grp_data$MonthYYYYMM)
+
+    # Generate expected complete sequence
+    expected <- generate_month_seq_local(min(months), max(months))
+
+    if (!all(expected %in% months)) {
+      missing <- setdiff(expected, months)
+      stop(sprintf(
+        paste0(
+          "Month sequence for %s='%s' has gaps. Missing months: %s\n\n",
+          "User-supplied month sequences must be complete with no gaps."
+        ),
+        vGroupCols[1], grp_val, paste(missing, collapse = ", ")
+      ), call. = FALSE)
+    }
+  }
+
+  invisible(TRUE)
+}
+
 test_that("validate_month_sequence detects gaps", {
   tbl_with_gap <- data.frame(
     StudyID = "STUDY001",
@@ -69,7 +134,7 @@ test_that("validate_month_sequence handles multiple studies", {
   )
 })
 
-test_that("expand_lazy_table rejects invalid expansion types", {
+test_that("ExpandLazyTable rejects invalid expansion types", {
   skip_if_not_installed("duckdb")
 
   # Create a simple lazy table
@@ -81,7 +146,7 @@ test_that("expand_lazy_table rejects invalid expansion types", {
 
   # Try with invalid expansion type (not data.frame or tbl_lazy)
   expect_error(
-    expand_lazy_table(
+    ExpandLazyTable(
       tblInput = tbl_lazy,
       tblExpansion = list(x = 1:10), # Invalid type
       dfExpansion_mem = data.frame(x = 1:10),
@@ -92,7 +157,7 @@ test_that("expand_lazy_table rejects invalid expansion types", {
   )
 })
 
-test_that("expand_lazy_table uses user-supplied data.frame", {
+test_that("ExpandLazyTable uses user-supplied data.frame", {
   skip_if_not_installed("duckdb")
 
   # Create a simple lazy table
@@ -105,7 +170,7 @@ test_that("expand_lazy_table uses user-supplied data.frame", {
   # Provide user data.frame - should write it to temp table
   user_df <- data.frame(BootstrapRep = 1:3)
 
-  result <- expand_lazy_table(
+  result <- ExpandLazyTable(
     tblInput = tbl_lazy,
     tblExpansion = user_df,
     dfExpansion_mem = data.frame(BootstrapRep = 1:10), # Should be ignored
@@ -120,7 +185,7 @@ test_that("expand_lazy_table uses user-supplied data.frame", {
   expect_equal(nrow(dplyr::collect(result)), 3)
 })
 
-test_that("expand_lazy_table auto-generates when no user table provided", {
+test_that("ExpandLazyTable auto-generates when no user table provided", {
   skip_if_not_installed("duckdb")
 
   # Create a simple lazy table
@@ -131,7 +196,7 @@ test_that("expand_lazy_table auto-generates when no user table provided", {
   tbl_lazy <- dplyr::tbl(con, "test_data")
 
   # No user table - should auto-generate from dfExpansion_mem
-  result <- expand_lazy_table(
+  result <- ExpandLazyTable(
     tblInput = tbl_lazy,
     tblExpansion = NULL,
     dfExpansion_mem = data.frame(BootstrapRep = 1:10),
@@ -146,7 +211,7 @@ test_that("expand_lazy_table auto-generates when no user table provided", {
   expect_equal(nrow(dplyr::collect(result)), 10)
 })
 
-test_that("expand_lazy_table verifies connection match for user lazy tables", {
+test_that("ExpandLazyTable verifies connection match for user lazy tables", {
   skip_if_not_installed("duckdb")
 
   # Create two separate connections
@@ -165,7 +230,7 @@ test_that("expand_lazy_table verifies connection match for user lazy tables", {
 
   # Should error because connections don't match
   expect_error(
-    expand_lazy_table(
+    ExpandLazyTable(
       tblInput = tbl_lazy1,
       tblExpansion = tbl_lazy2,
       dfExpansion_mem = data.frame(y = 1:10),
@@ -176,7 +241,7 @@ test_that("expand_lazy_table verifies connection match for user lazy tables", {
   )
 })
 
-test_that("expand_lazy_table returns user-supplied lazy table when connection matches", {
+test_that("ExpandLazyTable returns user-supplied lazy table when connection matches", {
   skip_if_not_installed("duckdb")
 
   # Create connection and tables
@@ -190,7 +255,7 @@ test_that("expand_lazy_table returns user-supplied lazy table when connection ma
   tbl_expansion <- dplyr::tbl(con, "user_expansion")
 
   # Should use user-supplied lazy table directly
-  result <- expand_lazy_table(
+  result <- ExpandLazyTable(
     tblInput = tbl_input,
     tblExpansion = tbl_expansion,
     dfExpansion_mem = data.frame(Rep = 1:10), # Should be ignored
@@ -202,7 +267,7 @@ test_that("expand_lazy_table returns user-supplied lazy table when connection ma
   expect_equal(nrow(dplyr::collect(result)), 7)
 })
 
-test_that("expand_lazy_table handles NULL connection error", {
+test_that("ExpandLazyTable handles NULL connection error", {
   skip_if_not_installed("duckdb")
 
   # Create a lazy table
@@ -219,7 +284,7 @@ test_that("expand_lazy_table handles NULL connection error", {
   )
 
   expect_error(
-    expand_lazy_table(
+    ExpandLazyTable(
       tblInput = tbl_lazy,
       tblExpansion = NULL,
       dfExpansion_mem = data.frame(x = 1:10),
@@ -230,7 +295,7 @@ test_that("expand_lazy_table handles NULL connection error", {
   )
 })
 
-test_that("expand_lazy_table handles temp table creation failure", {
+test_that("ExpandLazyTable handles temp table creation failure", {
   skip_if_not_installed("duckdb")
 
   # Create a lazy table
@@ -247,7 +312,7 @@ test_that("expand_lazy_table handles temp table creation failure", {
   )
 
   expect_error(
-    expand_lazy_table(
+    ExpandLazyTable(
       tblInput = tbl_lazy,
       tblExpansion = NULL,
       dfExpansion_mem = data.frame(x = 1:10),
@@ -258,7 +323,7 @@ test_that("expand_lazy_table handles temp table creation failure", {
   )
 
   expect_error(
-    expand_lazy_table(
+    ExpandLazyTable(
       tblInput = tbl_lazy,
       tblExpansion = NULL,
       dfExpansion_mem = data.frame(x = 1:10),
@@ -269,7 +334,7 @@ test_that("expand_lazy_table handles temp table creation failure", {
   )
 
   expect_error(
-    expand_lazy_table(
+    ExpandLazyTable(
       tblInput = tbl_lazy,
       tblExpansion = NULL,
       dfExpansion_mem = data.frame(x = 1:10),

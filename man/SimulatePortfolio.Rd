@@ -43,7 +43,7 @@ If dfConfig is provided, it should contain:
 \item studyid: Unique study identifier
 \item nSubjects: Number of subjects per study
 \item TargetSiteCount: (Optional) Target number of sites
-\item strOversamplDomain: (Optional) Domain for stratified sampling
+\item strOversampleDomain: (Optional) Domain for stratified sampling
 \item vOversamplQuantileRange_min/max: (Optional) Quantile range for stratification
 \item replacement: (Optional) Sample with replacement (default TRUE)
 }

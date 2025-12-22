@@ -337,7 +337,7 @@ lCharts <- gsm.studykri::MakeCharts_StudyKRI(
     dfMetrics = dfMetrics
   )
 
-gsm.studykri::Report_KRI_StudyKRI(
+gsm.studykri::Report_StudyKRI(
   lCharts = lCharts,
   dfResults = dfTransformed,
   dfGroups = dfGroups,

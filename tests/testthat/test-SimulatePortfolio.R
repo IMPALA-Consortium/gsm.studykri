@@ -105,11 +105,11 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
   result <- SimulatePortfolio(lRaw, dfConfig = dfConfig, seed = 123)
   expect_equal(length(unique(result$Raw_SUBJ$studyid)), 2)
 
-  # Test with strOversamplDomain parameter
+  # Test with strOversampleDomain parameter
   dfConfig2 <- data.frame(
     studyid = c("TEST3", "TEST4"),
     nSubjects = c(25, 35),
-    strOversamplDomain = c("Raw_AE", "Raw_AE"),
+    strOversampleDomain = c("Raw_AE", "Raw_AE"),
     vOversamplQuantileRange_min = c(0, 0.5),
     vOversamplQuantileRange_max = c(0.5, 1.0)
   )
@@ -123,7 +123,7 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
   dfConfig3 <- data.frame(
     studyid = "TEST5",
     nSubjects = 20,
-    strOversamplDomain = "Raw_AE",
+    strOversampleDomain = "Raw_AE",
     vOversamplQuantileRange_min = 0.75
     # max not specified, should default to 1
   )
@@ -137,7 +137,7 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
   dfConfig4 <- data.frame(
     studyid = "TEST6",
     nSubjects = 20,
-    strOversamplDomain = "Raw_AE",
+    strOversampleDomain = "Raw_AE",
     vOversamplQuantileRange_max = 0.25
     # min not specified, should default to 0
   )

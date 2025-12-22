@@ -16,7 +16,7 @@ steps:
       
   # Step 2: Generate HTML report using gsm.kri
   - output: strReportPath
-    name: gsm.studykri::Report_KRI_StudyKRI
+    name: gsm.studykri::Report_StudyKRI
     params:
       lCharts: lCharts
       dfResults: Reporting_Results

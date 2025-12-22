@@ -125,7 +125,7 @@ Transform_CumCount <- function(
   global_min <- min(dfMonthRanges$min_month)
   global_max <- max(dfMonthRanges$max_month)
 
-  dfAllMonths <- generate_month_seq(global_min, global_max)
+  dfAllMonths <- GenerateMonthSeq(global_min, global_max)
 
   dfCompleteMonths_mem <- dfMonthRanges %>%
     dplyr::select(dplyr::all_of(.env$vBy)) %>%
@@ -143,7 +143,7 @@ Transform_CumCount <- function(
     dplyr::select(-"min_month", -"max_month")
 
   if (inherits(dfAggregated, "tbl_lazy")) {
-    dfCompleteMonths <- expand_lazy_table(
+    dfCompleteMonths <- ExpandLazyTable(
       tblInput = dfAggregated,
       tblExpansion = tblMonthSequence,
       dfExpansion_mem = dfCompleteMonths_mem,

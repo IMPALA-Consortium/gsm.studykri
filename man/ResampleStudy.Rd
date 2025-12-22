@@ -10,7 +10,7 @@ ResampleStudy(
   nSubjects = NULL,
   TargetSiteCount = NULL,
   replacement = TRUE,
-  strOversamplDomain = NULL,
+  strOversampleDomain = NULL,
   vOversamplQuantileRange = c(0, 1),
   seed = NULL,
   vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv"),
@@ -33,7 +33,7 @@ Must be a positive integer.}
 
 \item{replacement}{Logical indicating whether to sample with replacement (default: TRUE)}
 
-\item{strOversamplDomain}{Character string naming a domain to use for stratified sampling.
+\item{strOversampleDomain}{Character string naming a domain to use for stratified sampling.
 NULL (default) samples from all enrolled subjects}
 
 \item{vOversamplQuantileRange}{Numeric vector of length 2 with quantile range (0-1) for
@@ -104,7 +104,7 @@ lStudy2 <- ResampleStudy(
   lRaw,
   "STUDY002",
   nSubjects = 50,
-  strOversamplDomain = "Raw_AE",
+  strOversampleDomain = "Raw_AE",
   vOversamplQuantileRange = c(0.75, 1.0),
   seed = 456
 )

@@ -53,7 +53,7 @@ lPortfolio <- SimulatePortfolio(
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4"),
     nSubjects = c(500, 750, 150, 200),
-    strOversamplDomain = rep("Raw_AE", 4),
+    strOversampleDomain = rep("Raw_AE", 4),
     vOversamplQuantileRange_min = c(0, 0, 0, 0),
     vOversamplQuantileRange_max = c(1, 1, 1, 0.75)
   )

@@ -14,11 +14,11 @@
 #'
 #' @return tbl_lazy expansion table that can be joined
 #' @keywords internal
-expand_lazy_table <- function(tblInput,
-                              tblExpansion = NULL,
-                              dfExpansion_mem,
-                              strTempTableName,
-                              strExpansionType) {
+ExpandLazyTable <- function(tblInput,
+                            tblExpansion = NULL,
+                            dfExpansion_mem,
+                            strTempTableName,
+                            strExpansionType) {
   # Option 1: User provided expansion table
   if (!is.null(tblExpansion)) {
     if (inherits(tblExpansion, "tbl_lazy")) {
@@ -82,74 +82,6 @@ expand_lazy_table <- function(tblInput,
   )
 }
 
-#' Validate Month Sequence Has No Gaps
-#'
-#' @param tblMonthSeq tbl_lazy or data.frame. Month sequence to validate
-#' @param vGroupCols character. Grouping columns (e.g., "StudyID")
-#' @keywords internal
-validate_month_sequence <- function(tblMonthSeq, vGroupCols) {
-  # Collect to check (small sample if large)
-  sample <- tblMonthSeq %>%
-    dplyr::collect()
-
-  if (nrow(sample) == 0) {
-    stop("Month sequence table is empty")
-  }
-
-  # Check required columns BEFORE trying to sort
-  if (!"MonthYYYYMM" %in% names(sample)) {
-    stop("Month sequence must have 'MonthYYYYMM' column")
-  }
-
-  for (col in vGroupCols) {
-    if (!col %in% names(sample)) {
-      stop(sprintf("Month sequence must have '%s' column", col))
-    }
-  }
-
-  # Now we can safely sort
-  sample <- sample %>%
-    SortDf(dplyr::across(dplyr::all_of(vGroupCols)), .data$MonthYYYYMM)
-
-  # Generate expected sequence helper
-  generate_month_seq <- function(start_yyyymm, end_yyyymm) {
-    start_year <- floor(start_yyyymm / 100)
-    start_month <- start_yyyymm %% 100
-    end_year <- floor(end_yyyymm / 100)
-    end_month <- end_yyyymm %% 100
-
-    dates <- seq(
-      as.Date(paste0(start_year, "-", sprintf("%02d", start_month), "-01")),
-      as.Date(paste0(end_year, "-", sprintf("%02d", end_month), "-01")),
-      by = "month"
-    )
-
-    as.numeric(format(dates, "%Y%m"))
-  }
-
-  # For each group, verify no gaps
-  for (grp_val in unique(sample[[vGroupCols[1]]])) {
-    grp_data <- sample %>% dplyr::filter(.data[[vGroupCols[1]]] == grp_val)
-    months <- sort(grp_data$MonthYYYYMM)
-
-    # Generate expected complete sequence
-    expected <- generate_month_seq(min(months), max(months))
-
-    if (!all(expected %in% months)) {
-      missing <- setdiff(expected, months)
-      stop(sprintf(
-        paste0(
-          "Month sequence for %s='%s' has gaps. Missing months: %s\n\n",
-          "User-supplied month sequences must be complete with no gaps."
-        ),
-        vGroupCols[1], grp_val, paste(missing, collapse = ", ")
-      ), call. = FALSE)
-    }
-  }
-
-  invisible(TRUE)
-}
-
 #' Sort Data Frame or Lazy Table
 #'
 #' @param data data.frame or tbl_lazy
@@ -170,7 +102,7 @@ SortDf <- function(data, ...) {
 #' @param end_yyyymm numeric. End month in YYYYMM format
 #' @return data.frame with MonthYYYYMM column
 #' @keywords internal
-generate_month_seq <- function(start_yyyymm, end_yyyymm) {
+GenerateMonthSeq <- function(start_yyyymm, end_yyyymm) {
   start_year <- floor(start_yyyymm / 100)
   start_month <- start_yyyymm %% 100
   end_year <- floor(end_yyyymm / 100)

@@ -148,7 +148,7 @@ test_that("ResampleStudy maintains referential integrity", {
   }
 })
 
-test_that("ResampleStudy handles strOversamplDomain parameter", {
+test_that("ResampleStudy handles strOversampleDomain parameter", {
   lRaw <- list(
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_AE = clindata::rawplus_ae,
@@ -163,7 +163,7 @@ test_that("ResampleStudy handles strOversamplDomain parameter", {
       lRaw,
       "STUDY001",
       nSubjects = 100,
-      strOversamplDomain = "Raw_AE",
+      strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.75, 1.0),
       seed = 123
     )
@@ -175,7 +175,7 @@ test_that("ResampleStudy handles strOversamplDomain parameter", {
       lRaw,
       "STUDY002",
       nSubjects = 100,
-      strOversamplDomain = "Raw_AE",
+      strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0, 0.25),
       seed = 456
     )
@@ -233,15 +233,15 @@ test_that("ResampleStudy input checking works", {
   # Invalid replacement
   expect_error(ResampleStudy(lRaw, "STUDY001", replacement = "yes"), "logical value")
 
-  # Invalid strOversamplDomain
+  # Invalid strOversampleDomain
   expect_error(
-    ResampleStudy(lRaw, "STUDY001", strOversamplDomain = "NonExistent"),
+    ResampleStudy(lRaw, "STUDY001", strOversampleDomain = "NonExistent"),
     "not found in lRaw"
   )
 
-  # Invalid strOversamplDomain type
+  # Invalid strOversampleDomain type
   expect_error(
-    ResampleStudy(lRaw, "STUDY001", strOversamplDomain = c("Raw_AE", "Raw_LB")),
+    ResampleStudy(lRaw, "STUDY001", strOversampleDomain = c("Raw_AE", "Raw_LB")),
     "must be NULL or a single character string"
   )
 
@@ -641,7 +641,7 @@ test_that("ResampleStudy maintains reasonable column order", {
 
 # Edge Case Tests for Coverage ---------------------------------------------
 
-test_that("ResampleStudy handles strOversamplDomain without subject ID column", {
+test_that("ResampleStudy handles strOversampleDomain without subject ID column", {
   lRaw <- list(
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_SITE = clindata::ctms_site
@@ -652,7 +652,7 @@ test_that("ResampleStudy handles strOversamplDomain without subject ID column", 
     ResampleStudy(
       lRaw,
       "STUDY001",
-      strOversamplDomain = "Raw_SITE",
+      strOversampleDomain = "Raw_SITE",
       vOversamplQuantileRange = c(0, 1)
     ),
     "must have a subject identifier column"
@@ -688,7 +688,7 @@ test_that("ResampleStudy handles extreme quantile ranges", {
       lRaw,
       "STUDY001",
       nSubjects = 50,
-      strOversamplDomain = "Raw_AE",
+      strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.95, 1.0),
       seed = 123
     )
@@ -767,7 +767,7 @@ test_that("ResampleStudy handles invalid composite ID mappings", {
       lRaw,
       "STUDY001",
       nSubjects = 20,
-      strOversamplDomain = "Raw_AE_TEST",
+      strOversampleDomain = "Raw_AE_TEST",
       vOversamplQuantileRange = c(0, 1),
       seed = 123
     )
