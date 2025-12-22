@@ -526,28 +526,54 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet validates all numeric parameters
     stringsAsFactors = FALSE
   )
 
-  # Use helper to test multiple parameter validations
-  test_parameter_errors(
-    fn = Analyze_StudyKRI_PredictBoundsRefSet,
-    valid_args = list(dfInput = dfTest, vStudyFilter = "STUDY1"),
-    invalid_tests = list(
-      # nMinDenominator validations
-      list(args = list(nMinDenominator = -5), error = "nMinDenominator must be a single non-negative numeric value"),
-      list(args = list(nMinDenominator = "invalid"), error = "nMinDenominator must be a single non-negative numeric value"),
-      list(args = list(nMinDenominator = c(5, 10)), error = "nMinDenominator must be a single non-negative numeric value"),
+  # nMinDenominator validations
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nMinDenominator = -5),
+    "nMinDenominator must be a single non-negative numeric value"
+  )
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nMinDenominator = "invalid"),
+    "nMinDenominator must be a single non-negative numeric value"
+  )
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nMinDenominator = c(5, 10)),
+    "nMinDenominator must be a single non-negative numeric value"
+  )
 
-      # nBootstrapReps validations
-      list(args = list(nBootstrapReps = 0), error = "nBootstrapReps must be a positive integer"),
-      list(args = list(nBootstrapReps = "ten"), error = "nBootstrapReps must be a positive integer"),
-      list(args = list(nBootstrapReps = c(10, 20)), error = "nBootstrapReps must be a positive integer"),
+  # nBootstrapReps validations
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nBootstrapReps = 0),
+    "nBootstrapReps must be a positive integer"
+  )
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nBootstrapReps = "ten"),
+    "nBootstrapReps must be a positive integer"
+  )
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nBootstrapReps = c(10, 20)),
+    "nBootstrapReps must be a positive integer"
+  )
 
-      # nConfLevel validations
-      list(args = list(nConfLevel = 0), error = "nConfLevel must be between 0 and 1"),
-      list(args = list(nConfLevel = 1), error = "nConfLevel must be between 0 and 1"),
-      list(args = list(nConfLevel = -0.5), error = "nConfLevel must be between 0 and 1"),
-      list(args = list(nConfLevel = "0.95"), error = "nConfLevel must be between 0 and 1"),
-      list(args = list(nConfLevel = c(0.9, 0.95)), error = "nConfLevel must be between 0 and 1")
-    )
+  # nConfLevel validations
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nConfLevel = 0),
+    "nConfLevel must be between 0 and 1"
+  )
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nConfLevel = 1),
+    "nConfLevel must be between 0 and 1"
+  )
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nConfLevel = -0.5),
+    "nConfLevel must be between 0 and 1"
+  )
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nConfLevel = "0.95"),
+    "nConfLevel must be between 0 and 1"
+  )
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nConfLevel = c(0.9, 0.95)),
+    "nConfLevel must be between 0 and 1"
   )
 })
 
