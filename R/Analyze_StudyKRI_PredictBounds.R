@@ -338,18 +338,14 @@ BootstrapStudyKRI <- function(
     BootstrapRep = seq_len(nBootstrapReps)
   )
 
-  # If lazy table, use helper function
-  if (inherits(dfInput, "tbl_lazy")) {
-    dfReps <- ExpandLazyTable(
-      tblInput = dfInput,
-      tblExpansion = tblBootstrapReps,
-      dfExpansion_mem = dfReps_mem,
-      strTempTableName = "bootstrap_reps",
-      strExpansionType = "bootstrap replicate indices"
-    )
-  } else {
-    dfReps <- dfReps_mem
-  }
+  # HandleLazyTable handles both lazy and in-memory cases
+  dfReps <- HandleLazyTable(
+    tblInput = dfInput,
+    tblUser = tblBootstrapReps,
+    dfMem = dfReps_mem,
+    strTempTableName = "bootstrap_reps",
+    strTableType = "bootstrap replicate indices"
+  )
 
   # Step 1: Number each group sequentially within study (following studykri.Rmd pattern)
   dfGroupsNumbered <- dfInput %>%
@@ -409,18 +405,14 @@ BootstrapStudyKRI <- function(
     
     dfPositions_mem <- tibble::tibble(Position = seq_len(as.integer(max_effective)))
 
-    # Convert to lazy table if needed
-    if (inherits(dfInput, "tbl_lazy")) {
-      dfPositions <- ExpandLazyTable(
-        tblInput = dfInput,
-        tblExpansion = NULL,
-        dfExpansion_mem = dfPositions_mem,
-        strTempTableName = "bootstrap_positions",
-        strExpansionType = "position indices for nGroups"
-      )
-    } else {
-      dfPositions <- dfPositions_mem
-    }
+    # HandleLazyTable handles both lazy and in-memory cases
+    dfPositions <- HandleLazyTable(
+      tblInput = dfInput,
+      tblUser = NULL,
+      dfMem = dfPositions_mem,
+      strTempTableName = "bootstrap_positions",
+      strTableType = "position indices for nGroups"
+    )
 
     # Generate selections using positions for expansion
     dfBootstrapSelections <- dfGroupsNumbered %>%

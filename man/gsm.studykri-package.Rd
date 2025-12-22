@@ -4,7 +4,7 @@
 \name{gsm.studykri-package}
 \alias{gsm.studykri}
 \alias{gsm.studykri-package}
-\title{gsm.studykri: Bootstrap Study KRI comnfidence intervals based on reference studies.}
+\title{gsm.studykri: Bootstrap Study KRI comnfidence intervals based on reference studies}
 \description{
 A new approach for calculating KRI lower and upper limits on study-level for quality monitoring in clinical trials. The method uses bootstrapping to calculate confidence intervals for a given study over-time. The confidence intervals can then be used to compare the study-level KRI against a fixed expectation or against the confidence intervals and KRI values over time of one or more reference studies. The bootstrapping method resamples a new set of sites with replacement from the original study data set.
 }

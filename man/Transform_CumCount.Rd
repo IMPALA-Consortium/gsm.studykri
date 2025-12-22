@@ -19,9 +19,10 @@ c("StudyID", "BootstrapRep")).}
 filtering early/sparse data (default: 25).}
 
 \item{tblMonthSequence}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
-Optional pre-generated complete month sequences. Must contain columns matching
-vBy and MonthYYYYMM with NO gaps. If NULL, attempts to create temp table
-(requires write privileges). If data.frame provided, will be written to temp table.}
+Optional pre-generated month sequence with only a \code{MonthYYYYMM} column
+(output of \code{GenerateMonthSeq()}). Must contain consecutive months with NO gaps.
+If NULL, attempts to create temp table (requires write privileges).
+If data.frame provided, will be written to temp table.}
 }
 \value{
 A data.frame with study-level aggregated cumulative counts and ratios.

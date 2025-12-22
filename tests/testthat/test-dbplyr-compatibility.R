@@ -705,3 +705,228 @@ test_that("Transform_Long works with lazy tables in list", {
   DBI::dbDisconnect(con, shutdown = TRUE)
 })
 
+# Test 13: User-supplied tblBootstrapReps controls bootstrap count
+test_that("User-supplied tblBootstrapReps controls bootstrap count", {
+  skip_if_not_installed("dbplyr")
+  skip_if_not_installed("duckdb")
+
+  # Create in-memory database
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+
+  # Create test data with multiple studies and enough sites
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2"), each = 60),
+    GroupID = rep(paste0("Site", 1:10), each = 6, times = 2),
+    Numerator = rep(1:6, times = 20),
+    Denominator = rep(10:15, times = 20),
+    MonthYYYYMM = rep(202301:202306, times = 20),
+    Metric = runif(120, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Write to database
+  DBI::dbWriteTable(con, "site_data", dfTest)
+  dfLazy <- dplyr::tbl(con, "site_data")
+
+  # Create user-supplied bootstrap reps with exactly 7 replicates
+  dfBootstrapReps <- data.frame(BootstrapRep = 1:7)
+  DBI::dbWriteTable(con, "bootstrap_reps", dfBootstrapReps)
+  tblBootstrapRepsLazy <- dplyr::tbl(con, "bootstrap_reps")
+
+  # Execute function with nBootstrapReps=100 but tblBootstrapReps has only 7 rows
+  # The table should override the parameter
+  suppressMessages({
+    result <- Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfLazy,
+      vStudyFilter = c("STUDY1", "STUDY2"),
+      nBootstrapReps = 100, # This should be overridden by tblBootstrapReps
+      nConfLevel = 0.95,
+      nMinDenominator = 1,
+      seed = 42,
+      tblBootstrapReps = tblBootstrapRepsLazy
+    )
+  })
+
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+
+  # Collect and verify BootstrapCount equals 7 (from table, not 100 from parameter)
+  result_collected <- dplyr::collect(result)
+  expect_equal(unique(result_collected$BootstrapCount), 7)
+
+  # Clean up
+  DBI::dbDisconnect(con, shutdown = TRUE)
+})
+
+# Test 14: User-supplied tblMonthSequence controls output months
+test_that("User-supplied tblMonthSequence controls output months", {
+  skip_if_not_installed("dbplyr")
+  skip_if_not_installed("duckdb")
+
+  # Create in-memory database
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+
+  # Create test data spanning months 202301-202306 (6 months)
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2"), each = 60),
+    GroupID = rep(paste0("Site", 1:10), each = 6, times = 2),
+    Numerator = rep(1:6, times = 20),
+    Denominator = rep(10:15, times = 20),
+    MonthYYYYMM = rep(202301:202306, times = 20), # 6 months of data
+    Metric = runif(120, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Write to database
+  DBI::dbWriteTable(con, "site_data", dfTest)
+  dfLazy <- dplyr::tbl(con, "site_data")
+
+  # Create user-supplied month sequence: only 3 months (Jan-Mar)
+  # This is the simple format expected by Transform_CumCount (just MonthYYYYMM)
+  dfMonthSequence <- data.frame(MonthYYYYMM = c(202301, 202302, 202303))
+  DBI::dbWriteTable(con, "month_seq", dfMonthSequence)
+  tblMonthSeqLazy <- dplyr::tbl(con, "month_seq")
+
+  # Execute function
+  suppressMessages({
+    result <- Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfLazy,
+      vStudyFilter = c("STUDY1", "STUDY2"),
+      nBootstrapReps = 10,
+      nConfLevel = 0.95,
+      nMinDenominator = 1,
+      seed = 42,
+      tblMonthSequence = tblMonthSeqLazy
+    )
+  })
+
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+
+  # Collect and verify output months are limited to 1-3
+  result_collected <- dplyr::collect(result)
+  expect_true(max(result_collected$StudyMonth) <= 3)
+  # Should only have months 1, 2, 3 (after filtering by nMinDenominator=1, should start at 1)
+  expect_true(all(result_collected$StudyMonth <= 3))
+
+  # Clean up
+  DBI::dbDisconnect(con, shutdown = TRUE)
+})
+
+# Test 15: Analyze_StudyKRI_PredictBoundsRef with user-supplied lazy tables
+test_that("Analyze_StudyKRI_PredictBoundsRef works with user-supplied tblBootstrapReps", {
+  skip_if_not_installed("dbplyr")
+  skip_if_not_installed("duckdb")
+
+  # Create in-memory database
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+
+  # Create test data with multiple studies and sites
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2", "REF1", "REF2"), each = 60),
+    GroupID = rep(paste0("Site", 1:10), each = 6, times = 4),
+    Numerator = rep(1:6, times = 40),
+    Denominator = rep(10:15, times = 40),
+    MonthYYYYMM = rep(202301:202306, times = 40),
+    Metric = runif(240, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Write to database
+  DBI::dbWriteTable(con, "site_data", dfTest)
+  dfLazy <- dplyr::tbl(con, "site_data")
+
+  # Create study reference mapping
+  dfStudyRef <- data.frame(
+    study = c("STUDY1", "STUDY2"),
+    studyref = c("REF1", "REF2")
+  )
+
+  # Create user-supplied bootstrap reps with 5 replicates
+  dfBootstrapReps <- data.frame(BootstrapRep = 1:5)
+  DBI::dbWriteTable(con, "bootstrap_reps", dfBootstrapReps)
+  tblBootstrapRepsLazy <- dplyr::tbl(con, "bootstrap_reps")
+
+  # Execute Analyze_StudyKRI_PredictBoundsRef with user-supplied tblBootstrapReps
+  suppressMessages({
+    result <- Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfLazy,
+      dfStudyRef = dfStudyRef,
+      nBootstrapReps = 50, # Should be overridden by tblBootstrapReps
+      nConfLevel = 0.95,
+      nMinDenominator = 1,
+      seed = 42,
+      tblBootstrapReps = tblBootstrapRepsLazy
+    )
+  })
+
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+
+  # Collect and verify BootstrapCount equals 5 (from table, not 50 from parameter)
+  result_collected <- dplyr::collect(result)
+  expect_equal(unique(result_collected$BootstrapCount), 5)
+
+  # Verify we have results for both target studies
+  expect_equal(sort(unique(result_collected$StudyID)), c("STUDY1", "STUDY2"))
+
+  # Clean up
+  DBI::dbDisconnect(con, shutdown = TRUE)
+})
+
+# Test 16: Analyze_StudyKRI_PredictBounds with user-supplied lazy tables
+test_that("Analyze_StudyKRI_PredictBounds works with user-supplied tblBootstrapReps", {
+  skip_if_not_installed("dbplyr")
+  skip_if_not_installed("duckdb")
+
+  # Create in-memory database
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+
+  # Create test data for a single study with multiple sites
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 60),
+    GroupID = rep(paste0("Site", 1:10), each = 6),
+    Numerator = rep(1:6, times = 10),
+    Denominator = rep(10:15, times = 10),
+    MonthYYYYMM = rep(202301:202306, times = 10),
+    Metric = runif(60, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Write to database
+  DBI::dbWriteTable(con, "site_data", dfTest)
+  dfLazy <- dplyr::tbl(con, "site_data")
+
+  # Create user-supplied bootstrap reps with 8 replicates
+  dfBootstrapReps <- data.frame(BootstrapRep = 1:8)
+  DBI::dbWriteTable(con, "bootstrap_reps", dfBootstrapReps)
+  tblBootstrapRepsLazy <- dplyr::tbl(con, "bootstrap_reps")
+
+  # Execute Analyze_StudyKRI_PredictBounds with user-supplied tblBootstrapReps
+  suppressMessages({
+    result <- Analyze_StudyKRI_PredictBounds(
+      dfInput = dfLazy,
+      dfStudyRef = NULL, # All studies
+      nBootstrapReps = 200, # Should be overridden by tblBootstrapReps
+      nConfLevel = 0.95,
+      nMinDenominator = 1,
+      seed = 42,
+      tblBootstrapReps = tblBootstrapRepsLazy
+    )
+  })
+
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+
+  # Collect and verify BootstrapCount equals 8 (from table, not 200 from parameter)
+  result_collected <- dplyr::collect(result)
+  expect_equal(unique(result_collected$BootstrapCount), 8)
+
+  # Clean up
+  DBI::dbDisconnect(con, shutdown = TRUE)
+})
+

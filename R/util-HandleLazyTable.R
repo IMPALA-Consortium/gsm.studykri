@@ -1,46 +1,55 @@
-#' Expand Lazy Table with Fallback Strategy
+#' Handle Lazy Table with Fallback Strategy
 #'
 #' @description
-#' Handles expansion of lazy tables with consistent fallback:
-#' 1. Use user-supplied expansion table if provided
-#' 2. Attempt to write temp table to database
-#' 3. Throw expressive error if write fails
+#' Handles lazy tables with consistent fallback:
+#' 1. For in-memory data frames: return dfMem directly
+#' 2. Use user-supplied table if provided
+#' 3. Attempt to write temp table to database
+#' 4. Throw expressive error if write fails
 #'
-#' @param tblInput tbl_lazy. The lazy table context (for extracting connection)
-#' @param tblExpansion tbl_lazy, data.frame, or NULL. User-supplied expansion
-#' @param dfExpansion_mem data.frame. In-memory expansion data for auto-generation
+#' @param tblInput tbl_lazy or data.frame. The input table context (for extracting connection if lazy)
+#' @param tblUser tbl_lazy, data.frame, or NULL. User-supplied table
+#' @param dfMem data.frame. In-memory data for auto-generation
 #' @param strTempTableName character. Name for temp table
-#' @param strExpansionType character. Description for error messages
+#' @param strTableType character. Description for error messages
 #'
-#' @return tbl_lazy expansion table that can be joined
+#' @return tbl_lazy or data.frame table that can be joined
 #' @keywords internal
-ExpandLazyTable <- function(tblInput,
-                            tblExpansion = NULL,
-                            dfExpansion_mem,
+HandleLazyTable <- function(tblInput,
+                            tblUser = NULL,
+                            dfMem,
                             strTempTableName,
-                            strExpansionType) {
-  # Option 1: User provided expansion table
-  if (!is.null(tblExpansion)) {
-    if (inherits(tblExpansion, "tbl_lazy")) {
+                            strTableType) {
+  # For in-memory data frames, just return the in-memory data directly
+  if (!inherits(tblInput, "tbl_lazy")) {
+    if (!is.null(tblUser) && is.data.frame(tblUser)) {
+      return(tblUser)
+    }
+    return(dfMem)
+  }
+
+  # Option 1: User provided table (for lazy inputs)
+  if (!is.null(tblUser)) {
+    if (inherits(tblUser, "tbl_lazy")) {
       # Verify same connection
       con_input <- dbplyr::remote_con(tblInput)
-      con_expansion <- dbplyr::remote_con(tblExpansion)
+      con_user <- dbplyr::remote_con(tblUser)
 
-      if (!identical(con_input, con_expansion)) {
+      if (!identical(con_input, con_user)) {
         stop(sprintf(
           "User-supplied %s table must be on the same database connection as input data",
-          strExpansionType
+          strTableType
         ))
       }
-      return(tblExpansion)
-    } else if (is.data.frame(tblExpansion)) {
+      return(tblUser)
+    } else if (is.data.frame(tblUser)) {
       # User provided data.frame - use it for writing
-      dfExpansion_mem <- tblExpansion
+      dfMem <- tblUser
     } else {
       stop(sprintf(
         "%s must be a data.frame or tbl_lazy, got: %s",
-        strExpansionType,
-        class(tblExpansion)[1]
+        strTableType,
+        class(tblUser)[1]
       ))
     }
   }
@@ -57,7 +66,7 @@ ExpandLazyTable <- function(tblInput,
       # Attempt to write temp table
       tblResult <- dplyr::copy_to(
         con,
-        dfExpansion_mem,
+        dfMem,
         name = strTempTableName,
         temporary = TRUE,
         overwrite = TRUE
@@ -70,12 +79,12 @@ ExpandLazyTable <- function(tblInput,
         paste0(
           "Failed to create %s for lazy table.\n\n",
           "Possible solutions:\n",
-          "1. Supply pre-generated expansion via the appropriate parameter\n",
+          "1. Supply pre-generated table via the appropriate parameter\n",
           "2. Call collect() to bring data to memory before processing\n",
           "3. Ensure database connection has CREATE TEMP TABLE privileges\n\n",
           "Original error: %s"
         ),
-        strExpansionType,
+        strTableType,
         conditionMessage(e)
       ), call. = FALSE)
     }

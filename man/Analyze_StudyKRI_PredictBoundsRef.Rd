@@ -12,7 +12,9 @@ Analyze_StudyKRI_PredictBoundsRef(
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
   nMinDenominator = 25,
-  seed = NULL
+  seed = NULL,
+  tblBootstrapReps = NULL,
+  tblMonthSequence = NULL
 )
 }
 \arguments{
@@ -34,6 +36,17 @@ Can have multiple rows per target study (one row per target-reference pair).}
 \item{nMinDenominator}{numeric. Minimum denominator (default: 25).}
 
 \item{seed}{integer or NULL. Random seed (default: NULL).}
+
+\item{tblBootstrapReps}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
+Optional pre-generated bootstrap replicate indices with a \code{BootstrapRep} column
+containing values 1 to N (where N is the desired number of replicates).
+If provided, overrides the \code{nBootstrapReps} parameter. If NULL, attempts to
+create temp table (requires write privileges).}
+
+\item{tblMonthSequence}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
+Optional pre-generated month sequence with only a \code{MonthYYYYMM} column
+(output of \code{GenerateMonthSeq()}). If NULL, attempts to create temp table
+(requires write privileges).}
 }
 \value{
 A tibble (or tbl_lazy if input was lazy) with columns: \code{StudyID}, \code{StudyRefID}, \code{StudyMonth},

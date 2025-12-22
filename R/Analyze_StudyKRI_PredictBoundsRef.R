@@ -29,6 +29,15 @@
 #' @param nMinDenominator numeric. Minimum denominator for Transform_CumCount
 #'   (default: 25).
 #' @param seed integer or NULL. Random seed for reproducibility (default: NULL).
+#' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
+#'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
+#'   containing values 1 to N (where N is the desired number of replicates).
+#'   If provided, overrides the `nBootstrapReps` parameter. If NULL, attempts to
+#'   create temp table (requires write privileges).
+#' @param tblMonthSequence tbl_lazy, data.frame, or NULL. For lazy table inputs:
+#'   Optional pre-generated month sequence with only a `MonthYYYYMM` column
+#'   (output of `GenerateMonthSeq()`). If NULL, attempts to create temp table
+#'   (requires write privileges).
 #'
 #' @return A tibble (or tbl_lazy if input was lazy) with confidence intervals.
 #'   Output columns: `StudyMonth`, `Median_*`, `Lower_*`, `Upper_*` for each Metric column,
@@ -69,7 +78,9 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
     nMinDenominator = 25,
-    seed = NULL) {
+    seed = NULL,
+    tblBootstrapReps = NULL,
+    tblMonthSequence = NULL) {
   # Input Validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfInput, c("data.frame", "tbl"))) {
     stop("dfInput must be a data.frame or tbl object")
@@ -149,7 +160,8 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     nGroups = nMinGroups, # Key: use minimum to ensure fair comparison
     strStudyCol = strStudyCol,
     strGroupCol = strGroupCol,
-    seed = seed
+    seed = seed,
+    tblBootstrapReps = tblBootstrapReps
   )
 
   # Transform to study-level, but group by BootstrapRep only (not StudyID)
@@ -157,7 +169,8 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   dfStudyLevel <- Transform_CumCount(
     dfInput = dfBootstrapped,
     vBy = "BootstrapRep", # Critical: only group by BootstrapRep, not StudyID
-    nMinDenominator = nMinDenominator
+    nMinDenominator = nMinDenominator,
+    tblMonthSequence = tblMonthSequence
   )
 
   # Calculate CI for the combined distribution
@@ -199,6 +212,15 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' @param strStudyMonthCol character. Column name for study month (default: "StudyMonth").
 #' @param nMinDenominator numeric. Minimum denominator (default: 25).
 #' @param seed integer or NULL. Random seed (default: NULL).
+#' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
+#'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
+#'   containing values 1 to N (where N is the desired number of replicates).
+#'   If provided, overrides the `nBootstrapReps` parameter. If NULL, attempts to
+#'   create temp table (requires write privileges).
+#' @param tblMonthSequence tbl_lazy, data.frame, or NULL. For lazy table inputs:
+#'   Optional pre-generated month sequence with only a `MonthYYYYMM` column
+#'   (output of `GenerateMonthSeq()`). If NULL, attempts to create temp table
+#'   (requires write privileges).
 #'
 #' @return A tibble (or tbl_lazy if input was lazy) with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
 #'   `Median_*`, `Lower_*`, `Upper_*` for each Metric column, `BootstrapCount`,
@@ -241,7 +263,9 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
     nMinDenominator = 25,
-    seed = NULL) {
+    seed = NULL,
+    tblBootstrapReps = NULL,
+    tblMonthSequence = NULL) {
   # Input validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfStudyRef, c("data.frame", "tbl"))) {
     stop("dfStudyRef must be a data.frame or tbl object")
@@ -283,7 +307,9 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       strGroupCol = strGroupCol,
       strStudyMonthCol = strStudyMonthCol,
       nMinDenominator = nMinDenominator,
-      seed = seed
+      seed = seed,
+      tblBootstrapReps = tblBootstrapReps,
+      tblMonthSequence = tblMonthSequence
     )
 
     # Compute constant values outside mutate to avoid SQL translation issues

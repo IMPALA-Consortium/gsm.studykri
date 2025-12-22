@@ -39,18 +39,14 @@ CalculateDaysByMonth <- function(dfData, strStartDateCol, strEndDateCol, vGroupC
   # Generate complete month sequence using helper function
   dfMonths <- GenerateMonthSeq(date_range$min_yyyymm, date_range$max_yyyymm)
 
-  # Create month lookup table in database if lazy
-  if (inherits(dfData_expanded, "tbl_lazy")) {
-    tblMonths <- ExpandLazyTable(
-      tblInput = dfData_expanded,
-      tblExpansion = NULL,
-      dfExpansion_mem = dfMonths,
-      strTempTableName = "temp_month_sequence",
-      strExpansionType = "month sequence"
-    )
-  } else {
-    tblMonths <- dfMonths
-  }
+  # Create month lookup table - HandleLazyTable handles both lazy and in-memory
+  tblMonths <- HandleLazyTable(
+    tblInput = dfData_expanded,
+    tblUser = NULL,
+    dfMem = dfMonths,
+    strTempTableName = "temp_month_sequence",
+    strTableType = "month sequence"
+  )
 
   # Cross join to expand records to all months, then filter to relevant range
   dfExpanded <- dfData_expanded %>%

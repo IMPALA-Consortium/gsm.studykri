@@ -16,9 +16,10 @@
 #' @param nMinDenominator numeric. Minimum cumulative denominator threshold for
 #'   filtering early/sparse data (default: 25).
 #' @param tblMonthSequence tbl_lazy, data.frame, or NULL. For lazy table inputs:
-#'   Optional pre-generated complete month sequences. Must contain columns matching
-#'   vBy and MonthYYYYMM with NO gaps. If NULL, attempts to create temp table
-#'   (requires write privileges). If data.frame provided, will be written to temp table.
+#'   Optional pre-generated month sequence with only a `MonthYYYYMM` column
+#'   (output of `GenerateMonthSeq()`). Must contain consecutive months with NO gaps.
+#'   If NULL, attempts to create temp table (requires write privileges).
+#'   If data.frame provided, will be written to temp table.
 #'
 #' @return A data.frame with study-level aggregated cumulative counts and ratios.
 #'   Output columns: `vBy` columns, `MonthYYYYMM`, `StudyMonth`, Numerator columns,
@@ -119,19 +120,33 @@ Transform_CumCount <- function(
       min_month = min(.data$MonthYYYYMM, na.rm = TRUE),
       max_month = max(.data$MonthYYYYMM, na.rm = TRUE),
       .by = dplyr::all_of(.env$vBy)
-    ) %>%
-    dplyr::collect()
+    )
 
-  global_min <- min(dfMonthRanges$min_month)
-  global_max <- max(dfMonthRanges$max_month)
+  global_min <- dfMonthRanges %>%
+    dplyr::summarise(min_month = min(.data$min_month, na.rm = TRUE)) %>%
+    dplyr::pull(.data$min_month)
 
-  dfAllMonths <- GenerateMonthSeq(global_min, global_max)
+  global_max <- dfMonthRanges %>%
+    dplyr::summarise(max_month = max(.data$max_month, na.rm = TRUE)) %>%
+    dplyr::pull(.data$max_month)
 
-  dfCompleteMonths_mem <- dfMonthRanges %>%
+  dfAllMonths_mem <- GenerateMonthSeq(global_min, global_max)
+
+  # HandleLazyTable handles both lazy and in-memory cases:
+  # - For lazy: writes to temp table or uses provided tblUser
+  # - For in-memory: returns dfMem directly
+  dfAllMonths <- HandleLazyTable(
+    tblInput = dfAggregated,
+    tblUser = tblMonthSequence,
+    dfMem = dfAllMonths_mem,
+    strTempTableName = "month_sequences",
+    strTableType = "month sequence"
+  )
+
+  # Cross-join and filter (unified for both lazy and in-memory)
+  dfCompleteMonths <- dfMonthRanges %>%
     dplyr::select(dplyr::all_of(.env$vBy)) %>%
-    dplyr::cross_join(dfAllMonths)
-
-  dfCompleteMonths_mem <- dfCompleteMonths_mem %>%
+    dplyr::cross_join(dfAllMonths) %>%
     dplyr::left_join(
       dfMonthRanges %>% dplyr::select(dplyr::all_of(.env$vBy), "min_month", "max_month"),
       by = vBy
@@ -141,18 +156,6 @@ Transform_CumCount <- function(
         .data$MonthYYYYMM <= .data$max_month
     ) %>%
     dplyr::select(-"min_month", -"max_month")
-
-  if (inherits(dfAggregated, "tbl_lazy")) {
-    dfCompleteMonths <- ExpandLazyTable(
-      tblInput = dfAggregated,
-      tblExpansion = tblMonthSequence,
-      dfExpansion_mem = dfCompleteMonths_mem,
-      strTempTableName = "month_sequences",
-      strExpansionType = "complete month sequences"
-    )
-  } else {
-    dfCompleteMonths <- dfCompleteMonths_mem
-  }
 
   # Left join to fill gaps and recalculate StudyMonth
   dfAggregated <- dfCompleteMonths %>%
