@@ -95,26 +95,21 @@ Transform_Long <- function(lWide, strDenominatorCol = "DenominatorType") {
     })
 
     # Use union_all for lazy table compatibility instead of bind_rows
-    if (length(lPivoted) == 0) {
-      dfLong <- NULL
-    } else if (length(lPivoted) == 1) {
+    if (length(lPivoted) == 1) {
       dfLong <- lPivoted[[1]]
     } else {
       dfLong <- Reduce(dplyr::union_all, lPivoted)
     }
     
     # Use dplyr::mutate for lazy table compatibility instead of [[ assignment
-    if (!is.null(dfLong)) {
-      dfLong <- dfLong %>%
-        dplyr::mutate("{strDenominatorCol}" := strDenomType)
-    }
+    dfLong <- dfLong %>%
+      dplyr::mutate("{strDenominatorCol}" := strDenomType)
+    
     dfLong
   })
 
   # Use union_all for lazy table compatibility instead of bind_rows
-  if (length(lLong) == 0) {
-    dfResult <- tibble::tibble()
-  } else if (length(lLong) == 1) {
+  if (length(lLong) == 1) {
     dfResult <- lLong[[1]]
   } else {
     dfResult <- Reduce(dplyr::union_all, lLong)
@@ -122,11 +117,14 @@ Transform_Long <- function(lWide, strDenominatorCol = "DenominatorType") {
 
   # Reorder columns: MetricID and DenominatorType first
   vFinalCols <- colnames(dfResult)
-  vPriorityCols <- c("MetricID", strDenominatorCol)
-  vOtherCols <- setdiff(vFinalCols, vPriorityCols)
-  # Use dplyr::select for reordering
-  dfResult <- dfResult %>%
-    dplyr::select(dplyr::all_of(c(vPriorityCols, vOtherCols)))
+  # Only reorder if MetricID column exists (i.e., we had wide columns to process)
+  if ("MetricID" %in% vFinalCols) {
+    vPriorityCols <- c("MetricID", strDenominatorCol)
+    vOtherCols <- setdiff(vFinalCols, vPriorityCols)
+    # Use dplyr::select for reordering
+    dfResult <- dfResult %>%
+      dplyr::select(dplyr::all_of(c(vPriorityCols, vOtherCols)))
+  }
 
   # Return lazy table as-is, only convert regular data frames to tibble
   if (inherits(dfResult, "tbl_lazy")) {
