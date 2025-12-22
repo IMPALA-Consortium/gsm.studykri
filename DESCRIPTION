@@ -1,10 +1,15 @@
 Package: gsm.studykri
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.1
+Title: Bootstrap Study KRI comnfidence intervals based on reference studies
+Version: 0.1.0
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
+    person("Bjoern", "Koneswarakantha", , "bjoern.koneswarakantha@roche.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Description: A new approach for calculating KRI lower and upper limits on study-level for quality monitoring
+ in clinical trials. The method uses bootstrapping to calculate confidence intervals for a given study 
+ over-time. The confidence intervals can then be used to compare the study-level KRI against a fixed
+ expectation or against the confidence intervals and KRI values over time of one or more reference 
+ studies. The bootstrapping method resamples a new set of sites with replacement from the original 
+ study data set.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
