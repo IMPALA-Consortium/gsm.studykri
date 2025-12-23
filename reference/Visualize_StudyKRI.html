@@ -23,7 +23,7 @@ expected portfolio norms."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,6 +35,7 @@ expected portfolio norms."></head><body>
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ContributorGuidelines.html">ContributorGuidelines</a></li>
     <li><a class="dropdown-item" href="../articles/Cookbook.html">Cookbook</a></li>
+    <li><a class="dropdown-item" href="../articles/db.html">In-Database Compatibility</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-sample-reports" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Sample Reports</button>
@@ -75,6 +76,9 @@ expected portfolio norms.</p>
 <span>  <span class="va">strStudyID</span>,</span>
 <span>  strStudyMonthCol <span class="op">=</span> <span class="st">"StudyMonth"</span>,</span>
 <span>  strMetricCol <span class="op">=</span> <span class="st">"Metric"</span>,</span>
+<span>  strMedianCol <span class="op">=</span> <span class="st">"Median"</span>,</span>
+<span>  strLowerCol <span class="op">=</span> <span class="st">"Lower"</span>,</span>
+<span>  strUpperCol <span class="op">=</span> <span class="st">"Upper"</span>,</span>
 <span>  nMaxMonth <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  strTitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  strSubtitle <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -95,15 +99,16 @@ If a <code>StudyID</code> column exists, data will be automatically filtered to 
 
 <dt id="arg-dfboundsref">dfBoundsRef<a class="anchor" aria-label="anchor" href="#arg-dfboundsref"></a></dt>
 <dd><p>data.frame or NULL. Portfolio/comparison group confidence intervals
-from <code>Analyze_StudyKRI_PredictBoundsRef</code> (optional, default: NULL). If provided, must contain: <code>StudyMonth</code>,
-<code>MedianMetric</code>, <code>LowerBound</code>, <code>UpperBound</code>. If NULL, plot will show only study data without reference comparison.</p></dd>
+from <code>Analyze_StudyKRI_PredictBoundsRef</code> or <code>Transform_Long</code> (optional, default: NULL).
+If provided, must contain: <code>StudyMonth</code> and columns specified by <code>strMedianCol</code>,
+<code>strLowerCol</code>, <code>strUpperCol</code>. If NULL, plot will show only study data without reference comparison.</p></dd>
 
 
 <dt id="arg-dfbounds">dfBounds<a class="anchor" aria-label="anchor" href="#arg-dfbounds"></a></dt>
 <dd><p>data.frame or NULL. Individual study confidence intervals
-from <code>Analyze_StudyKRI_PredictBounds</code> (optional). If a <code>StudyID</code> column exists,
+from <code>Analyze_StudyKRI_PredictBounds</code> or <code>Transform_Long</code> (optional). If a <code>StudyID</code> column exists,
 data will be automatically filtered to <code>strStudyID</code>. If provided, must contain:
-<code>StudyMonth</code>, <code>MedianMetric</code>, <code>LowerBound</code>, <code>UpperBound</code>.</p></dd>
+<code>StudyMonth</code> and columns specified by <code>strMedianCol</code>, <code>strLowerCol</code>, <code>strUpperCol</code>.</p></dd>
 
 
 <dt id="arg-strstudyid">strStudyID<a class="anchor" aria-label="anchor" href="#arg-strstudyid"></a></dt>
@@ -116,6 +121,18 @@ data will be automatically filtered to <code>strStudyID</code>. If provided, mus
 
 <dt id="arg-strmetriccol">strMetricCol<a class="anchor" aria-label="anchor" href="#arg-strmetriccol"></a></dt>
 <dd><p>character. Column name for metric (default: "Metric").</p></dd>
+
+
+<dt id="arg-strmediancol">strMedianCol<a class="anchor" aria-label="anchor" href="#arg-strmediancol"></a></dt>
+<dd><p>character. Column name for median in bounds dataframes (default: "Median").</p></dd>
+
+
+<dt id="arg-strlowercol">strLowerCol<a class="anchor" aria-label="anchor" href="#arg-strlowercol"></a></dt>
+<dd><p>character. Column name for lower bound (default: "Lower").</p></dd>
+
+
+<dt id="arg-struppercol">strUpperCol<a class="anchor" aria-label="anchor" href="#arg-struppercol"></a></dt>
+<dd><p>character. Column name for upper bound (default: "Upper").</p></dd>
 
 
 <dt id="arg-nmaxmonth">nMaxMonth<a class="anchor" aria-label="anchor" href="#arg-nmaxmonth"></a></dt>
@@ -147,7 +164,7 @@ showing comparison study count.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Basic usage with reference bounds</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example 1: Using Transform_Long output (default column names)</span></span></span>
 <span class="r-in"><span><span class="va">dfStudyKRI</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  StudyID <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"STUDY1"</span>, <span class="fl">5</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  StudyMonth <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,</span></span>
@@ -156,19 +173,19 @@ showing comparison study count.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">dfBoundsRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  StudyMonth <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,</span></span>
-<span class="r-in"><span>  MedianMetric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.11</span>, <span class="fl">0.13</span>, <span class="fl">0.14</span>, <span class="fl">0.15</span>, <span class="fl">0.14</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  LowerBound <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.08</span>, <span class="fl">0.10</span>, <span class="fl">0.11</span>, <span class="fl">0.12</span>, <span class="fl">0.11</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  UpperBound <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.14</span>, <span class="fl">0.16</span>, <span class="fl">0.17</span>, <span class="fl">0.18</span>, <span class="fl">0.17</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  Median <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.11</span>, <span class="fl">0.13</span>, <span class="fl">0.14</span>, <span class="fl">0.15</span>, <span class="fl">0.14</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  Lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.08</span>, <span class="fl">0.10</span>, <span class="fl">0.11</span>, <span class="fl">0.12</span>, <span class="fl">0.11</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  Upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.14</span>, <span class="fl">0.16</span>, <span class="fl">0.17</span>, <span class="fl">0.18</span>, <span class="fl">0.17</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">dfBounds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  StudyMonth <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,</span></span>
-<span class="r-in"><span>  MedianMetric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.10</span>, <span class="fl">0.12</span>, <span class="fl">0.15</span>, <span class="fl">0.14</span>, <span class="fl">0.13</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  LowerBound <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.08</span>, <span class="fl">0.10</span>, <span class="fl">0.12</span>, <span class="fl">0.11</span>, <span class="fl">0.10</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  UpperBound <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.12</span>, <span class="fl">0.14</span>, <span class="fl">0.18</span>, <span class="fl">0.17</span>, <span class="fl">0.16</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  Median <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.10</span>, <span class="fl">0.12</span>, <span class="fl">0.15</span>, <span class="fl">0.14</span>, <span class="fl">0.13</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  Lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.08</span>, <span class="fl">0.10</span>, <span class="fl">0.12</span>, <span class="fl">0.11</span>, <span class="fl">0.10</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  Upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.12</span>, <span class="fl">0.14</span>, <span class="fl">0.18</span>, <span class="fl">0.17</span>, <span class="fl">0.16</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Plot with reference bounds</span></span></span>
+<span class="r-in"><span><span class="co"># Plot with reference bounds (uses default column names)</span></span></span>
 <span class="r-in"><span><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu">Visualize_StudyKRI</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  dfStudyKRI <span class="op">=</span> <span class="va">dfStudyKRI</span>,</span></span>
 <span class="r-in"><span>  dfBoundsRef <span class="op">=</span> <span class="va">dfBoundsRef</span>,</span></span>
@@ -179,18 +196,27 @@ showing comparison study count.</p></dd>
 <span class="r-in"><span><span class="va">p1</span></span></span>
 <span class="r-plt img"><img src="Visualize_StudyKRI-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Plot without reference bounds (only study data)</span></span></span>
+<span class="r-in"><span><span class="co"># Example 2: Backward compatibility with old column names</span></span></span>
+<span class="r-in"><span><span class="va">dfBoundsRef_old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  StudyMonth <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,</span></span>
+<span class="r-in"><span>  MedianMetric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.11</span>, <span class="fl">0.13</span>, <span class="fl">0.14</span>, <span class="fl">0.15</span>, <span class="fl">0.14</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  LowerBound <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.08</span>, <span class="fl">0.10</span>, <span class="fl">0.11</span>, <span class="fl">0.12</span>, <span class="fl">0.11</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  UpperBound <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.14</span>, <span class="fl">0.16</span>, <span class="fl">0.17</span>, <span class="fl">0.18</span>, <span class="fl">0.17</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu">Visualize_StudyKRI</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  dfStudyKRI <span class="op">=</span> <span class="va">dfStudyKRI</span>,</span></span>
-<span class="r-in"><span>  dfBoundsRef <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
-<span class="r-in"><span>  dfBounds <span class="op">=</span> <span class="va">dfBounds</span>,</span></span>
+<span class="r-in"><span>  dfBoundsRef <span class="op">=</span> <span class="va">dfBoundsRef_old</span>,</span></span>
 <span class="r-in"><span>  strStudyID <span class="op">=</span> <span class="st">"STUDY1"</span>,</span></span>
+<span class="r-in"><span>  strMedianCol <span class="op">=</span> <span class="st">"MedianMetric"</span>,</span></span>
+<span class="r-in"><span>  strLowerCol <span class="op">=</span> <span class="st">"LowerBound"</span>,</span></span>
+<span class="r-in"><span>  strUpperCol <span class="op">=</span> <span class="st">"UpperBound"</span>,</span></span>
 <span class="r-in"><span>  strYlab <span class="op">=</span> <span class="st">"Cumulative AE Rate per Visit"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">p2</span></span></span>
 <span class="r-plt img"><img src="Visualize_StudyKRI-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Plot with only study data (no bounds at all)</span></span></span>
+<span class="r-in"><span><span class="co"># Example 3: Plot with only study data (no bounds)</span></span></span>
 <span class="r-in"><span><span class="va">p3</span> <span class="op">&lt;-</span> <span class="fu">Visualize_StudyKRI</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  dfStudyKRI <span class="op">=</span> <span class="va">dfStudyKRI</span>,</span></span>
 <span class="r-in"><span>  strStudyID <span class="op">=</span> <span class="st">"STUDY1"</span>,</span></span>
@@ -207,11 +233,11 @@ showing comparison study count.</p></dd>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by Bjoern Koneswarakantha.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

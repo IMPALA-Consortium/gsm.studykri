@@ -11,7 +11,7 @@ mapped reference studies."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@ mapped reference studies."></head><body>
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ContributorGuidelines.html">ContributorGuidelines</a></li>
     <li><a class="dropdown-item" href="../articles/Cookbook.html">Cookbook</a></li>
+    <li><a class="dropdown-item" href="../articles/db.html">In-Database Compatibility</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-sample-reports" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Sample Reports</button>
@@ -56,15 +57,14 @@ mapped reference studies.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">Analyze_StudyKRI_PredictBoundsRef</span><span class="op">(</span></span>
 <span>  <span class="va">dfInput</span>,</span>
 <span>  <span class="va">dfStudyRef</span>,</span>
-<span>  strStudyCol <span class="op">=</span> <span class="st">"study"</span>,</span>
-<span>  strStudyRefCol <span class="op">=</span> <span class="st">"studyref"</span>,</span>
 <span>  nBootstrapReps <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  nConfLevel <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  strGroupCol <span class="op">=</span> <span class="st">"GroupID"</span>,</span>
 <span>  strStudyMonthCol <span class="op">=</span> <span class="st">"StudyMonth"</span>,</span>
-<span>  strMetricCol <span class="op">=</span> <span class="st">"Metric"</span>,</span>
 <span>  nMinDenominator <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tblBootstrapReps <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tblMonthSequence <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -73,20 +73,14 @@ mapped reference studies.</p>
 
 
 <dl><dt id="arg-dfinput">dfInput<a class="anchor" aria-label="anchor" href="#arg-dfinput"></a></dt>
-<dd><p>data.frame or tbl_lazy. Site-level data from <code>Input_CumCountSiteByMonth</code>.</p></dd>
+<dd><p>data.frame or tbl_lazy. Site-level data from <code>Input_CumCountSiteByMonth</code>.
+Must contain one or more <code>Numerator_*</code> columns, <code>Denominator</code>, <code>MonthYYYYMM</code>.</p></dd>
 
 
 <dt id="arg-dfstudyref">dfStudyRef<a class="anchor" aria-label="anchor" href="#arg-dfstudyref"></a></dt>
-<dd><p>data.frame. Study-to-reference mappings with two columns specified
-by <code>strStudyCol</code> and <code>strStudyRefCol</code>.</p></dd>
-
-
-<dt id="arg-strstudycol">strStudyCol<a class="anchor" aria-label="anchor" href="#arg-strstudycol"></a></dt>
-<dd><p>character. Column name in <code>dfStudyRef</code> for target studies (default: "study").</p></dd>
-
-
-<dt id="arg-strstudyrefcol">strStudyRefCol<a class="anchor" aria-label="anchor" href="#arg-strstudyrefcol"></a></dt>
-<dd><p>character. Column name in <code>dfStudyRef</code> for reference studies (default: "studyref").</p></dd>
+<dd><p>data.frame or tbl_lazy. Study-to-reference mappings with at least
+two columns: first column = target studies, second column = reference studies.
+Can have multiple rows per target study (one row per target-reference pair).</p></dd>
 
 
 <dt id="arg-nbootstrapreps">nBootstrapReps<a class="anchor" aria-label="anchor" href="#arg-nbootstrapreps"></a></dt>
@@ -105,10 +99,6 @@ by <code>strStudyCol</code> and <code>strStudyRefCol</code>.</p></dd>
 <dd><p>character. Column name for study month (default: "StudyMonth").</p></dd>
 
 
-<dt id="arg-strmetriccol">strMetricCol<a class="anchor" aria-label="anchor" href="#arg-strmetriccol"></a></dt>
-<dd><p>character. Column name for metric (default: "Metric").</p></dd>
-
-
 <dt id="arg-nmindenominator">nMinDenominator<a class="anchor" aria-label="anchor" href="#arg-nmindenominator"></a></dt>
 <dd><p>numeric. Minimum denominator (default: 25).</p></dd>
 
@@ -116,11 +106,27 @@ by <code>strStudyCol</code> and <code>strStudyRefCol</code>.</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>integer or NULL. Random seed (default: NULL).</p></dd>
 
+
+<dt id="arg-tblbootstrapreps">tblBootstrapReps<a class="anchor" aria-label="anchor" href="#arg-tblbootstrapreps"></a></dt>
+<dd><p>tbl_lazy, data.frame, or NULL. For lazy table inputs:
+Optional pre-generated bootstrap replicate indices with a <code>BootstrapRep</code> column
+containing values 1 to N (where N is the desired number of replicates).
+If provided, overrides the <code>nBootstrapReps</code> parameter. If NULL, attempts to
+create temp table (requires write privileges).</p></dd>
+
+
+<dt id="arg-tblmonthsequence">tblMonthSequence<a class="anchor" aria-label="anchor" href="#arg-tblmonthsequence"></a></dt>
+<dd><p>tbl_lazy, data.frame, or NULL. For lazy table inputs:
+Optional pre-generated month sequence with only a <code>MonthYYYYMM</code> column
+(output of <code><a href="GenerateMonthSeq.html">GenerateMonthSeq()</a></code>). If NULL, attempts to create temp table
+(requires write privileges).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data.frame with columns: <code>StudyID</code>, <code>StudyRefID</code>, <code>StudyMonth</code>,
-<code>MedianMetric</code>, <code>LowerBound</code>, <code>UpperBound</code>, <code>BootstrapCount</code>, <code>GroupCount</code>, <code>StudyCount</code>.</p>
+    <p>A tibble (or tbl_lazy if input was lazy) with columns: <code>StudyID</code>, <code>StudyRefID</code>, <code>StudyMonth</code>,
+<code>Median_*</code>, <code>Lower_*</code>, <code>Upper_*</code> for each Metric column, <code>BootstrapCount</code>,
+<code>GroupCount</code>, <code>StudyCount</code>.</p>
     </div>
 
     <div class="section level2">
@@ -153,20 +159,16 @@ by <code>strStudyCol</code> and <code>strStudyRefCol</code>.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Resampling with minimum group count: 10</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dfBounds</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   StudyMonth MedianMetric LowerBound UpperBound BootstrapCount GroupCount</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1          1    0.1609729  0.1045548  0.2035928            100         10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2          2    0.1759777  0.1475652  0.2169918            100         10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3          3    0.1735380  0.1510965  0.1988901            100         10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4          4    0.1724547  0.1514333  0.1928321            100         10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5          5    0.1684342  0.1485709  0.1857495            100         10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6          6    0.1704308  0.1530549  0.1843249             98         10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   StudyCount StudyID StudyRefID</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1          2  STUDY1 REF1, REF2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2          2  STUDY1 REF1, REF2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3          2  STUDY1 REF1, REF2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4          2  STUDY1 REF1, REF2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5          2  STUDY1 REF1, REF2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6          2  STUDY1 REF1, REF2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 9</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   StudyMonth Median  Lower Upper BootstrapCount GroupCount StudyCount StudyID</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>          1  0.146 0.082<span style="text-decoration: underline;">0</span> 0.176            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>          2  0.146 0.123  0.184            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>          3  0.150 0.128  0.170            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>          4  0.149 0.131  0.166            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>          5  0.150 0.126  0.169            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>          6  0.153 0.138  0.170             98         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: StudyRefID &lt;chr&gt;</span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
@@ -175,11 +177,11 @@ by <code>strStudyCol</code> and <code>strStudyRefCol</code>.</p></dd>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by Bjoern Koneswarakantha.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

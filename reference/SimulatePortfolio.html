@@ -9,7 +9,7 @@ Each study is generated using ResampleStudy with configurable parameters."></hea
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,6 +21,7 @@ Each study is generated using ResampleStudy with configurable parameters."></hea
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ContributorGuidelines.html">ContributorGuidelines</a></li>
     <li><a class="dropdown-item" href="../articles/Cookbook.html">Cookbook</a></li>
+    <li><a class="dropdown-item" href="../articles/db.html">In-Database Compatibility</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-sample-reports" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Sample Reports</button>
@@ -101,7 +102,7 @@ from all simulated studies row-bound together.</p>
     <p>If dfConfig is provided, it should contain:</p><ul><li><p>studyid: Unique study identifier</p></li>
 <li><p>nSubjects: Number of subjects per study</p></li>
 <li><p>TargetSiteCount: (Optional) Target number of sites</p></li>
-<li><p>strOversamplDomain: (Optional) Domain for stratified sampling</p></li>
+<li><p>strOversampleDomain: (Optional) Domain for stratified sampling</p></li>
 <li><p>vOversamplQuantileRange_min/max: (Optional) Quantile range for stratification</p></li>
 <li><p>replacement: (Optional) Sample with replacement (default TRUE)</p></li>
 </ul><p>If dfConfig is NULL, generates default configuration with random parameters.</p>
@@ -136,11 +137,11 @@ from all simulated studies row-bound together.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by Bjoern Koneswarakantha.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

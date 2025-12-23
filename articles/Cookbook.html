@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/ContributorGuidelines.html">ContributorGuidelines</a></li>
     <li><a class="dropdown-item" href="../articles/Cookbook.html">Cookbook</a></li>
+    <li><a class="dropdown-item" href="../articles/db.html">In-Database Compatibility</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -92,7 +93,12 @@
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Gilead-BioStats/gsm.mapping" class="external-link">gsm.mapping</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Gilead-BioStats/gsm.kri" class="external-link">gsm.kri</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gilead-biostats.github.io/gsm.reporting/" class="external-link">gsm.reporting</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://impala-consortium.github.io/gsm.studykri/">gsm.studykri</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://impala-consortium.github.io/gsm.studykri/">gsm.studykri</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Attaching package: 'gsm.studykri'</span></span>
+<span><span class="co">#&gt; The following object is masked from 'package:gsm.reporting':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     BindResults</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
@@ -139,11 +145,7 @@ oversampling patients with low AE counts.</p>
 <span>    vOversamplQuantileRange_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
 <span>    vOversamplQuantileRange_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0.75</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
-<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
-<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
-<span><span class="co">#&gt; Filtered to 773 subjects with Raw_AE records in 0.00-0.75 quantile range (1-6 records)</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="calculate-kri">Calculate KRI<a class="anchor" aria-label="anchor" href="#calculate-kri"></a>
@@ -171,24 +173,23 @@ denominator per month</p>
 <span>  strSubjectCol <span class="op">=</span> <span class="st">"subjid"</span>,</span>
 <span>  strNumeratorDateCol <span class="op">=</span> <span class="st">"aest_dt"</span>,</span>
 <span>  strDenominatorDateCol <span class="op">=</span> <span class="st">"visit_dt"</span>,</span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dfInput</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 18,945 × 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 19,901 × 7</span></span></span>
 <span><span class="co">#&gt;    GroupID    GroupLevel Numerator Denominator Metric StudyID MonthYYYYMM</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X004 Site               3           3      1 AA-1         <span style="text-decoration: underline;">200</span>909</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X004 Site               1           1      1 AA-1         <span style="text-decoration: underline;">201</span>301</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X005 Site               1           1      1 AA-1         <span style="text-decoration: underline;">201</span>610</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X006 Site               1           1      1 AA-1         <span style="text-decoration: underline;">200</span>708</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X006 Site               1           1      1 AA-1         <span style="text-decoration: underline;">200</span>709</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X006 Site               2           1      2 AA-1         <span style="text-decoration: underline;">200</span>710</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X006 Site               2           1      2 AA-1         <span style="text-decoration: underline;">200</span>806</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X006 Site               2           1      2 AA-1         <span style="text-decoration: underline;">200</span>904</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X006 Site               1           1      1 AA-1         <span style="text-decoration: underline;">201</span>204</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X007 Site               1           0     <span style="color: #BB0000;">NA</span> AA-1         <span style="text-decoration: underline;">201</span>108</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 18,935 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X001 Site               1           1    1   AA-1         <span style="text-decoration: underline;">201</span>610</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X001 Site               1           1    1   AA-1         <span style="text-decoration: underline;">201</span>611</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X001 Site               1           1    1   AA-1         <span style="text-decoration: underline;">201</span>803</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X001 Site               1           0   <span style="color: #BB0000;">NA</span>   AA-1         <span style="text-decoration: underline;">201</span>806</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X003 Site               3           1    3   AA-1         <span style="text-decoration: underline;">200</span>410</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X003 Site               2           1    2   AA-1         <span style="text-decoration: underline;">200</span>504</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X003 Site               1           0   <span style="color: #BB0000;">NA</span>   AA-1         <span style="text-decoration: underline;">200</span>506</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X003 Site               1           1    1   AA-1         <span style="text-decoration: underline;">200</span>602</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X003 Site               1           2    0.5 AA-1         <span style="text-decoration: underline;">200</span>605</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X003 Site               1           1    1   AA-1         <span style="text-decoration: underline;">200</span>907</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 19,891 more rows</span></span></span></code></pre></div>
 <p>Alternatively we can also use days on study as a denominator by
 passing subjects as denominator and an end date.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -203,24 +204,23 @@ passing subjects as denominator and an end date.</p>
 <span>  strNumeratorDateCol <span class="op">=</span> <span class="st">"aest_dt"</span>,</span>
 <span>  strDenominatorDateCol <span class="op">=</span> <span class="st">"firstparticipantdate"</span>,</span>
 <span>  strDenominatorEndDateCol <span class="op">=</span> <span class="st">"lastparticipantdate"</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dfInputDays</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 23,307 × 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 24,486 × 7</span></span></span>
 <span><span class="co">#&gt;    GroupID    GroupLevel Numerator Denominator Metric StudyID MonthYYYYMM</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X004 Site               3          60 0.05   AA-1         <span style="text-decoration: underline;">200</span>909</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X004 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>301</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X005 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>610</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X006 Site               1          22 0.045<span style="text-decoration: underline;">5</span> AA-1         <span style="text-decoration: underline;">200</span>708</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X006 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">200</span>709</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X006 Site               2          31 0.064<span style="text-decoration: underline;">5</span> AA-1         <span style="text-decoration: underline;">200</span>710</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X006 Site               2          30 0.066<span style="text-decoration: underline;">7</span> AA-1         <span style="text-decoration: underline;">200</span>806</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X006 Site               2          30 0.066<span style="text-decoration: underline;">7</span> AA-1         <span style="text-decoration: underline;">200</span>904</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X006 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>204</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X007 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>108</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 23,297 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X001 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>610</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X001 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>611</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X001 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>803</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X001 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>806</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X003 Site               3          31 0.096<span style="text-decoration: underline;">8</span> AA-1         <span style="text-decoration: underline;">200</span>410</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X003 Site               2          30 0.066<span style="text-decoration: underline;">7</span> AA-1         <span style="text-decoration: underline;">200</span>504</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X003 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">200</span>506</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X003 Site               1          56 0.017<span style="text-decoration: underline;">9</span> AA-1         <span style="text-decoration: underline;">200</span>602</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X003 Site               1          62 0.016<span style="text-decoration: underline;">1</span> AA-1         <span style="text-decoration: underline;">200</span>605</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X003 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">200</span>907</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 24,476 more rows</span></span></span></code></pre></div>
 <p>Next we transform the data to return the cumulated event counts on
 study-level by study month. We define the first study month to be the
 month in which we have reached the first 25 Denominator counts across
@@ -230,171 +230,117 @@ all sites to account for data artifacts.</p>
 <span>  <span class="va">dfInput</span>,</span>
 <span>  nMinDenominator <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  vBy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"StudyID"</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dfTransformed</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 743 × 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 740 × 7</span></span></span>
 <span><span class="co">#&gt;    StudyID MonthYYYYMM StudyMonth Numerator Denominator Metric GroupCount</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1         <span style="text-decoration: underline;">200</span>404          1         8          35  0.229         10</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1         <span style="text-decoration: underline;">200</span>405          2        12          49  0.245         13</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1         <span style="text-decoration: underline;">200</span>406          3        14          67  0.209         16</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1         <span style="text-decoration: underline;">200</span>407          4        16          90  0.178         21</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1         <span style="text-decoration: underline;">200</span>408          5        19         121  0.157         24</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1         <span style="text-decoration: underline;">200</span>409          6        28         148  0.189         22</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1         <span style="text-decoration: underline;">200</span>410          7        30         183  0.164         25</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1         <span style="text-decoration: underline;">200</span>411          8        31         213  0.146         24</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1         <span style="text-decoration: underline;">200</span>412          9        33         245  0.135         24</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1         <span style="text-decoration: underline;">200</span>501         10        40         282  0.142         26</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 733 more rows</span></span></span></code></pre></div>
-<p>Then we generate site-level bootstrap simulations for the study AA-4
-which has been oversampled for low AE counts.</p>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1         <span style="text-decoration: underline;">200</span>404          1         6          39  0.154         13</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1         <span style="text-decoration: underline;">200</span>405          2        12          60  0.2           16</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1         <span style="text-decoration: underline;">200</span>406          3        12          80  0.15          16</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1         <span style="text-decoration: underline;">200</span>407          4        16         106  0.151         18</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1         <span style="text-decoration: underline;">200</span>408          5        19         137  0.139         22</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1         <span style="text-decoration: underline;">200</span>409          6        26         168  0.155         23</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1         <span style="text-decoration: underline;">200</span>410          7        31         200  0.155         24</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1         <span style="text-decoration: underline;">200</span>411          8        34         233  0.146         24</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1         <span style="text-decoration: underline;">200</span>412          9        36         268  0.134         22</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1         <span style="text-decoration: underline;">200</span>501         10        40         300  0.133         23</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 730 more rows</span></span></span></code></pre></div>
+<p>Analyze_StudyKRI_PredictBounds calculates upper and lower confidence
+intervalls of the study metrics KRI using a bootstrap technique.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df_Analyzed_Bootstrap_Site</span> <span class="op">&lt;-</span> <span class="va">dfInput</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Analyze_StudyKRI.html">Analyze_StudyKRI</a></span><span class="op">(</span>nBootstrapReps <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">dfBounds</span> <span class="op">&lt;-</span> <span class="va">dfInput</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Using all 4 studies found in dfInput</span></span>
 <span></span>
-<span></span>
-<span><span class="va">df_Analyzed_Bootstrap_Site</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 18,967,794 × 8</span></span></span>
-<span><span class="co">#&gt;    StudyID BootstrapRep GroupID    GroupLevel Numerator Denominator Metric</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1               1 AA-1_0X107 Site               1           1      1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1               1 AA-1_0X107 Site               1           1      1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1               1 AA-1_0X107 Site               2           1      2</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1               1 AA-1_0X107 Site               1           1      1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1               1 AA-1_0X107 Site               0           1      0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1               1 AA-1_0X107 Site               0           1      0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1               1 AA-1_0X107 Site               0           2      0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1               1 AA-1_0X107 Site               0           1      0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1               1 AA-1_0X107 Site               0           1      0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1               1 AA-1_0X107 Site               0           2      0</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 18,967,784 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: MonthYYYYMM &lt;dbl&gt;</span></span></span></code></pre></div>
-<p>We aggregate each site-level bootstrap iteration to study-level.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df_Analyzed_Bootstrap_Study</span> <span class="op">&lt;-</span> <span class="va">df_Analyzed_Bootstrap_Site</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Transform_CumCount.html">Transform_CumCount</a></span><span class="op">(</span></span>
-<span>    nMinDenominator <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>    vBy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"StudyID"</span>, <span class="st">"BootstrapRep"</span><span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">df_Analyzed_Bootstrap_Study</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 739,600 × 8</span></span></span>
-<span><span class="co">#&gt;    StudyID BootstrapRep MonthYYYYMM StudyMonth Numerator Denominator Metric</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1               1      <span style="text-decoration: underline;">200</span>403          1         7          30  0.233</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1               1      <span style="text-decoration: underline;">200</span>404          2        12          53  0.226</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1               1      <span style="text-decoration: underline;">200</span>405          3        22          78  0.282</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1               1      <span style="text-decoration: underline;">200</span>406          4        28         110  0.255</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1               1      <span style="text-decoration: underline;">200</span>407          5        33         144  0.229</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1               1      <span style="text-decoration: underline;">200</span>408          6        38         189  0.201</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1               1      <span style="text-decoration: underline;">200</span>409          7        47         232  0.203</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1               1      <span style="text-decoration: underline;">200</span>410          8        50         274  0.182</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1               1      <span style="text-decoration: underline;">200</span>411          9        51         312  0.163</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1               1      <span style="text-decoration: underline;">200</span>412         10        51         354  0.144</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 739,590 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: GroupCount &lt;int&gt;</span></span></span></code></pre></div>
-<p>From the study-level bootstrap results we can calculate the 95%
-confidence intervalls.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df_Bounds</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds</a></span><span class="op">(</span></span>
-<span>  <span class="va">df_Analyzed_Bootstrap_Study</span>,</span>
-<span>  vBy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"StudyID"</span><span class="op">)</span>,</span>
-<span>  nConfLevel <span class="op">=</span> <span class="fl">0.95</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">df_Bounds</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 758 × 6</span></span></span>
-<span><span class="co">#&gt;    StudyID StudyMonth MedianMetric LowerBound UpperBound BootstrapCount</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1             1        0.222     0.090<span style="text-decoration: underline;">8</span>      0.367           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1             2        0.222     0.081<span style="text-decoration: underline;">6</span>      0.373           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1             3        0.206     0.078<span style="text-decoration: underline;">4</span>      0.353           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1             4        0.184     0.075<span style="text-decoration: underline;">7</span>      0.338           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1             5        0.175     0.081<span style="text-decoration: underline;">3</span>      0.306           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1             6        0.174     0.084<span style="text-decoration: underline;">9</span>      0.285           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1             7        0.163     0.079<span style="text-decoration: underline;">7</span>      0.269           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1             8        0.152     0.083<span style="text-decoration: underline;">0</span>      0.260           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1             9        0.143     0.079<span style="text-decoration: underline;">5</span>      0.242           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1            10        0.142     0.078<span style="text-decoration: underline;">9</span>      0.220           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 748 more rows</span></span></span></code></pre></div>
+<span><span class="va">dfBounds</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 752 × 6</span></span></span>
+<span><span class="co">#&gt;    StudyID StudyMonth Median  Lower Upper BootstrapCount</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1             1  0.111 0      0.281           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1             2  0.162 0.043<span style="text-decoration: underline;">5</span> 0.318           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1             3  0.159 0.042<span style="text-decoration: underline;">8</span> 0.318           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1             4  0.143 0.055<span style="text-decoration: underline;">0</span> 0.286           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1             5  0.142 0.057<span style="text-decoration: underline;">5</span> 0.255           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1             6  0.146 0.070<span style="text-decoration: underline;">3</span> 0.243           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1             7  0.152 0.071<span style="text-decoration: underline;">0</span> 0.244           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1             8  0.146 0.064<span style="text-decoration: underline;">4</span> 0.240           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1             9  0.138 0.058<span style="text-decoration: underline;">8</span> 0.228           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1            10  0.133 0.054<span style="text-decoration: underline;">4</span> 0.220           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 742 more rows</span></span></span></code></pre></div>
 <p>We can plot the preliminary results.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
+<span>  dfStudyKRI <span class="op">=</span> <span class="va">dfTransformed</span> ,</span>
+<span>  dfBounds <span class="op">=</span> <span class="va">dfBounds</span>,</span>
+<span>  strStudyID <span class="op">=</span> <span class="st">"AA-1"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="Cookbook_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
+<p>We then calculate a reference confidence interval based on a set of
+reference studies.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">dfStudyRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  study <span class="op">=</span> <span class="st">"AA-1"</span>,</span>
+<span>  studyref <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-2"</span>, <span class="st">"AA-3"</span>, <span class="st">"AA-4"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">dfBoundsRef</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span><span class="va">dfInput</span>, <span class="va">dfStudyRef</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 78</span></span>
+<span></span>
+<span><span class="va">dfBoundsRef</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 191 × 9</span></span></span>
+<span><span class="co">#&gt;    StudyMonth Median  Lower Upper BootstrapCount GroupCount StudyCount StudyID</span></span>
+<span><span class="co">#&gt;         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          1  0.135 0.028<span style="text-decoration: underline;">6</span> 0.289           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>          2  0.137 0.022<span style="text-decoration: underline;">7</span> 0.279           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>          3  0.143 0.042<span style="text-decoration: underline;">8</span> 0.276           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>          4  0.143 0.047<span style="text-decoration: underline;">6</span> 0.260           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          5  0.137 0.048  0.245           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>          6  0.133 0.053<span style="text-decoration: underline;">0</span> 0.224           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>          7  0.136 0.064<span style="text-decoration: underline;">2</span> 0.213           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          8  0.134 0.072<span style="text-decoration: underline;">8</span> 0.208           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          9  0.130 0.070<span style="text-decoration: underline;">3</span> 0.202           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>         10  0.121 0.070<span style="text-decoration: underline;">1</span> 0.186           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 181 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: StudyRefID &lt;chr&gt;</span></span></span></code></pre></div>
+<p>And add the reference confidence interval to out plot</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
-<span>  dfStudyKRI <span class="op">=</span> <span class="va">dfTransformed</span>,</span>
-<span>  dfBounds <span class="op">=</span> <span class="va">df_Bounds</span>,</span>
-<span>  strStudyID <span class="op">=</span> <span class="st">"AA-4"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><img src="Cookbook_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
-<p>Then we generate the portfolio reference confidence intervals. When
-calculating the reference bound the study with the smalles number of
-sites determines the total amount of sites sampled for each study, so
-that each study contributes equally to the reference distribution.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df_Bounds_Ref</span> <span class="op">&lt;-</span> <span class="va">dfInput</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRefSet.html">Analyze_StudyKRI_PredictBoundsRefSet</a></span><span class="op">(</span></span>
-<span>    vStudyFilter <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-1"</span>, <span class="st">"AA-2"</span>, <span class="st">"AA-3"</span><span class="op">)</span>,</span>
-<span>    nBootstrapReps <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>    nConfLevel <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>    nMinDenominator <span class="op">=</span> <span class="fl">25</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 73</span></span>
-<span></span>
-<span><span class="va">df_Bounds_Ref</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 190 × 7</span></span></span>
-<span><span class="co">#&gt;    StudyMonth MedianMetric LowerBound UpperBound BootstrapCount GroupCount</span></span>
-<span><span class="co">#&gt;         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          1        0.158     0.052<span style="text-decoration: underline;">5</span>      0.485           <span style="text-decoration: underline;">1</span>000         73</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>          2        0.191     0.075<span style="text-decoration: underline;">5</span>      0.508           <span style="text-decoration: underline;">1</span>000         73</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>          3        0.283     0.098<span style="text-decoration: underline;">6</span>      0.526           <span style="text-decoration: underline;">1</span>000         73</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>          4        0.288     0.105       0.507           <span style="text-decoration: underline;">1</span>000         73</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          5        0.275     0.105       0.455           <span style="text-decoration: underline;">1</span>000         73</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>          6        0.275     0.118       0.510           <span style="text-decoration: underline;">1</span>000         73</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>          7        0.271     0.114       0.530           <span style="text-decoration: underline;">1</span>000         73</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          8        0.263     0.112       0.523           <span style="text-decoration: underline;">1</span>000         73</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          9        0.248     0.106       0.483           <span style="text-decoration: underline;">1</span>000         73</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>         10        0.235     0.106       0.449           <span style="text-decoration: underline;">1</span>000         73</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 180 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: StudyCount &lt;int&gt;</span></span></span></code></pre></div>
-<p>Now we can plot the final results.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
-<span>  <span class="va">dfTransformed</span>,</span>
-<span>  <span class="va">df_Bounds_Ref</span>,</span>
-<span>  <span class="va">df_Bounds</span>,</span>
-<span>  strStudyID <span class="op">=</span> <span class="st">"AA-4"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><img src="Cookbook_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
-<p>We can also plot the members of the reference portfolio.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
-<span>  <span class="va">dfTransformed</span>,</span>
-<span>  <span class="va">df_Bounds_Ref</span>,</span>
-<span>  <span class="va">df_Bounds</span>,</span>
+<span>  dfStudyKRI <span class="op">=</span> <span class="va">dfTransformed</span> ,</span>
+<span>  dfBounds <span class="op">=</span> <span class="va">dfBounds</span>,</span>
+<span>  dfBoundsRef <span class="op">=</span> <span class="va">dfBoundsRef</span>,</span>
 <span>  strStudyID <span class="op">=</span> <span class="st">"AA-1"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="Cookbook_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
+<p>We can also plot the members of the reference portfolio.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
+<span>  dfStudyKRI <span class="op">=</span> <span class="va">dfTransformed</span> ,</span>
+<span>  dfBounds <span class="op">=</span> <span class="va">dfBounds</span>,</span>
+<span>  dfBoundsRef <span class="op">=</span> <span class="va">dfBoundsRef</span>,</span>
+<span>  strStudyID <span class="op">=</span> <span class="st">"AA-2"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
-<span>  <span class="va">dfTransformed</span>,</span>
-<span>  <span class="va">df_Bounds_Ref</span>,</span>
-<span>  <span class="va">df_Bounds</span>,</span>
-<span>  strStudyID <span class="op">=</span> <span class="st">"AA-2"</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">p3</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
-<span>  <span class="va">dfTransformed</span>,</span>
-<span>  <span class="va">df_Bounds_Ref</span>,</span>
-<span>  <span class="va">df_Bounds</span>,</span>
+<span>  dfStudyKRI <span class="op">=</span> <span class="va">dfTransformed</span> ,</span>
+<span>  dfBounds <span class="op">=</span> <span class="va">dfBounds</span>,</span>
+<span>  dfBoundsRef <span class="op">=</span> <span class="va">dfBoundsRef</span>,</span>
 <span>  strStudyID <span class="op">=</span> <span class="st">"AA-3"</span></span>
 <span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">p3</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
+<span>  dfStudyKRI <span class="op">=</span> <span class="va">dfTransformed</span> ,</span>
+<span>  dfBounds <span class="op">=</span> <span class="va">dfBounds</span>,</span>
+<span>  dfBoundsRef <span class="op">=</span> <span class="va">dfBoundsRef</span>,</span>
+<span>  strStudyID <span class="op">=</span> <span class="st">"AA-4"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">p1</span> <span class="op">+</span> <span class="va">p2</span> <span class="op">+</span> <span class="va">p3</span> <span class="op">+</span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span>guides <span class="op">=</span> <span class="st">"collect"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Cookbook_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+<p><img src="Cookbook_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="calculate-kri-using-yaml-workflows">Calculate KRI using yaml workflows<a class="anchor" aria-label="anchor" href="#calculate-kri-using-yaml-workflows"></a>
@@ -402,7 +348,7 @@ that each study contributes equally to the reference distribution.</p>
 <p>We can also use the {gsm}-style yaml workflow. Here we start with a
 portfolio with 6 studies of which 2 are target studies for whcih reports
 will be built, while the others serve as reference.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Generate multi-study portfolio using SimulatePortfolio</span></span>
 <span><span class="va">lRaw_original</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  Raw_SUBJ <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/rawplus_dm.html" class="external-link">rawplus_dm</a></span>,</span>
@@ -433,12 +379,6 @@ will be built, while the others serve as reference.</p>
 <span>    vOversamplQuantileRange_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.75</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0.95</span>, <span class="fl">0.9</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
-<span><span class="co">#&gt; Filtered to 773 subjects with Raw_AE records in 0.00-0.75 quantile range (1-6 records)</span></span>
-<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
-<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
-<span><span class="co">#&gt; Filtered to 969 subjects with Raw_AE records in 0.00-0.95 quantile range (1-13 records)</span></span>
-<span><span class="co">#&gt; Filtered to 914 subjects with Raw_AE records in 0.00-0.90 quantile range (1-10 records)</span></span>
 <span></span>
 <span><span class="va">lRaw</span><span class="op">$</span><span class="va">Raw_StudyRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  studyid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"AA-1"</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"AA-2"</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -455,15 +395,15 @@ will be built, while the others serve as reference.</p>
 <span><span class="va">lIngest</span> <span class="op">&lt;-</span> <span class="fu">gsm.mapping</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.mapping/reference/Ingest.html" class="external-link">Ingest</a></span><span class="op">(</span><span class="va">lRaw</span>, <span class="fu">gsm.mapping</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.mapping/reference/CombineSpecs.html" class="external-link">CombineSpecs</a></span><span class="op">(</span><span class="va">mapping_wf</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for AE.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 6545 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 6688 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for ENROLL.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for LB.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1457497 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1585395 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for PD.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
@@ -471,15 +411,15 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for Randomization.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for SDRGCOMP.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 876 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 964 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for STUDCOMP.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 154 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 193 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for StudyRef.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
@@ -487,12 +427,12 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for SUBJ.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for VISIT.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; Warning: Field `visit_dt`: 13 unparsable Date(s) set to NA</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 36113 rows returned.</span></span>
+<span><span class="co">#&gt; Warning: Field `visit_dt`: 27 unparsable Date(s) set to NA</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 39431 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for DATAENT.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
@@ -500,7 +440,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for SUBJ.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for QUERY.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
@@ -508,7 +448,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for SITE.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 632 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 636 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for STUDY.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
@@ -535,9 +475,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 6545x7 data.frame saved as `lData$Mapped_AE`.</span></span>
+<span><span class="co">#&gt; ── 6688x7 data.frame saved as `lData$Mapped_AE`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6545x7 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6688x7 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_AE` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -556,9 +496,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1661x6 data.frame saved as `lData$Mapped_ENROLL`.</span></span>
+<span><span class="co">#&gt; ── 1819x6 data.frame saved as `lData$Mapped_ENROLL`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1661x6 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1819x6 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_ENROLL` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -577,9 +517,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1457497x2 data.frame saved as `lData$Mapped_LB`.</span></span>
+<span><span class="co">#&gt; ── 1585395x2 data.frame saved as `lData$Mapped_LB`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1457497x2 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1585395x2 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_LB` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -619,12 +559,12 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1661x6 data.frame saved as `lData$Mapped_Randomization`.</span></span>
+<span><span class="co">#&gt; ── 1819x6 data.frame saved as `lData$Mapped_Randomization`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1661x6 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1819x6 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_Randomization` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -643,9 +583,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 876x3 data.frame saved as `lData$Mapped_SDRGCOMP`.</span></span>
+<span><span class="co">#&gt; ── 964x3 data.frame saved as `lData$Mapped_SDRGCOMP`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 876x3 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 964x3 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_SDRGCOMP` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -664,9 +604,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 154x3 data.frame saved as `lData$Mapped_STUDCOMP`.</span></span>
+<span><span class="co">#&gt; ── 193x3 data.frame saved as `lData$Mapped_STUDCOMP`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 154x3 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 193x3 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_STUDCOMP` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -709,12 +649,12 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1661x14 data.frame saved as `lData$Mapped_SUBJ`.</span></span>
+<span><span class="co">#&gt; ── 1819x14 data.frame saved as `lData$Mapped_SUBJ`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1661x14 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1819x14 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_SUBJ` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -733,12 +673,12 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 36113 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 39431 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 36113x4 data.frame saved as `lData$Mapped_VISIT`.</span></span>
+<span><span class="co">#&gt; ── 39431x4 data.frame saved as `lData$Mapped_VISIT`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 36113x4 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 39431x4 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_Visit` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -759,7 +699,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::select`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1661x2 data.frame saved as `lData$Temp_SubjectLookup`.</span></span>
+<span><span class="co">#&gt; ── 1819x2 data.frame saved as `lData$Temp_SubjectLookup`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 2: `dplyr::left_join`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -793,7 +733,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::select`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1661x2 data.frame saved as `lData$Temp_SubjectLookup`.</span></span>
+<span><span class="co">#&gt; ── 1819x2 data.frame saved as `lData$Temp_SubjectLookup`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 2: `dplyr::left_join`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -860,10 +800,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 632 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 636 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 632x9 data.frame saved as `lData$Temp_CTMSSiteWide`.</span></span>
+<span><span class="co">#&gt; ── 636x9 data.frame saved as `lData$Temp_CTMSSiteWide`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 5: `gsm.mapping::MakeLongMeta`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -873,7 +813,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.mapping::MakeLongMeta`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 5056x4 data.frame saved as `lData$Temp_CTMSSite`.</span></span>
+<span><span class="co">#&gt; ── 5088x4 data.frame saved as `lData$Temp_CTMSSite`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 5: `gsm.core::RunQuery`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -883,10 +823,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 591 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 606 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 591x3 data.frame saved as `lData$Temp_SiteCountsWide`.</span></span>
+<span><span class="co">#&gt; ── 606x3 data.frame saved as `lData$Temp_SiteCountsWide`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 5: `gsm.mapping::MakeLongMeta`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -896,7 +836,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.mapping::MakeLongMeta`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1182x4 data.frame saved as `lData$Temp_SiteCounts`.</span></span>
+<span><span class="co">#&gt; ── 1212x4 data.frame saved as `lData$Temp_SiteCounts`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 5 of 5: `dplyr::bind_rows`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -906,9 +846,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::bind_rows`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 6238x4 data.frame saved as `lData$Mapped_SITE`.</span></span>
+<span><span class="co">#&gt; ── 6300x4 data.frame saved as `lData$Mapped_SITE`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6238x4 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6300x4 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_SITE` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1041,7 +981,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co"># Combine lMapped with metrics workflows for comprehensive result</span></span>
 <span><span class="va">lAnalyzed</span> <span class="op">&lt;-</span> <span class="fu">gsm.core</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.core/reference/RunWorkflows.html" class="external-link">RunWorkflows</a></span><span class="op">(</span>lWorkflows <span class="op">=</span> <span class="va">metrics_wf</span>, lData <span class="op">=</span> <span class="va">lMapped</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Running 2 Workflows</span> <span style="color: #00BBBB;">─────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Running 4 Workflows</span> <span style="color: #00BBBB;">─────────────────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Analysis_kri0001` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1052,9 +992,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; → All specified columns in Mapped_Visit are in the expected format</span></span>
 <span><span class="co">#&gt; → All 7 specified column(s) in the spec are present in the data: Mapped_AE$subjid, Mapped_AE$aest_dt, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_Visit$subjid, Mapped_Visit$visit_dt</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 7: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 3: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 9 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`</span></span>
+<span><span class="co">#&gt; ── Evaluating 10 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfNumerator = Mapped_AE: Passing lData$Mapped_AE.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfDenominator = Mapped_Visit: Passing lData$Mapped_Visit.</span></span>
@@ -1064,12 +1004,13 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strNumeratorDateCol = aest_dt: No matching data found. Passing 'aest_dt' as a string.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strDenominatorDateCol = visit_dt: No matching data found. Passing 'visit_dt' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> strDenominatorType = Denominator: Passing lMeta$Denominator.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 26212x7 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 28119x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 7: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 3: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_Input: Passing lData$Analysis_Input.</span></span>
@@ -1078,73 +1019,20 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1110x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1124x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 7: `gsm.studykri::Analyze_StudyKRI`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 3: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `gsm.studykri::Analyze_StudyKRI`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_Input: Passing lData$Analysis_Input.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> seed = 42: No matching data found. Passing '42' as a string.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.studykri::Analyze_StudyKRI`</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 26214557x8 data.frame saved as `lData$Analysis_Bootstrapped`.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 7: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `gsm.studykri::Transform_CumCount`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_Bootstrapped: Passing lData$Analysis_Bootstrapped.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> vBy is of length 2: Parameter is a vector. Passing as is.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1106889x8 data.frame saved as `lData$Analysis_BootstrappedStudy`.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 5 of 7: `gsm.studykri::Analyze_StudyKRI_PredictBounds`</span> ──</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `gsm.studykri::Analyze_StudyKRI_PredictBounds`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_BootstrappedStudy: Passing lData$Analysis_BootstrappedStudy.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> vBy = StudyID: No matching data found. Passing 'StudyID' as a string.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nConfLevel = Threshold: Passing lMeta$Threshold.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.studykri::Analyze_StudyKRI_PredictBounds`</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1127x6 data.frame saved as `lData$Analysis_Bounds`.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 6 of 7: `gsm.studykri::Analyze_StudyKRI_PredictBoundsRef`</span> ──</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 6 parameter(s) for `gsm.studykri::Analyze_StudyKRI_PredictBoundsRef`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_Input: Passing lData$Analysis_Input.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nConfLevel = Threshold: Passing lMeta$Threshold.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> seed = 42: No matching data found. Passing '42' as a string.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.studykri::Analyze_StudyKRI_PredictBoundsRef`</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 69</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 69</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 378x9 data.frame saved as `lData$Analysis_BoundsRef`.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 7 of 7: `list`</span> ──</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 7 parameter(s) for `list`</span></span>
+<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `list`</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> ID = ID: Passing lMeta$ID.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Bootstrapped = Analysis_Bootstrapped: Passing lData$Analysis_Bootstrapped.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_BootstrappedStudy = Analysis_BootstrappedStudy: Passing lData$Analysis_BootstrappedStudy.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Bounds = Analysis_Bounds: Passing lData$Analysis_Bounds.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_BoundsRef = Analysis_BoundsRef: Passing lData$Analysis_BoundsRef.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `list`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── list of length 7 saved as `lData$lAnalysis`.</span></span>
+<span><span class="co">#&gt; ── list of length 3 saved as `lData$lAnalysis`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: list of length 7`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: list of length 3`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Analysis_kri0001` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1156,9 +1044,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; → All specified columns in Mapped_SUBJ are in the expected format</span></span>
 <span><span class="co">#&gt; → All 7 specified column(s) in the spec are present in the data: Mapped_AE$subjid, Mapped_AE$aest_dt, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 7: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 3: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 10 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`</span></span>
+<span><span class="co">#&gt; ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfNumerator = Mapped_AE: Passing lData$Mapped_AE.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.</span></span>
@@ -1169,12 +1057,85 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strNumeratorDateCol = aest_dt: No matching data found. Passing 'aest_dt' as a string.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strDenominatorEndDateCol = lastparticipantdate: No matching data found. Passing 'lastparticipantdate' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> strDenominatorType = Denominator: Passing lMeta$Denominator.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 32433x7 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 34657x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 7: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 3: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `gsm.studykri::Transform_CumCount`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_Input: Passing lData$Analysis_Input.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> vBy = StudyID: No matching data found. Passing 'StudyID' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── 1136x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 3: `list`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `list`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> ID = ID: Passing lMeta$ID.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `list`</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── list of length 3 saved as `lData$lAnalysis`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: list of length 3`.</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Analysis_kri0002` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Analysis_kri0003` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Checking data against spec</span></span>
+<span><span class="co">#&gt; → All 3 data.frame(s) in the spec are present in the data: Mapped_AE, Mapped_SUBJ, Mapped_Visit</span></span>
+<span><span class="co">#&gt; → All specified columns in Mapped_AE are in the expected format</span></span>
+<span><span class="co">#&gt; → All specified columns in Mapped_SUBJ are in the expected format</span></span>
+<span><span class="co">#&gt; → All specified columns in Mapped_Visit are in the expected format</span></span>
+<span><span class="co">#&gt; → All 8 specified column(s) in the spec are present in the data: Mapped_AE$subjid, Mapped_AE$aest_dt, Mapped_AE$aeser, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_Visit$subjid, Mapped_Visit$visit_dt</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 4: `gsm.core::RunQuery`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> df = Mapped_AE: Passing lData$Mapped_AE.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strQuery = SELECT *</span></span>
+<span><span class="co">#&gt; FROM df</span></span>
+<span><span class="co">#&gt; WHERE aeser = 'Y'</span></span>
+<span><span class="co">#&gt; : No matching data found. Passing 'SELECT *</span></span>
+<span><span class="co">#&gt; FROM df</span></span>
+<span><span class="co">#&gt; WHERE aeser = 'Y'</span></span>
+<span><span class="co">#&gt; ' as a string.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
+<span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 193 rows returned.</span></span>
+<span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── 193x7 data.frame saved as `lData$Mapped_SAE`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 10 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfNumerator = Mapped_SAE: Passing lData$Mapped_SAE.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfDenominator = Mapped_Visit: Passing lData$Mapped_Visit.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strGroupCol = invid: No matching data found. Passing 'invid' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strNumeratorDateCol = aest_dt: No matching data found. Passing 'aest_dt' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strDenominatorDateCol = visit_dt: No matching data found. Passing 'visit_dt' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> strDenominatorType = Denominator: Passing lMeta$Denominator.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── 27665x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_Input: Passing lData$Analysis_Input.</span></span>
@@ -1185,84 +1146,103 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── 1124x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 7: `gsm.studykri::Analyze_StudyKRI`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `gsm.studykri::Analyze_StudyKRI`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_Input: Passing lData$Analysis_Input.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> seed = 42: No matching data found. Passing '42' as a string.</span></span>
+<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `list`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> ID = ID: Passing lMeta$ID.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.studykri::Analyze_StudyKRI`</span></span>
+<span><span class="co">#&gt; ── Calling `list`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 32432932x8 data.frame saved as `lData$Analysis_Bootstrapped`.</span></span>
+<span><span class="co">#&gt; ── list of length 3 saved as `lData$lAnalysis`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 7: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: list of length 3`.</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Analysis_kri0003` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Analysis_kri0004` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Checking data against spec</span></span>
+<span><span class="co">#&gt; → All 2 data.frame(s) in the spec are present in the data: Mapped_AE, Mapped_SUBJ</span></span>
+<span><span class="co">#&gt; → All specified columns in Mapped_AE are in the expected format</span></span>
+<span><span class="co">#&gt; → All specified columns in Mapped_SUBJ are in the expected format</span></span>
+<span><span class="co">#&gt; → All 8 specified column(s) in the spec are present in the data: Mapped_AE$subjid, Mapped_AE$aest_dt, Mapped_AE$aeser, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 4: `gsm.core::RunQuery`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> df = Mapped_AE: Passing lData$Mapped_AE.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strQuery = SELECT *</span></span>
+<span><span class="co">#&gt; FROM df</span></span>
+<span><span class="co">#&gt; WHERE aeser = 'Y'</span></span>
+<span><span class="co">#&gt; : No matching data found. Passing 'SELECT *</span></span>
+<span><span class="co">#&gt; FROM df</span></span>
+<span><span class="co">#&gt; WHERE aeser = 'Y'</span></span>
+<span><span class="co">#&gt; ' as a string.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
+<span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 193 rows returned.</span></span>
+<span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── 193x7 data.frame saved as `lData$Mapped_SAE`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfNumerator = Mapped_SAE: Passing lData$Mapped_SAE.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strGroupCol = invid: No matching data found. Passing 'invid' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strNumeratorDateCol = aest_dt: No matching data found. Passing 'aest_dt' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strDenominatorEndDateCol = lastparticipantdate: No matching data found. Passing 'lastparticipantdate' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> strDenominatorType = Denominator: Passing lMeta$Denominator.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── 34657x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `gsm.studykri::Transform_CumCount`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_Bootstrapped: Passing lData$Analysis_Bootstrapped.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> vBy is of length 2: Parameter is a vector. Passing as is.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_Input: Passing lData$Analysis_Input.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> vBy = StudyID: No matching data found. Passing 'StudyID' as a string.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1122028x8 data.frame saved as `lData$Analysis_BootstrappedStudy`.</span></span>
+<span><span class="co">#&gt; ── 1136x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 5 of 7: `gsm.studykri::Analyze_StudyKRI_PredictBounds`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `gsm.studykri::Analyze_StudyKRI_PredictBounds`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_BootstrappedStudy: Passing lData$Analysis_BootstrappedStudy.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> vBy = StudyID: No matching data found. Passing 'StudyID' as a string.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nConfLevel = Threshold: Passing lMeta$Threshold.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.studykri::Analyze_StudyKRI_PredictBounds`</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1139x6 data.frame saved as `lData$Analysis_Bounds`.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 6 of 7: `gsm.studykri::Analyze_StudyKRI_PredictBoundsRef`</span> ──</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 6 parameter(s) for `gsm.studykri::Analyze_StudyKRI_PredictBoundsRef`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Analysis_Input: Passing lData$Analysis_Input.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nConfLevel = Threshold: Passing lMeta$Threshold.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> seed = 42: No matching data found. Passing '42' as a string.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.studykri::Analyze_StudyKRI_PredictBoundsRef`</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 69</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 69</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 380x9 data.frame saved as `lData$Analysis_BoundsRef`.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 7 of 7: `list`</span> ──</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 7 parameter(s) for `list`</span></span>
+<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `list`</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> ID = ID: Passing lMeta$ID.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Bootstrapped = Analysis_Bootstrapped: Passing lData$Analysis_Bootstrapped.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_BootstrappedStudy = Analysis_BootstrappedStudy: Passing lData$Analysis_BootstrappedStudy.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_Bounds = Analysis_Bounds: Passing lData$Analysis_Bounds.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Analysis_BoundsRef = Analysis_BoundsRef: Passing lData$Analysis_BoundsRef.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `list`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── list of length 7 saved as `lData$lAnalysis`.</span></span>
+<span><span class="co">#&gt; ── list of length 3 saved as `lData$lAnalysis`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: list of length 7`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: list of length 3`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Analysis_kri0002` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Analysis_kri0004` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="generate-kri-report-using-scripts">Generate KRI report using scripts<a class="anchor" aria-label="anchor" href="#generate-kri-report-using-scripts"></a>
 </h2>
 <p>and subsequently generate a KRI report using {gsm.reporting}.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">dfResults</span> <span class="op">&lt;-</span> <span class="fu">gsm.reporting</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.reporting/reference/BindResults.html" class="external-link">BindResults</a></span><span class="op">(</span><span class="va">lAnalyzed</span>, <span class="st">"Analysis_Transformed"</span><span class="op">)</span></span>
+<p>We assemble some data needed for reporting.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">dfInput</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/BindResults.html">BindResults</a></span><span class="op">(</span><span class="va">lAnalyzed</span>, <span class="st">"Analysis_Input"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">dfBounds</span> <span class="op">&lt;-</span> <span class="fu">gsm.reporting</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.reporting/reference/BindResults.html" class="external-link">BindResults</a></span><span class="op">(</span><span class="va">lAnalyzed</span>, <span class="st">"Analysis_Bounds"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">dfBoundsRef</span> <span class="op">&lt;-</span> <span class="fu">gsm.reporting</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.reporting/reference/BindResults.html" class="external-link">BindResults</a></span><span class="op">(</span><span class="va">lAnalyzed</span>, <span class="st">"Analysis_BoundsRef"</span><span class="op">)</span></span>
+<span><span class="va">dfTransformed</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/BindResults.html">BindResults</a></span><span class="op">(</span><span class="va">lAnalyzed</span>, <span class="st">"Analysis_Transformed"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dfMetrics</span> <span class="op">&lt;-</span> <span class="fu">gsm.reporting</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.reporting/reference/MakeMetric.html" class="external-link">MakeMetric</a></span><span class="op">(</span><span class="va">metrics_wf</span><span class="op">)</span></span>
 <span></span>
@@ -1272,24 +1252,78 @@ will be built, while the others serve as reference.</p>
 <span>  <span class="va">lMapped</span><span class="op">$</span><span class="va">Country</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">lCharts</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/MakeCharts_StudyKRI.html">MakeCharts_StudyKRI</a></span><span class="op">(</span><span class="va">dfResults</span>, <span class="va">dfBounds</span>, <span class="va">dfBoundsRef</span>, <span class="va">dfMetrics</span><span class="op">)</span></span>
+<span><span class="va">dfStudyRef</span> <span class="op">&lt;-</span> <span class="va">lMapped</span><span class="op">$</span><span class="va">Mapped_StudyRef</span></span>
 <span></span>
-<span><span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Report_KRI_StudyKRI.html">Report_KRI_StudyKRI</a></span><span class="op">(</span></span>
+<span><span class="va">dfStudyRef</span></span>
+<span><span class="co">#&gt;   study studyref</span></span>
+<span><span class="co">#&gt; 1  AA-1     AA-3</span></span>
+<span><span class="co">#&gt; 2  AA-1     AA-4</span></span>
+<span><span class="co">#&gt; 3  AA-1     AA-5</span></span>
+<span><span class="co">#&gt; 4  AA-2     AA-3</span></span>
+<span><span class="co">#&gt; 5  AA-2     AA-4</span></span>
+<span><span class="co">#&gt; 6  AA-2     AA-5</span></span>
+<span><span class="co">#&gt; 7  AA-2     AA-6</span></span></code></pre></div>
+<p>In order to make the bootstrapping more efficient we can combine all
+KRI that use the same denominator.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">lJoined</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/JoinKRIByDenominator.html">JoinKRIByDenominator</a></span><span class="op">(</span><span class="va">dfInput</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">lJoined</span><span class="op">)</span></span>
+<span><span class="co">#&gt; List of 2</span></span>
+<span><span class="co">#&gt;  $ Visits       : tibble [28,119 × 7] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:28119] "AA-1_0X001" "AA-1_0X003" "AA-1_0X003" "AA-1_0X003" ...</span></span>
+<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:28119] "Site" "Site" "Site" "Site" ...</span></span>
+<span><span class="co">#&gt;   ..$ Denominator               : int [1:28119] 1 1 1 3 2 3 2 2 1 2 ...</span></span>
+<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:28119] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
+<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:28119] 201105 200706 200712 200804 200806 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0001: int [1:28119] 1 1 1 2 4 2 6 1 2 2 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0003: int [1:28119] 0 0 0 0 0 0 0 0 0 0 ...</span></span>
+<span><span class="co">#&gt;  $ Days on Study: tibble [34,657 × 7] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:34657] "AA-1_0X001" "AA-1_0X003" "AA-1_0X003" "AA-1_0X003" ...</span></span>
+<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:34657] "Site" "Site" "Site" "Site" ...</span></span>
+<span><span class="co">#&gt;   ..$ Denominator               : int [1:34657] 31 30 31 60 60 62 60 62 60 62 ...</span></span>
+<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:34657] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
+<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:34657] 201105 200706 200712 200804 200806 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0002: int [1:34657] 1 1 1 2 4 2 6 1 2 2 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0004: int [1:34657] 0 0 0 0 0 0 0 0 0 0 ...</span></span></code></pre></div>
+<p>Using the study references we can calculate the bootstrapped
+confidence intervals for all KRI at once.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">Bounds_Wide</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="va">lJoined</span>, <span class="op">~</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">dfStudyRef</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">BoundsRef_Wide</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="va">lJoined</span>, <span class="op">~</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">dfStudyRef</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
+<span></span>
+<span><span class="va">dfBounds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Transform_long.html">Transform_Long</a></span><span class="op">(</span><span class="va">Bounds_Wide</span><span class="op">)</span></span>
+<span><span class="va">dfBoundsRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Transform_long.html">Transform_Long</a></span><span class="op">(</span><span class="va">BoundsRef_Wide</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">lCharts</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/MakeCharts_StudyKRI.html">MakeCharts_StudyKRI</a></span><span class="op">(</span></span>
+<span>    dfResults <span class="op">=</span> <span class="va">dfTransformed</span>, </span>
+<span>    dfBounds <span class="op">=</span> <span class="va">dfBounds</span>,</span>
+<span>    dfBoundsRef <span class="op">=</span> <span class="va">dfBoundsRef</span>,</span>
+<span>    dfMetrics <span class="op">=</span> <span class="va">dfMetrics</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Report_StudyKRI.html">Report_StudyKRI</a></span><span class="op">(</span></span>
 <span>  lCharts <span class="op">=</span> <span class="va">lCharts</span>,</span>
-<span>  dfResults <span class="op">=</span> <span class="va">dfResults</span>,</span>
+<span>  dfResults <span class="op">=</span> <span class="va">dfTransformed</span>,</span>
 <span>  dfGroups <span class="op">=</span> <span class="va">dfGroups</span>,</span>
 <span>  dfMetrics <span class="op">=</span> <span class="va">dfMetrics</span>,</span>
 <span>  strOutputFile <span class="op">=</span> <span class="st">"report_studykri.html"</span>,</span>
 <span>  strInputPath <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"report"</span>, <span class="st">"Report_KRI.Rmd"</span>, package <span class="op">=</span> <span class="st">"gsm.studykri"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; processing file: Report_KRI.Rmd</span></span>
-<span><span class="co">#&gt; output file: /tmp/Rtmp6qWkjF/Report_KRI.knit.md</span></span>
-<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/Rtmp6qWkjF/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/Rtmp6qWkjF/rmarkdown-str232458d78dee.html --variable code_folding=hide --variable code_menu=1</span></span>
+<span><span class="co">#&gt; output file: /tmp/RtmpQoRpSs/Report_KRI.knit.md</span></span>
+<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpQoRpSs/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpQoRpSs/rmarkdown-str21c31864c2dc.html --variable code_folding=hide --variable code_menu=1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Output created: report_studykri_AA-1.html</span></span>
 <span><span class="co">#&gt; processing file: Report_KRI.Rmd</span></span>
-<span><span class="co">#&gt; output file: /tmp/Rtmp6qWkjF/Report_KRI.knit.md</span></span>
-<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/Rtmp6qWkjF/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/Rtmp6qWkjF/rmarkdown-str2324685682.html --variable code_folding=hide --variable code_menu=1</span></span>
+<span><span class="co">#&gt; output file: /tmp/RtmpQoRpSs/Report_KRI.knit.md</span></span>
+<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpQoRpSs/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpQoRpSs/rmarkdown-str21c345407775.html --variable code_folding=hide --variable code_menu=1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Output created: report_studykri_AA-2.html</span></span>
 <span><span class="co">#&gt;                        AA-1                        AA-2 </span></span>
@@ -1298,7 +1332,7 @@ will be built, while the others serve as reference.</p>
 <div class="section level2">
 <h2 id="generate-kri-report-using-yaml-workflows">Generate KRI report using yaml workflows<a class="anchor" aria-label="anchor" href="#generate-kri-report-using-yaml-workflows"></a>
 </h2>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">reporting_wf</span> <span class="op">&lt;-</span> <span class="fu">gsm.core</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.core/reference/MakeWorkflowList.html" class="external-link">MakeWorkflowList</a></span><span class="op">(</span></span>
 <span>  strPath <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"workflow/3_reporting"</span>, package <span class="op">=</span> <span class="st">"gsm.studykri"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
@@ -1315,60 +1349,64 @@ will be built, while the others serve as reference.</p>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Running 5 Workflows</span> <span style="color: #00BBBB;">─────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Running 7 Workflows</span> <span style="color: #00BBBB;">─────────────────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Reporting_Bounds` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────</span></span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── No spec found in workflow. Proceeding without checking data.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 1: `gsm.reporting::BindResults`</span> ──</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 2 parameter(s) for `gsm.reporting::BindResults`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> lAnalysis = lAnalyzed: Passing lData$lAnalyzed.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strName = Analysis_Bounds: No matching data found. Passing 'Analysis_Bounds' as a string.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.reporting::BindResults`</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 2266x8 data.frame saved as `lData$lBounds`.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 2266x8 data.frame`.</span> ──</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Bounds` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Reporting_BoundsRef` Workflow</span> <span style="color: #00BBBB;">─────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Reporting_Results` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── No spec found in workflow. Proceeding without checking data.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 1: `gsm.reporting::BindResults`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 1: `gsm.studykri::BindResults`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 2 parameter(s) for `gsm.reporting::BindResults`</span></span>
+<span><span class="co">#&gt; ── Evaluating 2 parameter(s) for `gsm.studykri::BindResults`</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> lAnalysis = lAnalyzed: Passing lData$lAnalyzed.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strName = Analysis_BoundsRef: No matching data found. Passing 'Analysis_BoundsRef' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strName = Analysis_Transformed: No matching data found. Passing 'Analysis_Transformed' as a string.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.reporting::BindResults`</span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::BindResults`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 758x11 data.frame saved as `lData$lBoundsRef`.</span></span>
+<span><span class="co">#&gt; ── 4520x9 data.frame saved as `lData$lResults`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 758x11 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 4520x9 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_BoundsRef` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Results` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Reporting_Groups` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── No spec found in workflow. Proceeding without checking data.</span></span>
+<span><span class="co">#&gt; ── Checking data against spec</span></span>
+<span><span class="co">#&gt; → All 3 data.frame(s) in the spec are present in the data: Mapped_STUDY, Mapped_SITE, Mapped_COUNTRY</span></span>
+<span><span class="co">#&gt; → No columns specified in the spec. All data.frames are pulling in all available columns.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 1: `dplyr::bind_rows`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 1 parameter(s) for `dplyr::bind_rows`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> .list is of length 3: Parameter is a vector. Passing as is.</span></span>
+<span><span class="co">#&gt; ── Evaluating 3 parameter(s) for `dplyr::bind_rows`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Study = Mapped_STUDY: Passing lData$Mapped_STUDY.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Site = Mapped_SITE: Passing lData$Mapped_SITE.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Country = Mapped_COUNTRY: Passing lData$Mapped_COUNTRY.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::bind_rows`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 3x1 data.frame saved as `lData$dfGroups`.</span></span>
+<span><span class="co">#&gt; ── 6438x4 data.frame saved as `lData$Reporting_Groups`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 3x1 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6438x4 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Groups` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Reporting_Input` Workflow</span> <span style="color: #00BBBB;">─────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── No spec found in workflow. Proceeding without checking data.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 1: `gsm.studykri::BindResults`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 2 parameter(s) for `gsm.studykri::BindResults`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> lAnalysis = lAnalyzed: Passing lData$lAnalyzed.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strName = Analysis_Input: No matching data found. Passing 'Analysis_Input' as a string.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::BindResults`</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── 125098x10 data.frame saved as `lData$Reporting_Input`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 125098x10 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Input` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Reporting_Metrics` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1381,29 +1419,123 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.reporting::MakeMetric`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 2x16 data.frame saved as `lData$dfMetrics`.</span></span>
+<span><span class="co">#&gt; ── 4x16 data.frame saved as `lData$dfMetrics`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 2x16 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 4x16 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Metrics` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Reporting_Results` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Reporting_Join` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── No spec found in workflow. Proceeding without checking data.</span></span>
+<span><span class="co">#&gt; ── Checking data against spec</span></span>
+<span><span class="co">#&gt; → All 1 data.frame(s) in the spec are present in the data: Reporting_Input</span></span>
+<span><span class="co">#&gt; → All specified columns in Reporting_Input are in the expected format</span></span>
+<span><span class="co">#&gt; → All 7 specified column(s) in the spec are present in the data: Reporting_Input$MetricID, Reporting_Input$GroupID, Reporting_Input$GroupLevel, Reporting_Input$Numerator, Reporting_Input$Denominator, Reporting_Input$StudyID, Reporting_Input$MonthYYYYMM</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 1: `gsm.reporting::BindResults`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 1: `gsm.studykri::JoinKRIByDenominator`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 2 parameter(s) for `gsm.reporting::BindResults`</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> lAnalysis = lAnalyzed: Passing lData$lAnalyzed.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strName = Analysis_Transformed: No matching data found. Passing 'Analysis_Transformed' as a string.</span></span>
+<span><span class="co">#&gt; ── Evaluating 1 parameter(s) for `gsm.studykri::JoinKRIByDenominator`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfInput = Reporting_Input: Passing lData$Reporting_Input.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.reporting::BindResults`</span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::JoinKRIByDenominator`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 2234x9 data.frame saved as `lData$lResults`.</span></span>
+<span><span class="co">#&gt; ── list of length 2 saved as `lData$Joined_Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 2234x9 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: list of length 2`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Results` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Join` Workflow</span> <span style="color: #00BBBB;">─────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Reporting_Bounds` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Checking data against spec</span></span>
+<span><span class="co">#&gt; → All 2 data.frame(s) in the spec are present in the data: Reporting_Join, Mapped_StudyRef</span></span>
+<span><span class="co">#&gt; → All specified columns in Mapped_StudyRef are in the expected format</span></span>
+<span><span class="co">#&gt; → All 2 specified column(s) in the spec are present in the data: Mapped_StudyRef$study, Mapped_StudyRef$studyref</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 3: `gsm.studykri::ParseFunction`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 1 parameter(s) for `gsm.studykri::ParseFunction`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strFunction = gsm.studykri::Analyze_StudyKRI_PredictBounds: No matching data found. Passing 'gsm.studykri::Analyze_StudyKRI_PredictBounds' as a string.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::ParseFunction`</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── closure of length 1 saved as `lData$PredictBounds_Func`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 3: `purrr::map`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 7 parameter(s) for `purrr::map`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> .x = Reporting_Join: Passing lData$Reporting_Join.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> .f = PredictBounds_Func: Passing lData$PredictBounds_Func.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nConfLevel = Threshold: Passing lMeta$Threshold.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> seed = 42: No matching data found. Passing '42' as a string.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `purrr::map`</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── list of length 2 saved as `lData$Analysis_Bounds_Wide`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 3: `gsm.studykri::Transform_Long`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 1 parameter(s) for `gsm.studykri::Transform_Long`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> lWide = Analysis_Bounds_Wide: Passing lData$Analysis_Bounds_Wide.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_Long`</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── 1544x8 data.frame saved as `lData$Reporting_Bounds`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1544x8 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Bounds` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Initializing `Reporting_BoundsRef` Workflow</span> <span style="color: #00BBBB;">─────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Checking data against spec</span></span>
+<span><span class="co">#&gt; → All 2 data.frame(s) in the spec are present in the data: Reporting_Join, Mapped_StudyRef</span></span>
+<span><span class="co">#&gt; → All specified columns in Mapped_StudyRef are in the expected format</span></span>
+<span><span class="co">#&gt; → All 2 specified column(s) in the spec are present in the data: Mapped_StudyRef$study, Mapped_StudyRef$studyref</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 1 of 3: `gsm.studykri::ParseFunction`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 1 parameter(s) for `gsm.studykri::ParseFunction`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strFunction = gsm.studykri::Analyze_StudyKRI_PredictBoundsRef: No matching data found. Passing 'gsm.studykri::Analyze_StudyKRI_PredictBoundsRef' as a string.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::ParseFunction`</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── closure of length 1 saved as `lData$PredictBoundsRef_Func`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 3: `purrr::map`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 7 parameter(s) for `purrr::map`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> .x = Reporting_Join: Passing lData$Reporting_Join.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> .f = PredictBoundsRef_Func: Passing lData$PredictBoundsRef_Func.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nConfLevel = Threshold: Passing lMeta$Threshold.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> seed = 42: No matching data found. Passing '42' as a string.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `purrr::map`</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── list of length 2 saved as `lData$Analysis_BoundsRef_Wide`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 3: `gsm.studykri::Transform_Long`</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Evaluating 1 parameter(s) for `gsm.studykri::Transform_Long`</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> lWide = Analysis_BoundsRef_Wide: Passing lData$Analysis_BoundsRef_Wide.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_Long`</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── 1536x11 data.frame saved as `lData$Reporting_BoundsRef`.</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1536x11 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_BoundsRef` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────</span></span></span>
 <span></span>
 <span><span class="va">module_wf_gsm</span> <span class="op">&lt;-</span> <span class="fu">gsm.core</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.core/reference/MakeWorkflowList.html" class="external-link">MakeWorkflowList</a></span><span class="op">(</span></span>
 <span>  strNames <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -1436,11 +1568,11 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::MakeCharts_StudyKRI`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── list of length 4 saved as `lData$lCharts`.</span></span>
+<span><span class="co">#&gt; ── list of length 8 saved as `lData$lCharts`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 2: `gsm.studykri::Report_KRI_StudyKRI`</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 2: `gsm.studykri::Report_StudyKRI`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 6 parameter(s) for `gsm.studykri::Report_KRI_StudyKRI`</span></span>
+<span><span class="co">#&gt; ── Evaluating 6 parameter(s) for `gsm.studykri::Report_StudyKRI`</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> lCharts = lCharts: Passing lData$lCharts.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfResults = Reporting_Results: Passing lData$Reporting_Results.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfGroups = Reporting_Groups: Passing lData$Reporting_Groups.</span></span>
@@ -1448,15 +1580,15 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strOutputFile = report_studykri.html: No matching data found. Passing 'report_studykri.html' as a string.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> strInputPath = /home/runner/work/_temp/Library/gsm.studykri/report/Report_KRI.Rmd: No matching data found. Passing '/home/runner/work/_temp/Library/gsm.studykri/report/Report_KRI.Rmd' as a string.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Calling `gsm.studykri::Report_KRI_StudyKRI`</span></span>
+<span><span class="co">#&gt; ── Calling `gsm.studykri::Report_StudyKRI`</span></span>
 <span><span class="co">#&gt; processing file: Report_KRI.Rmd</span></span>
-<span><span class="co">#&gt; output file: /tmp/Rtmp6qWkjF/Report_KRI.knit.md</span></span>
-<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/Rtmp6qWkjF/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/Rtmp6qWkjF/rmarkdown-str23247ff7aaa2.html --variable code_folding=hide --variable code_menu=1</span></span>
+<span><span class="co">#&gt; output file: /tmp/RtmpQoRpSs/Report_KRI.knit.md</span></span>
+<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpQoRpSs/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpQoRpSs/rmarkdown-str21c3baf6ec1.html --variable code_folding=hide --variable code_menu=1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Output created: report_studykri_AA-1.html</span></span>
 <span><span class="co">#&gt; processing file: Report_KRI.Rmd</span></span>
-<span><span class="co">#&gt; output file: /tmp/Rtmp6qWkjF/Report_KRI.knit.md</span></span>
-<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/Rtmp6qWkjF/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/Rtmp6qWkjF/rmarkdown-str232479a7b99e.html --variable code_folding=hide --variable code_menu=1</span></span>
+<span><span class="co">#&gt; output file: /tmp/RtmpQoRpSs/Report_KRI.knit.md</span></span>
+<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpQoRpSs/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpQoRpSs/rmarkdown-str21c316ad76eb.html --variable code_folding=hide --variable code_menu=1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Output created: report_studykri_AA-2.html</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1473,11 +1605,11 @@ will be built, while the others serve as reference.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by Bjoern Koneswarakantha.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
