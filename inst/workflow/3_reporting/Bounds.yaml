@@ -1,12 +1,41 @@
 meta:
   Type: Reporting
   ID: Bounds
-  Description: Bind study-specific bounds from all KRI analyses
-
+  Description: Calculate study bounds for KRIs
+  BootstrapReps: 1000
+  Threshold: 0.95
+  AccrualThreshold: 25
+  Priority: 3
+spec:
+  Reporting_Join:
+    _all:
+      required: true
+  Mapped_StudyRef:
+    study:
+      type: character
+    studyref:
+      type: character
 steps:
-  - output: lBounds
-    name: gsm.reporting::BindResults
+  # Step 1: Parse study bounds function
+  - output: PredictBounds_Func
+    name: gsm.studykri::ParseFunction
     params:
-      lAnalysis: lAnalyzed
-      strName: "Analysis_Bounds"
+      strFunction: gsm.studykri::Analyze_StudyKRI_PredictBounds
 
+  # Step 2: Calculate study bounds (includes bootstrap internally)
+  - output: Analysis_Bounds_Wide
+    name: purrr::map
+    params:
+      .x: Reporting_Join
+      .f: PredictBounds_Func
+      dfStudyRef: Mapped_StudyRef
+      nBootstrapReps: BootstrapReps
+      nConfLevel: Threshold
+      nMinDenominator: AccrualThreshold
+      seed: 42
+
+  # Step 3: Transform bounds to long format
+  - output: Reporting_Bounds
+    name: gsm.studykri::Transform_Long
+    params:
+      lWide: Analysis_Bounds_Wide

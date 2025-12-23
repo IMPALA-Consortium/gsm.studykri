@@ -8,7 +8,7 @@ Transform_CumCount(dfInput, vBy, nMinDenominator = 25, tblMonthSequence = NULL)
 }
 \arguments{
 \item{dfInput}{data.frame or tbl. Output from Input_CountSiteByMonth with columns:
-GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.
+GroupID, GroupLevel, Numerator (or Numerator_*), Denominator, StudyID, MonthYYYYMM.
 Note: Input should contain monthly (not cumulative) counts. This function
 calculates cumulative sums at the study level.}
 
@@ -19,21 +19,22 @@ c("StudyID", "BootstrapRep")).}
 filtering early/sparse data (default: 25).}
 
 \item{tblMonthSequence}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
-Optional pre-generated complete month sequences. Must contain columns matching
-vBy and MonthYYYYMM with NO gaps. If NULL, attempts to create temp table
-(requires write privileges). If data.frame provided, will be written to temp table.}
+Optional pre-generated month sequence with only a \code{MonthYYYYMM} column
+(output of \code{GenerateMonthSeq()}). Must contain consecutive months with NO gaps.
+If NULL, attempts to create temp table (requires write privileges).
+If data.frame provided, will be written to temp table.}
 }
 \value{
 A data.frame with study-level aggregated cumulative counts and ratios.
-Output columns: \code{vBy} columns, \code{MonthYYYYMM}, \code{StudyMonth}, \code{Numerator},
-\code{Denominator}, \code{Metric}, \code{GroupCount}.
-Note: \code{Numerator} and \code{Denominator} are cumulative sums. \code{Metric} is the ratio.
+Output columns: \code{vBy} columns, \code{MonthYYYYMM}, \code{StudyMonth}, Numerator columns,
+\code{Denominator}, Metric columns, \code{GroupCount}.
 }
 \description{
 Transforms site-level cumulative counts into study-level metrics by aggregating
 across groups (sites/countries) by calendar month. Creates sequential study months,
 applies minimum denominator filtering, and calculates cumulative metrics.
 Supports both in-memory data frames and dbplyr lazy tables.
+Handles multiple Numerator columns (e.g., Numerator_kri0001, Numerator_kri0003).
 }
 \examples{
 # Generate input data

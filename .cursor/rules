@@ -242,15 +242,6 @@ https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/.github/workflows/pk
 https://github.com/IMPALA-Consortium/gsm.simaerep/blob/main/_pkgdown.yml 
 
 
-Code Coverage
-- Code Coverage needs to be 100%
-
-Sys.setenv(NOT_CRAN = "true")
-cov <- covr::package_coverage()
-cov
-covr::file_report(cov, "R/filename.R")
-
-
 lazy tables:
 - do not create separate if else logic that checks for dataframe or lazy table in the user facing functions
 - create separate helper functions for these cases for example:
@@ -281,3 +272,73 @@ if (df1 is lazy table) {
 }
 
 df_expanded <- create as join of df1 and df_expand
+
+
+# Optimize Bootstrapping
+
+## principle
+- currently the bootstrapping is done multiple times for each KRI which is very ressource intense
+- I would propose that we only run the gsm.studykri::Transform_CumCount step on kri level
+- in the reporting phase we join all Analysis_Transformed results into one dataframe that use the same denominator
+- then execute Analyze_Simaerep in the reporting layer, it will need to get modified to support more than one Numerator column
+
+## new KRI
+create AE serious KRI for visit and days on study denominator
+
+copy the existing KRI yaml and add the following step:
+
+  - output: Mapped_SAE
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_AE
+      strQuery: |
+        SELECT *
+        FROM df
+        WHERE aeser = 'Y'
+
+only keep Analysis_Input and Analysis_Transformed steps
+
+## reporting workflow
+
+1. use results from Results.yaml, so that all the individual dataframes have been concatenated into one dataframe with a new column for the KRI ID. There should be a list with one dataframe each for Analysis_Input and Analysis_Transformed
+
+2. Joined_Analysis_Input
+Then we Analysis_Input join using a specific function e.d. JoinKRIByDenominaotr.
+The results should be a list with one entry for every denomonator in the input with the
+numerators joined as separate columns to the denominator
+
+3. Analysis_Bootstrapped_Wide:
+Then we execute Analyze_StudyKRI on each data frame in the list in Joined_Analysis_Input to get Analysis_Bootstrapped. This will return a dataframe with all the simulated bootstraps
+
+4. Analysis_BootstrappedStudy_Wide:
+Then we exectute Transform_CumCount on each dataframe in Analysis_Bootstrapped to get cumulative counts per iterations and study per iteration 
+
+5. Analysis_Bounds_Wide:
+Then we exectute Analyze_StudyKRI_PredictBounds on Analysis_BootstrappedStudy to get the confidence intervalls for each study
+
+6. Analyze_StudyKRI_PredictBoundsRef_Wide
+Then we use Joined_Analysis_Input and Mapped_StudyRef to execute Analyze_StudyKRI_PredictBoundsRef to get refernce confidence interval for every relevant study.
+
+7. Transform_long
+transform all dataframes from the _Wide steps back into long format. The result should be one single dataframe per step with the original columns for METRIC ID and Denominator. It should automatically detect which columns to create
+
+
+
+# Optimize Unit Tests
+
+Code Coverage
+- Code Coverage needs to be 100%
+
+Sys.setenv(NOT_CRAN = "true")
+cov <- covr::package_coverage()
+cov
+covr::file_report(cov, "R/filename.R")
+
+
+## test-dbplyr-compatibility
+
+Here we need to prove that each of the user facing funtions works with lazy tables as input.
+
+If it returns a table the table must be returned in lazy table format.
+
+There should be no unit tests testing lazy tables outside this file.

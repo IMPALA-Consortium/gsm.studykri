@@ -11,6 +11,9 @@ Visualize_StudyKRI(
   strStudyID,
   strStudyMonthCol = "StudyMonth",
   strMetricCol = "Metric",
+  strMedianCol = "Median",
+  strLowerCol = "Lower",
+  strUpperCol = "Upper",
   nMaxMonth = NULL,
   strTitle = NULL,
   strSubtitle = NULL,
@@ -24,19 +27,26 @@ Must contain columns specified by \code{strStudyMonthCol} and \code{strMetricCol
 If a \code{StudyID} column exists, data will be automatically filtered to \code{strStudyID}.}
 
 \item{dfBoundsRef}{data.frame or NULL. Portfolio/comparison group confidence intervals
-from \code{Analyze_StudyKRI_PredictBoundsRef} (optional, default: NULL). If provided, must contain: \code{StudyMonth},
-\code{MedianMetric}, \code{LowerBound}, \code{UpperBound}. If NULL, plot will show only study data without reference comparison.}
+from \code{Analyze_StudyKRI_PredictBoundsRef} or \code{Transform_Long} (optional, default: NULL).
+If provided, must contain: \code{StudyMonth} and columns specified by \code{strMedianCol},
+\code{strLowerCol}, \code{strUpperCol}. If NULL, plot will show only study data without reference comparison.}
 
 \item{dfBounds}{data.frame or NULL. Individual study confidence intervals
-from \code{Analyze_StudyKRI_PredictBounds} (optional). If a \code{StudyID} column exists,
+from \code{Analyze_StudyKRI_PredictBounds} or \code{Transform_Long} (optional). If a \code{StudyID} column exists,
 data will be automatically filtered to \code{strStudyID}. If provided, must contain:
-\code{StudyMonth}, \code{MedianMetric}, \code{LowerBound}, \code{UpperBound}.}
+\code{StudyMonth} and columns specified by \code{strMedianCol}, \code{strLowerCol}, \code{strUpperCol}.}
 
 \item{strStudyID}{character. Study ID to filter data and display in title/subtitle.}
 
 \item{strStudyMonthCol}{character. Column name for study month (default: "StudyMonth").}
 
 \item{strMetricCol}{character. Column name for metric (default: "Metric").}
+
+\item{strMedianCol}{character. Column name for median in bounds dataframes (default: "Median").}
+
+\item{strLowerCol}{character. Column name for lower bound (default: "Lower").}
+
+\item{strUpperCol}{character. Column name for upper bound (default: "Upper").}
 
 \item{nMaxMonth}{integer or NULL. Maximum study month to display. If NULL (default),
 shows all available months.}
@@ -66,7 +76,7 @@ This visualization helps identify when a study's performance deviates from
 expected portfolio norms.
 }
 \examples{
-# Basic usage with reference bounds
+# Example 1: Using Transform_Long output (default column names)
 dfStudyKRI <- data.frame(
   StudyID = rep("STUDY1", 5),
   StudyMonth = 1:5,
@@ -75,19 +85,19 @@ dfStudyKRI <- data.frame(
 
 dfBoundsRef <- data.frame(
   StudyMonth = 1:5,
-  MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-  LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-  UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17)
+  Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+  Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+  Upper = c(0.14, 0.16, 0.17, 0.18, 0.17)
 )
 
 dfBounds <- data.frame(
   StudyMonth = 1:5,
-  MedianMetric = c(0.10, 0.12, 0.15, 0.14, 0.13),
-  LowerBound = c(0.08, 0.10, 0.12, 0.11, 0.10),
-  UpperBound = c(0.12, 0.14, 0.18, 0.17, 0.16)
+  Median = c(0.10, 0.12, 0.15, 0.14, 0.13),
+  Lower = c(0.08, 0.10, 0.12, 0.11, 0.10),
+  Upper = c(0.12, 0.14, 0.18, 0.17, 0.16)
 )
 
-# Plot with reference bounds
+# Plot with reference bounds (uses default column names)
 p1 <- Visualize_StudyKRI(
   dfStudyKRI = dfStudyKRI,
   dfBoundsRef = dfBoundsRef,
@@ -97,17 +107,26 @@ p1 <- Visualize_StudyKRI(
 )
 p1
 
-# Plot without reference bounds (only study data)
+# Example 2: Backward compatibility with old column names
+dfBoundsRef_old <- data.frame(
+  StudyMonth = 1:5,
+  MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
+  LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
+  UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17)
+)
+
 p2 <- Visualize_StudyKRI(
   dfStudyKRI = dfStudyKRI,
-  dfBoundsRef = NULL,
-  dfBounds = dfBounds,
+  dfBoundsRef = dfBoundsRef_old,
   strStudyID = "STUDY1",
+  strMedianCol = "MedianMetric",
+  strLowerCol = "LowerBound",
+  strUpperCol = "UpperBound",
   strYlab = "Cumulative AE Rate per Visit"
 )
 p2
 
-# Plot with only study data (no bounds at all)
+# Example 3: Plot with only study data (no bounds)
 p3 <- Visualize_StudyKRI(
   dfStudyKRI = dfStudyKRI,
   strStudyID = "STUDY1",

@@ -1,10 +1,10 @@
 meta:
   Type: Analysis
-  ID: kri0001
+  ID: kri0003
   GroupLevel: Site
-  Abbreviation: AE
-  Metric: Adverse Event Rate per Visit
-  Numerator: Adverse Events
+  Abbreviation: SAE
+  Metric: Serious Adverse Event Rate per Visit
+  Numerator: Serious Adverse Events
   Denominator: Visits
   Model: Bootstrap CI
   Score: Bootstrap CI
@@ -19,6 +19,8 @@ spec:
       type: character
     aest_dt:
       type: Date
+    aeser:
+      type: character
   Mapped_SUBJ:
     subjid:
       type: character
@@ -32,11 +34,19 @@ spec:
     visit_dt:
       type: Date
 steps:
+  - output: Mapped_SAE
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_AE
+      strQuery: |
+        SELECT *
+        FROM df
+        WHERE aeser = 'Y'
   - output: Analysis_Input
     name: gsm.studykri::Input_CountSiteByMonth
     params:
       dfSubjects: Mapped_SUBJ
-      dfNumerator: Mapped_AE
+      dfNumerator: Mapped_SAE
       dfDenominator: Mapped_Visit
       strStudyCol: studyid
       strGroupCol: invid
@@ -58,3 +68,8 @@ steps:
       ID: ID
       Analysis_Input: Analysis_Input
       Analysis_Transformed: Analysis_Transformed
+
+
+
+
+

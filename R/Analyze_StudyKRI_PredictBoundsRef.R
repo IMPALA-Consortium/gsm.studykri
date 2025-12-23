@@ -13,11 +13,9 @@
 #' This enables comparing one study's KRI against expected variation from a portfolio
 #' of similar studies.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
-#'   Must contain columns: `StudyID`, `GroupID`, `Numerator`, `Denominator`, `MonthYYYYMM`.
+#'   Must contain columns: `StudyID`, `GroupID`, one or more `Numerator_*` columns,
+#'   `Denominator`, `MonthYYYYMM`.
 #' @param vStudyFilter character or NULL. Study IDs to include in comparison group.
 #'   If NULL (default), uses all studies found in dfInput.
 #'   Example: `c("STUDY1", "STUDY2", "STUDY3")`.
@@ -28,13 +26,21 @@
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
 #' @param strStudyMonthCol character. Column name for sequential study month
 #'   (default: "StudyMonth").
-#' @param strMetricCol character. Column name for metric (default: "Metric").
 #' @param nMinDenominator numeric. Minimum denominator for Transform_CumCount
 #'   (default: 25).
 #' @param seed integer or NULL. Random seed for reproducibility (default: NULL).
+#' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
+#'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
+#'   containing values 1 to N (where N is the desired number of replicates).
+#'   If provided, overrides the `nBootstrapReps` parameter. If NULL, attempts to
+#'   create temp table (requires write privileges).
+#' @param tblMonthSequence tbl_lazy, data.frame, or NULL. For lazy table inputs:
+#'   Optional pre-generated month sequence with only a `MonthYYYYMM` column
+#'   (output of `GenerateMonthSeq()`). If NULL, attempts to create temp table
+#'   (requires write privileges).
 #'
-#' @return A data.frame (or tbl_lazy if input was lazy) with confidence intervals.
-#'   Output columns: `StudyMonth`, `MedianMetric`, `LowerBound`, `UpperBound`,
+#' @return A tibble (or tbl_lazy if input was lazy) with confidence intervals.
+#'   Output columns: `StudyMonth`, `Median_*`, `Lower_*`, `Upper_*` for each Metric column,
 #'   `BootstrapCount`, `GroupCount`, `StudyCount`.
 #'   Note: No `StudyID` column as studies are intentionally combined.
 #'
@@ -71,16 +77,23 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
-    strMetricCol = "Metric",
     nMinDenominator = 25,
-    seed = NULL) {
+    seed = NULL,
+    tblBootstrapReps = NULL,
+    tblMonthSequence = NULL) {
   # Input Validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfInput, c("data.frame", "tbl"))) {
     stop("dfInput must be a data.frame or tbl object")
   }
 
-  # Check required columns
-  required_cols <- c(strStudyCol, strGroupCol, "Numerator", "Denominator", "MonthYYYYMM")
+  # Auto-detect Numerator columns (matches both "Numerator" and "Numerator_*")
+  vNumeratorCols <- grep("^Numerator", colnames(dfInput), value = TRUE)
+  if (length(vNumeratorCols) == 0) {
+    stop("dfInput must have at least one Numerator column")
+  }
+
+  # Check other required columns
+  required_cols <- c(strStudyCol, strGroupCol, "Denominator", "MonthYYYYMM")
   missing_cols <- setdiff(required_cols, colnames(dfInput))
   if (length(missing_cols) > 0) {
     stop(sprintf(
@@ -127,33 +140,28 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     stop("No data found for specified studies in vStudyFilter")
   }
 
-  # Count unique groups per study
+  # Count unique groups per study and find minimum
   dfGroupCounts <- dfFiltered %>%
     dplyr::summarise(
       GroupCount = dplyr::n_distinct(.data[[strGroupCol]]),
       .by = dplyr::all_of(.env$strStudyCol)
-    )
+    ) %>%
+    dplyr::collect()
 
-  # Find minimum across studies
-  # For lazy tables, collect just the counts
-  if (inherits(dfGroupCounts, "tbl_lazy")) {
-    dfGroupCounts_mem <- dplyr::collect(dfGroupCounts)
-    nMinGroups <- min(dfGroupCounts_mem$GroupCount)
-  } else {
-    nMinGroups <- min(dfGroupCounts$GroupCount)
-  }
+  nMinGroups <- min(dfGroupCounts$GroupCount)
 
   # Inform user
-  message(sprintf("Resampling with minimum group count: %d", nMinGroups))
+  message(sprintf("Resampling with minimum group count: %.0f", nMinGroups))
 
   # Resample each study independently with nGroups = nMinGroups
-  dfBootstrapped <- Analyze_StudyKRI(
+  dfBootstrapped <- BootstrapStudyKRI(
     dfInput = dfFiltered,
     nBootstrapReps = nBootstrapReps,
     nGroups = nMinGroups, # Key: use minimum to ensure fair comparison
     strStudyCol = strStudyCol,
     strGroupCol = strGroupCol,
-    seed = seed
+    seed = seed,
+    tblBootstrapReps = tblBootstrapReps
   )
 
   # Transform to study-level, but group by BootstrapRep only (not StudyID)
@@ -161,15 +169,15 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   dfStudyLevel <- Transform_CumCount(
     dfInput = dfBootstrapped,
     vBy = "BootstrapRep", # Critical: only group by BootstrapRep, not StudyID
-    nMinDenominator = nMinDenominator
+    nMinDenominator = nMinDenominator,
+    tblMonthSequence = tblMonthSequence
   )
 
   # Calculate CI for the combined distribution
-  dfBounds <- Analyze_StudyKRI_PredictBounds(
+  dfBounds <- CalculateStudyBounds(
     dfInput = dfStudyLevel,
     vBy = character(0), # No additional grouping
     nConfLevel = nConfLevel,
-    strMetricCol = strMetricCol,
     strStudyMonthCol = strStudyMonthCol
   )
 
@@ -193,24 +201,30 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' reference groups. For each study in `dfStudyRef`, calculates bounds using its
 #' mapped reference studies.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom rlang .data .env
-#'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
-#' @param dfStudyRef data.frame. Study-to-reference mappings with two columns specified
-#'   by `strStudyCol` and `strStudyRefCol`.
-#' @param strStudyCol character. Column name in `dfStudyRef` for target studies (default: "study").
-#' @param strStudyRefCol character. Column name in `dfStudyRef` for reference studies (default: "studyref").
+#'   Must contain one or more `Numerator_*` columns, `Denominator`, `MonthYYYYMM`.
+#' @param dfStudyRef data.frame or tbl_lazy. Study-to-reference mappings with at least
+#'   two columns: first column = target studies, second column = reference studies.
+#'   Can have multiple rows per target study (one row per target-reference pair).
 #' @param nBootstrapReps integer. Number of bootstrap replicates (default: 1000).
 #' @param nConfLevel numeric. Confidence level for the bounds (default: 0.95).
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
 #' @param strStudyMonthCol character. Column name for study month (default: "StudyMonth").
-#' @param strMetricCol character. Column name for metric (default: "Metric").
 #' @param nMinDenominator numeric. Minimum denominator (default: 25).
 #' @param seed integer or NULL. Random seed (default: NULL).
+#' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
+#'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
+#'   containing values 1 to N (where N is the desired number of replicates).
+#'   If provided, overrides the `nBootstrapReps` parameter. If NULL, attempts to
+#'   create temp table (requires write privileges).
+#' @param tblMonthSequence tbl_lazy, data.frame, or NULL. For lazy table inputs:
+#'   Optional pre-generated month sequence with only a `MonthYYYYMM` column
+#'   (output of `GenerateMonthSeq()`). If NULL, attempts to create temp table
+#'   (requires write privileges).
 #'
-#' @return A data.frame with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
-#'   `MedianMetric`, `LowerBound`, `UpperBound`, `BootstrapCount`, `GroupCount`, `StudyCount`.
+#' @return A tibble (or tbl_lazy if input was lazy) with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
+#'   `Median_*`, `Lower_*`, `Upper_*` for each Metric column, `BootstrapCount`,
+#'   `GroupCount`, `StudyCount`.
 #'
 #' @examples
 #' # Create study reference mapping
@@ -244,38 +258,44 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 Analyze_StudyKRI_PredictBoundsRef <- function(
     dfInput,
     dfStudyRef,
-    strStudyCol = "study",
-    strStudyRefCol = "studyref",
     nBootstrapReps = 1000,
     nConfLevel = 0.95,
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
-    strMetricCol = "Metric",
     nMinDenominator = 25,
-    seed = NULL) {
-  # Input validation
-  if (!is.data.frame(dfStudyRef)) {
-    stop("dfStudyRef must be a data.frame")
+    seed = NULL,
+    tblBootstrapReps = NULL,
+    tblMonthSequence = NULL) {
+  # Input validation - accept data.frame or tbl (including tbl_lazy)
+  if (!inherits(dfStudyRef, c("data.frame", "tbl"))) {
+    stop("dfStudyRef must be a data.frame or tbl object")
   }
 
-  if (!strStudyCol %in% colnames(dfStudyRef)) {
-    stop(sprintf("Column '%s' not found in dfStudyRef", strStudyCol))
+  if (ncol(dfStudyRef) < 2) {
+    stop("dfStudyRef must have at least 2 columns (target study in column 1, reference study in column 2)")
   }
 
-  if (!strStudyRefCol %in% colnames(dfStudyRef)) {
-    stop(sprintf("Column '%s' not found in dfStudyRef", strStudyRefCol))
-  }
-
+  # Collect dfStudyRef early (materialize if lazy)
+  dfStudyRefCollected <- dfStudyRef %>%
+    dplyr::distinct() %>%
+    dplyr::collect()
+  
+  # Use first column for target studies, second column for reference studies
+  strStudyCol <- colnames(dfStudyRefCollected)[1]
+  strStudyRefCol <- colnames(dfStudyRefCollected)[2]
+  
   # Get unique target studies
-  vTargetStudies <- unique(dfStudyRef[[strStudyCol]])
+  vTargetStudies <- unique(dfStudyRefCollected[[strStudyCol]])
 
   # Initialize list to collect results
   lResults <- list()
 
   # Loop over each target study
   for (study in vTargetStudies) {
-    # Extract reference studies for this target study
-    vRefStudies <- dfStudyRef[[strStudyRefCol]][dfStudyRef[[strStudyCol]] == study]
+    # Filter to get reference studies for this target study
+    vRefStudies <- dfStudyRefCollected %>%
+      dplyr::filter(.data[[strStudyCol]] == .env$study) %>%
+      dplyr::pull(.data[[strStudyRefCol]])
 
     # Call the set function
     dfBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
@@ -286,21 +306,31 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       strStudyCol = "StudyID",
       strGroupCol = strGroupCol,
       strStudyMonthCol = strStudyMonthCol,
-      strMetricCol = strMetricCol,
       nMinDenominator = nMinDenominator,
-      seed = seed
+      seed = seed,
+      tblBootstrapReps = tblBootstrapReps,
+      tblMonthSequence = tblMonthSequence
     )
 
+    # Compute constant values outside mutate to avoid SQL translation issues
+    # paste() with collapse is not supported in SQL translation
+    strStudyRefID <- paste(vRefStudies, collapse = ", ")
+    
     # Add StudyID and StudyRefID columns
-    dfBounds$StudyID <- study
-    dfBounds$StudyRefID <- paste(vRefStudies, collapse = ", ")
+    # Use dplyr::mutate for lazy table compatibility
+    dfBounds <- dfBounds %>%
+      dplyr::mutate(
+        StudyID = .env$study,
+        StudyRefID = .env$strStudyRefID
+      )
 
     # Store in list
     lResults[[study]] <- dfBounds
   }
 
-  # Bind all results
-  dfResult <- dplyr::bind_rows(lResults)
+  # Combine all results - use union_all for lazy table compatibility
+  dfResult <- Reduce(dplyr::union_all, lResults)
 
-  return(as.data.frame(dfResult))
+  # Return result (lazy or collected based on input)
+  return(dfResult)
 }

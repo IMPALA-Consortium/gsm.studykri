@@ -14,7 +14,7 @@
 #'   Note: Final site count may vary as sites with zero patients are excluded.
 #'   Must be a positive integer.
 #' @param replacement Logical indicating whether to sample with replacement (default: TRUE)
-#' @param strOversamplDomain Character string naming a domain to use for stratified sampling.
+#' @param strOversampleDomain Character string naming a domain to use for stratified sampling.
 #'   NULL (default) samples from all enrolled subjects
 #' @param vOversamplQuantileRange Numeric vector of length 2 with quantile range (0-1) for
 #'   oversampling. Default c(0, 1) includes all subjects
@@ -67,7 +67,7 @@
 #'   lRaw,
 #'   "STUDY002",
 #'   nSubjects = 50,
-#'   strOversamplDomain = "Raw_AE",
+#'   strOversampleDomain = "Raw_AE",
 #'   vOversamplQuantileRange = c(0.75, 1.0),
 #'   seed = 456
 #' )
@@ -88,7 +88,7 @@ ResampleStudy <- function(
     nSubjects = NULL,
     TargetSiteCount = NULL,
     replacement = TRUE,
-    strOversamplDomain = NULL,
+    strOversampleDomain = NULL,
     vOversamplQuantileRange = c(0, 1),
     seed = NULL,
     vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv"),
@@ -119,18 +119,18 @@ ResampleStudy <- function(
     stop("replacement must be a single logical value")
   }
 
-  if (!is.null(strOversamplDomain)) {
-    if (!is.character(strOversamplDomain) || length(strOversamplDomain) != 1) {
-      stop("strOversamplDomain must be NULL or a single character string")
+  if (!is.null(strOversampleDomain)) {
+    if (!is.character(strOversampleDomain) || length(strOversampleDomain) != 1) {
+      stop("strOversampleDomain must be NULL or a single character string")
     }
-    if (!strOversamplDomain %in% names(lRaw)) {
-      stop("strOversamplDomain '", strOversamplDomain, "' not found in lRaw")
+    if (!strOversampleDomain %in% names(lRaw)) {
+      stop("strOversampleDomain '", strOversampleDomain, "' not found in lRaw")
     }
     # Domain must have a subject ID column
-    domain_df <- lRaw[[strOversamplDomain]]
+    domain_df <- lRaw[[strOversampleDomain]]
     subj_check <- find_subject_id_column(domain_df, lRaw$Raw_SUBJ, vSubjectIDs)
     if (is.null(subj_check)) {
-      stop("strOversamplDomain must have a subject identifier column: ", paste(vSubjectIDs, collapse = ", "))
+      stop("strOversampleDomain must have a subject identifier column: ", paste(vSubjectIDs, collapse = ", "))
     }
   }
 
@@ -160,9 +160,9 @@ ResampleStudy <- function(
     stop("No enrolled subjects found in Raw_SUBJ (enrollyn == 'Y')")
   }
 
-  if (!is.null(strOversamplDomain)) {
+  if (!is.null(strOversampleDomain)) {
     # Count records per subject in oversampling domain
-    domain_df <- lRaw[[strOversamplDomain]]
+    domain_df <- lRaw[[strOversampleDomain]]
 
     # Find subject ID column and map to subjid (already validated above)
     subj_info <- find_subject_id_column(domain_df, lRaw$Raw_SUBJ, vSubjectIDs)
@@ -202,7 +202,7 @@ ResampleStudy <- function(
     message(sprintf(
       "Filtered to %d subjects with %s records in %.2f-%.2f quantile range (%.0f-%.0f records)",
       nrow(enrolled_subj),
-      strOversamplDomain,
+      strOversampleDomain,
       vOversamplQuantileRange[1],
       vOversamplQuantileRange[2],
       quantiles[1],
@@ -255,12 +255,11 @@ ResampleStudy <- function(
   }
 
   # ---- Create Subject Mapping ----
-  subject_mapping <- data.frame(
+  subject_mapping <- tibble::tibble(
     old_subjid = sampled_subj$subjid,
     new_subjid = sprintf("%s_%04d", strNewStudyID, seq_len(nrow(sampled_subj))),
     old_invid = sampled_subj$invid, # Already randomized
-    row_index = seq_len(nrow(sampled_subj)),
-    stringsAsFactors = FALSE
+    row_index = seq_len(nrow(sampled_subj))
   )
 
   # ---- Process All Domains ----
@@ -558,12 +557,11 @@ generate_default_config <- function(lRaw, nStudies, seed) {
 
   max_subj <- nrow(lRaw$Raw_SUBJ)
 
-  data.frame(
+  tibble::tibble(
     studyid = sprintf("PORTFOLIO%03d", seq_len(nStudies)),
     nSubjects = sample(20:min(100, max_subj), nStudies, replace = TRUE),
     TargetSiteCount = NA_integer_,
-    replacement = TRUE,
-    stringsAsFactors = FALSE
+    replacement = TRUE
   )
 }
 
@@ -590,7 +588,7 @@ generate_default_config <- function(lRaw, nStudies, seed) {
 #' - studyid: Unique study identifier
 #' - nSubjects: Number of subjects per study
 #' - TargetSiteCount: (Optional) Target number of sites
-#' - strOversamplDomain: (Optional) Domain for stratified sampling
+#' - strOversampleDomain: (Optional) Domain for stratified sampling
 #' - vOversamplQuantileRange_min/max: (Optional) Quantile range for stratification
 #' - replacement: (Optional) Sample with replacement (default TRUE)
 #'
@@ -675,8 +673,8 @@ SimulatePortfolio <- function(
       resample_args$replacement <- config_row$replacement
     }
 
-    if ("strOversamplDomain" %in% names(config_row) && !is.na(config_row$strOversamplDomain)) {
-      resample_args$strOversamplDomain <- config_row$strOversamplDomain
+    if ("strOversampleDomain" %in% names(config_row) && !is.na(config_row$strOversampleDomain)) {
+      resample_args$strOversampleDomain <- config_row$strOversampleDomain
 
       # Build quantile range
       qmin <- if ("vOversamplQuantileRange_min" %in% names(config_row) && !is.na(config_row$vOversamplQuantileRange_min)) {

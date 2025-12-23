@@ -1,5 +1,5 @@
-test_that("Report_KRI_StudyKRI returns empty character vector for empty lCharts", {
-  result <- Report_KRI_StudyKRI(
+test_that("Report_StudyKRI returns empty character vector for empty lCharts", {
+  result <- Report_StudyKRI(
     lCharts = list(),
     dfResults = data.frame(),
     dfGroups = data.frame(),
@@ -12,8 +12,8 @@ test_that("Report_KRI_StudyKRI returns empty character vector for empty lCharts"
   expect_length(result, 0)
 })
 
-test_that("Report_KRI_StudyKRI returns empty character vector for NULL lCharts", {
-  result <- Report_KRI_StudyKRI(
+test_that("Report_StudyKRI returns empty character vector for NULL lCharts", {
+  result <- Report_StudyKRI(
     lCharts = NULL,
     dfResults = data.frame(),
     dfGroups = data.frame(),
@@ -26,9 +26,9 @@ test_that("Report_KRI_StudyKRI returns empty character vector for NULL lCharts",
   expect_length(result, 0)
 })
 
-test_that("Report_KRI_StudyKRI returns empty character vector for non-list lCharts", {
+test_that("Report_StudyKRI returns empty character vector for non-list lCharts", {
   # Test with string input
-  result <- Report_KRI_StudyKRI(
+  result <- Report_StudyKRI(
     lCharts = "not a list",
     dfResults = data.frame(),
     dfGroups = data.frame(),
@@ -41,7 +41,7 @@ test_that("Report_KRI_StudyKRI returns empty character vector for non-list lChar
   expect_length(result, 0)
 
   # Test with numeric input
-  result2 <- Report_KRI_StudyKRI(
+  result2 <- Report_StudyKRI(
     lCharts = 123,
     dfResults = data.frame(),
     dfGroups = data.frame(),
@@ -54,7 +54,7 @@ test_that("Report_KRI_StudyKRI returns empty character vector for non-list lChar
   expect_length(result2, 0)
 })
 
-test_that("Report_KRI_StudyKRI handles dfResults without StudyID column", {
+test_that("Report_StudyKRI handles dfResults without StudyID column", {
   skip_if_not_installed("gsm.kri")
   skip_if_not_installed("rmarkdown")
 
@@ -100,7 +100,7 @@ test_that("Report_KRI_StudyKRI handles dfResults without StudyID column", {
 
   temp_out <- "test_report_temp.html"
 
-  result <- Report_KRI_StudyKRI(
+  result <- Report_StudyKRI(
     lCharts = lCharts,
     dfResults = dfResults,
     dfGroups = dfGroups,
@@ -118,7 +118,7 @@ test_that("Report_KRI_StudyKRI handles dfResults without StudyID column", {
   unlink(result, force = TRUE)
 })
 
-test_that("Report_KRI_StudyKRI handles filename without extension", {
+test_that("Report_StudyKRI handles filename without extension", {
   skip_if_not_installed("gsm.kri")
   skip_if_not_installed("rmarkdown")
 
@@ -165,7 +165,7 @@ test_that("Report_KRI_StudyKRI handles filename without extension", {
 
   temp_out <- "test_report_temp_no_ext"
 
-  result <- Report_KRI_StudyKRI(
+  result <- Report_StudyKRI(
     lCharts = lCharts,
     dfResults = dfResults,
     dfGroups = dfGroups,
@@ -182,7 +182,7 @@ test_that("Report_KRI_StudyKRI handles filename without extension", {
   unlink(result, force = TRUE)
 })
 
-test_that("Report_KRI_StudyKRI handles filename with extension", {
+test_that("Report_StudyKRI handles filename with extension", {
   skip_if_not_installed("gsm.kri")
   skip_if_not_installed("rmarkdown")
 
@@ -229,7 +229,7 @@ test_that("Report_KRI_StudyKRI handles filename with extension", {
 
   temp_out <- "test_report_temp2.html"
 
-  result <- Report_KRI_StudyKRI(
+  result <- Report_StudyKRI(
     lCharts = lCharts,
     dfResults = dfResults,
     dfGroups = dfGroups,
@@ -246,7 +246,7 @@ test_that("Report_KRI_StudyKRI handles filename with extension", {
   unlink(result, force = TRUE)
 })
 
-test_that("Report_KRI_StudyKRI processes multiple studies", {
+test_that("Report_StudyKRI processes multiple studies", {
   skip_if_not_installed("gsm.kri")
   skip_if_not_installed("rmarkdown")
 
@@ -295,7 +295,7 @@ test_that("Report_KRI_StudyKRI processes multiple studies", {
 
   temp_out <- "test_report_temp.html"
 
-  result <- Report_KRI_StudyKRI(
+  result <- Report_StudyKRI(
     lCharts = lCharts,
     dfResults = dfResults,
     dfGroups = dfGroups,
@@ -313,7 +313,7 @@ test_that("Report_KRI_StudyKRI processes multiple studies", {
   unlink(result, force = TRUE)
 })
 
-test_that("Report_KRI_StudyKRI skips studies with no matching charts after filtering", {
+test_that("Report_StudyKRI skips studies with no matching charts after filtering", {
   skip_if_not_installed("gsm.kri")
   skip_if_not_installed("rmarkdown")
 
@@ -361,7 +361,7 @@ test_that("Report_KRI_StudyKRI skips studies with no matching charts after filte
 
   temp_out <- "test_report_temp.html"
 
-  result <- Report_KRI_StudyKRI(
+  result <- Report_StudyKRI(
     lCharts = lCharts,
     dfResults = dfResults,
     dfGroups = dfGroups,
@@ -382,7 +382,7 @@ test_that("Report_KRI_StudyKRI skips studies with no matching charts after filte
   unlink(result, force = TRUE)
 })
 
-test_that("Report_KRI_StudyKRI correctly filters results by StudyID", {
+test_that("Report_StudyKRI correctly filters results by StudyID", {
   skip_if_not_installed("gsm.kri")
   skip_if_not_installed("rmarkdown")
 
@@ -431,7 +431,7 @@ test_that("Report_KRI_StudyKRI correctly filters results by StudyID", {
   temp_out <- "test_report_temp.html"
 
   # Call function - should only generate report for STUDY1
-  result <- Report_KRI_StudyKRI(
+  result <- Report_StudyKRI(
     lCharts = lCharts,
     dfResults = dfResults,
     dfGroups = dfGroups,

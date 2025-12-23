@@ -102,8 +102,7 @@ dfInput <- gsm.studykri::Input_CountSiteByMonth(
   strSubjectCol = "subjid",
   strNumeratorDateCol = "aest_dt",
   strDenominatorDateCol = "visit_dt",
-) %>%
-  tibble()
+)
 
 dfInput
 ```
@@ -122,8 +121,7 @@ dfInputDays <- gsm.studykri::Input_CountSiteByMonth(
   strNumeratorDateCol = "aest_dt",
   strDenominatorDateCol = "firstparticipantdate",
   strDenominatorEndDateCol = "lastparticipantdate"
-) %>%
-  tibble()
+)
 
 dfInputDays
 ```
@@ -136,110 +134,81 @@ dfTransformed <- gsm.studykri::Transform_CumCount(
   dfInput,
   nMinDenominator = 25,
   vBy = c("StudyID")
-) %>%
-  tibble()
+)
 
 dfTransformed
 ```
 
-Then we generate site-level bootstrap simulations for the study AA-4 which has been oversampled for low AE counts.
+Analyze_StudyKRI_PredictBounds calculates upper and lower confidence intervalls of the study metrics KRI using a bootstrap technique.
 
 ```{r}
-df_Analyzed_Bootstrap_Site <- dfInput %>%
-  gsm.studykri::Analyze_StudyKRI(nBootstrapReps = 1000) %>%
-  tibble()
+dfBounds <- dfInput %>%
+  gsm.studykri::Analyze_StudyKRI_PredictBounds()
 
-
-df_Analyzed_Bootstrap_Site
-```
-
-We aggregate each site-level bootstrap iteration to study-level.
-
-```{r}
-df_Analyzed_Bootstrap_Study <- df_Analyzed_Bootstrap_Site %>%
-  gsm.studykri::Transform_CumCount(
-    nMinDenominator = 25,
-    vBy = c("StudyID", "BootstrapRep")
-  ) %>%
-  tibble()
-
-df_Analyzed_Bootstrap_Study
-```
-
-
-From the study-level bootstrap results we can calculate the 95% confidence intervalls.
-
-```{r}
-df_Bounds <- gsm.studykri::Analyze_StudyKRI_PredictBounds(
-  df_Analyzed_Bootstrap_Study,
-  vBy = c("StudyID"),
-  nConfLevel = 0.95
-) %>%
-  tibble()
-
-df_Bounds
+dfBounds
 ```
 
 We can plot the preliminary results.
 
 ```{r}
 gsm.studykri::Visualize_StudyKRI(
-  dfStudyKRI = dfTransformed,
-  dfBounds = df_Bounds,
-  strStudyID = "AA-4"
+  dfStudyKRI = dfTransformed ,
+  dfBounds = dfBounds,
+  strStudyID = "AA-1"
 )
 ```
 
-Then we generate the portfolio reference confidence intervals. When calculating the reference bound the study with the smalles number of sites
-determines the total amount of sites sampled for each study, so that each study contributes equally to the reference distribution.
+
+We then calculate a reference confidence interval based on a set of reference studies.
 
 ```{r}
-df_Bounds_Ref <- dfInput %>%
-  gsm.studykri::Analyze_StudyKRI_PredictBoundsRefSet(
-    vStudyFilter = c("AA-1", "AA-2", "AA-3"),
-    nBootstrapReps = 1000,
-    nConfLevel = 0.95,
-    nMinDenominator = 25
-  ) %>%
-  tibble()
 
-df_Bounds_Ref
+dfStudyRef <- tibble(
+  study = "AA-1",
+  studyref = c("AA-2", "AA-3", "AA-4")
+)
+
+dfBoundsRef <- gsm.studykri::Analyze_StudyKRI_PredictBoundsRef(dfInput, dfStudyRef)
+
+dfBoundsRef
 ```
 
-
-Now we can plot the final results.
+And add the reference confidence interval to out plot
 
 ```{r}
 gsm.studykri::Visualize_StudyKRI(
-  dfTransformed,
-  df_Bounds_Ref,
-  df_Bounds,
-  strStudyID = "AA-4"
+  dfStudyKRI = dfTransformed ,
+  dfBounds = dfBounds,
+  dfBoundsRef = dfBoundsRef,
+  strStudyID = "AA-1"
 )
 ```
+
 
 We can also plot the members of the reference portfolio.
 
 ```{r}
 p1 <- gsm.studykri::Visualize_StudyKRI(
-  dfTransformed,
-  df_Bounds_Ref,
-  df_Bounds,
-  strStudyID = "AA-1"
+  dfStudyKRI = dfTransformed ,
+  dfBounds = dfBounds,
+  dfBoundsRef = dfBoundsRef,
+  strStudyID = "AA-2"
 )
 
 p2 <- gsm.studykri::Visualize_StudyKRI(
-  dfTransformed,
-  df_Bounds_Ref,
-  df_Bounds,
-  strStudyID = "AA-2"
-)
-p3 <- gsm.studykri::Visualize_StudyKRI(
-  dfTransformed,
-  df_Bounds_Ref,
-  df_Bounds,
+  dfStudyKRI = dfTransformed ,
+  dfBounds = dfBounds,
+  dfBoundsRef = dfBoundsRef,
   strStudyID = "AA-3"
 )
+
+p3 <- gsm.studykri::Visualize_StudyKRI(
+  dfStudyKRI = dfTransformed ,
+  dfBounds = dfBounds,
+  dfBoundsRef = dfBoundsRef,
+  strStudyID = "AA-4"
+)
+
 library(patchwork)
 
 p1 + p2 + p3 + patchwork::plot_layout(guides = "collect")
@@ -311,18 +280,20 @@ metrics_wf <- gsm.core::MakeWorkflowList(
 
 # Combine lMapped with metrics workflows for comprehensive result
 lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
+
 ```
 
 ## Generate KRI report using scripts
 
 and subsequently generate a KRI report using {gsm.reporting}.
 
+We assemble some data needed for reporting.
+
 ```{r cook5}
-dfResults <- gsm.reporting::BindResults(lAnalyzed, "Analysis_Transformed")
 
-dfBounds <- gsm.reporting::BindResults(lAnalyzed, "Analysis_Bounds")
+dfInput <- gsm.studykri::BindResults(lAnalyzed, "Analysis_Input")
 
-dfBoundsRef <- gsm.reporting::BindResults(lAnalyzed, "Analysis_BoundsRef")
+dfTransformed <- gsm.studykri::BindResults(lAnalyzed, "Analysis_Transformed")
 
 dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
 
@@ -332,11 +303,43 @@ dfGroups <- dplyr::bind_rows(
   lMapped$Country
 )
 
-lCharts <- gsm.studykri::MakeCharts_StudyKRI(dfResults, dfBounds, dfBoundsRef, dfMetrics)
+dfStudyRef <- lMapped$Mapped_StudyRef
 
-gsm.studykri::Report_KRI_StudyKRI(
+dfStudyRef
+```
+
+In order to make the bootstrapping more efficient we can combine all KRI that use the same denominator.
+
+```{r}
+
+lJoined <- gsm.studykri::JoinKRIByDenominator(dfInput)
+
+str(lJoined)
+
+```
+
+Using the study references we can calculate the bootstrapped confidence intervals for all KRI at once.
+
+```{r}
+Bounds_Wide <- purrr::map(lJoined, ~ Analyze_StudyKRI_PredictBounds(., dfStudyRef))
+BoundsRef_Wide <- purrr::map(lJoined, ~ Analyze_StudyKRI_PredictBoundsRef(., dfStudyRef))
+
+dfBounds <- Transform_Long(Bounds_Wide)
+dfBoundsRef <- Transform_Long(BoundsRef_Wide)
+```
+
+```{r}
+
+lCharts <- gsm.studykri::MakeCharts_StudyKRI(
+    dfResults = dfTransformed, 
+    dfBounds = dfBounds,
+    dfBoundsRef = dfBoundsRef,
+    dfMetrics = dfMetrics
+  )
+
+gsm.studykri::Report_StudyKRI(
   lCharts = lCharts,
-  dfResults = dfResults,
+  dfResults = dfTransformed,
   dfGroups = dfGroups,
   dfMetrics = dfMetrics,
   strOutputFile = "report_studykri.html",

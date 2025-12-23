@@ -7,26 +7,23 @@
 Analyze_StudyKRI_PredictBoundsRef(
   dfInput,
   dfStudyRef,
-  strStudyCol = "study",
-  strStudyRefCol = "studyref",
   nBootstrapReps = 1000,
   nConfLevel = 0.95,
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
-  strMetricCol = "Metric",
   nMinDenominator = 25,
-  seed = NULL
+  seed = NULL,
+  tblBootstrapReps = NULL,
+  tblMonthSequence = NULL
 )
 }
 \arguments{
-\item{dfInput}{data.frame or tbl_lazy. Site-level data from \code{Input_CumCountSiteByMonth}.}
+\item{dfInput}{data.frame or tbl_lazy. Site-level data from \code{Input_CumCountSiteByMonth}.
+Must contain one or more \verb{Numerator_*} columns, \code{Denominator}, \code{MonthYYYYMM}.}
 
-\item{dfStudyRef}{data.frame. Study-to-reference mappings with two columns specified
-by \code{strStudyCol} and \code{strStudyRefCol}.}
-
-\item{strStudyCol}{character. Column name in \code{dfStudyRef} for target studies (default: "study").}
-
-\item{strStudyRefCol}{character. Column name in \code{dfStudyRef} for reference studies (default: "studyref").}
+\item{dfStudyRef}{data.frame or tbl_lazy. Study-to-reference mappings with at least
+two columns: first column = target studies, second column = reference studies.
+Can have multiple rows per target study (one row per target-reference pair).}
 
 \item{nBootstrapReps}{integer. Number of bootstrap replicates (default: 1000).}
 
@@ -36,15 +33,25 @@ by \code{strStudyCol} and \code{strStudyRefCol}.}
 
 \item{strStudyMonthCol}{character. Column name for study month (default: "StudyMonth").}
 
-\item{strMetricCol}{character. Column name for metric (default: "Metric").}
-
 \item{nMinDenominator}{numeric. Minimum denominator (default: 25).}
 
 \item{seed}{integer or NULL. Random seed (default: NULL).}
+
+\item{tblBootstrapReps}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
+Optional pre-generated bootstrap replicate indices with a \code{BootstrapRep} column
+containing values 1 to N (where N is the desired number of replicates).
+If provided, overrides the \code{nBootstrapReps} parameter. If NULL, attempts to
+create temp table (requires write privileges).}
+
+\item{tblMonthSequence}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
+Optional pre-generated month sequence with only a \code{MonthYYYYMM} column
+(output of \code{GenerateMonthSeq()}). If NULL, attempts to create temp table
+(requires write privileges).}
 }
 \value{
-A data.frame with columns: \code{StudyID}, \code{StudyRefID}, \code{StudyMonth},
-\code{MedianMetric}, \code{LowerBound}, \code{UpperBound}, \code{BootstrapCount}, \code{GroupCount}, \code{StudyCount}.
+A tibble (or tbl_lazy if input was lazy) with columns: \code{StudyID}, \code{StudyRefID}, \code{StudyMonth},
+\verb{Median_*}, \verb{Lower_*}, \verb{Upper_*} for each Metric column, \code{BootstrapCount},
+\code{GroupCount}, \code{StudyCount}.
 }
 \description{
 Wrapper for \code{Analyze_StudyKRI_PredictBoundsRefSet} that applies study-specific

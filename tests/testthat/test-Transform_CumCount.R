@@ -223,6 +223,19 @@ test_that("Transform_CumCount validates dfInput parameter", {
     Transform_CumCount(dfInput = dfInput, vBy = "StudyID"),
     "dfInput missing required columns"
   )
+
+  # dfInput without Numerator column
+  dfNoNumerator <- data.frame(
+    StudyID = "STUDY001",
+    GroupID = "SITE01",
+    MonthYYYYMM = 202301,
+    Denominator = 20
+  )
+
+  expect_error(
+    Transform_CumCount(dfInput = dfNoNumerator, vBy = "StudyID"),
+    "dfInput must have at least one Numerator column"
+  )
 })
 
 test_that("Transform_CumCount validates vBy parameter", {
@@ -554,4 +567,67 @@ test_that("Transform_CumCount handles zero cumulative denominator correctly", {
   # but test the if_else logic is exercised
   # Month 202302 cumulative will be 30 + 0 = 30 (from previous)
   expect_true(all(!is.na(result$Metric)))
+})
+
+test_that("Transform_CumCount handles multiple Numerator columns", {
+  dfInput <- data.frame(
+    StudyID = rep("STUDY001", 4),
+    GroupID = rep(c("SITE01", "SITE02"), each = 2),
+    GroupLevel = "Site",
+    MonthYYYYMM = rep(c(202301, 202302), 2),
+    Numerator_kri0001 = c(5, 10, 3, 8),
+    Numerator_kri0003 = c(2, 4, 1, 3),
+    Denominator = c(50, 50, 50, 50)
+  )
+
+  result <- Transform_CumCount(
+    dfInput = dfInput,
+    vBy = "StudyID",
+    nMinDenominator = 25
+  )
+
+  # Check that both Numerator columns are present
+  expect_true("Numerator_kri0001" %in% names(result))
+  expect_true("Numerator_kri0003" %in% names(result))
+
+  # Check that corresponding Metric columns are generated
+  expect_true("Metric_kri0001" %in% names(result))
+  expect_true("Metric_kri0003" %in% names(result))
+
+  # Check cumulative sums are correct
+  # Month 202301: kri0001 = 5+3=8, kri0003 = 2+1=3, Denom = 100
+  # Month 202302: kri0001 = 8+10+8=26, kri0003 = 3+4+3=10, Denom = 200
+  expect_equal(result$Numerator_kri0001[result$MonthYYYYMM == 202301], 8)
+  expect_equal(result$Numerator_kri0001[result$MonthYYYYMM == 202302], 26)
+  expect_equal(result$Numerator_kri0003[result$MonthYYYYMM == 202301], 3)
+  expect_equal(result$Numerator_kri0003[result$MonthYYYYMM == 202302], 10)
+
+  # Check metrics are calculated correctly
+  expect_equal(result$Metric_kri0001[result$MonthYYYYMM == 202301], 8 / 100)
+  expect_equal(result$Metric_kri0003[result$MonthYYYYMM == 202302], 10 / 200)
+})
+
+test_that("Transform_CumCount single Numerator column still works", {
+  dfInput <- data.frame(
+    StudyID = rep("STUDY001", 4),
+    GroupID = rep(c("SITE01", "SITE02"), each = 2),
+    GroupLevel = "Site",
+    MonthYYYYMM = rep(c(202301, 202302), 2),
+    Numerator = c(5, 10, 3, 8),
+    Denominator = c(50, 50, 50, 50)
+  )
+
+  result <- Transform_CumCount(
+    dfInput = dfInput,
+    vBy = "StudyID",
+    nMinDenominator = 25
+  )
+
+  # Check single Numerator and Metric columns
+  expect_true("Numerator" %in% names(result))
+  expect_true("Metric" %in% names(result))
+
+  # Should not have _kri suffixed columns
+  expect_false(any(grepl("Numerator_", names(result))))
+  expect_false(any(grepl("Metric_", names(result))))
 })

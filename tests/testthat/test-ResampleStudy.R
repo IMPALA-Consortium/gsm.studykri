@@ -148,7 +148,7 @@ test_that("ResampleStudy maintains referential integrity", {
   }
 })
 
-test_that("ResampleStudy handles strOversamplDomain parameter", {
+test_that("ResampleStudy handles strOversampleDomain parameter", {
   lRaw <- list(
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_AE = clindata::rawplus_ae,
@@ -163,7 +163,7 @@ test_that("ResampleStudy handles strOversamplDomain parameter", {
       lRaw,
       "STUDY001",
       nSubjects = 100,
-      strOversamplDomain = "Raw_AE",
+      strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.75, 1.0),
       seed = 123
     )
@@ -175,7 +175,7 @@ test_that("ResampleStudy handles strOversamplDomain parameter", {
       lRaw,
       "STUDY002",
       nSubjects = 100,
-      strOversamplDomain = "Raw_AE",
+      strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0, 0.25),
       seed = 456
     )
@@ -233,15 +233,15 @@ test_that("ResampleStudy input checking works", {
   # Invalid replacement
   expect_error(ResampleStudy(lRaw, "STUDY001", replacement = "yes"), "logical value")
 
-  # Invalid strOversamplDomain
+  # Invalid strOversampleDomain
   expect_error(
-    ResampleStudy(lRaw, "STUDY001", strOversamplDomain = "NonExistent"),
+    ResampleStudy(lRaw, "STUDY001", strOversampleDomain = "NonExistent"),
     "not found in lRaw"
   )
 
-  # Invalid strOversamplDomain type
+  # Invalid strOversampleDomain type
   expect_error(
-    ResampleStudy(lRaw, "STUDY001", strOversamplDomain = c("Raw_AE", "Raw_LB")),
+    ResampleStudy(lRaw, "STUDY001", strOversampleDomain = c("Raw_AE", "Raw_LB")),
     "must be NULL or a single character string"
   )
 
@@ -324,7 +324,7 @@ test_that("ResampleStudy updates site IDs correctly", {
   } else if ("site_num" %in% names(result$Raw_SITE)) {
     "site_num"
   } else {
-    skip("No site ID column found")
+    stop("Expected site ID column (invid or site_num) not found")
   }
 
   # Site IDs should be prefixed only if using invid (not site_num)
@@ -641,7 +641,7 @@ test_that("ResampleStudy maintains reasonable column order", {
 
 # Edge Case Tests for Coverage ---------------------------------------------
 
-test_that("ResampleStudy handles strOversamplDomain without subject ID column", {
+test_that("ResampleStudy handles strOversampleDomain without subject ID column", {
   lRaw <- list(
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_SITE = clindata::ctms_site
@@ -652,7 +652,7 @@ test_that("ResampleStudy handles strOversamplDomain without subject ID column", 
     ResampleStudy(
       lRaw,
       "STUDY001",
-      strOversamplDomain = "Raw_SITE",
+      strOversampleDomain = "Raw_SITE",
       vOversamplQuantileRange = c(0, 1)
     ),
     "must have a subject identifier column"
@@ -688,7 +688,7 @@ test_that("ResampleStudy handles extreme quantile ranges", {
       lRaw,
       "STUDY001",
       nSubjects = 50,
-      strOversamplDomain = "Raw_AE",
+      strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.95, 1.0),
       seed = 123
     )
@@ -697,55 +697,6 @@ test_that("ResampleStudy handles extreme quantile ranges", {
   # Should work - may have fewer subjects than requested if range is very narrow
   expect_true(nrow(result$Raw_SUBJ) > 0)
   expect_true(nrow(result$Raw_SUBJ) <= 50)
-})
-
-test_that("ResampleStudy errors on impossible quantile range", {
-  # Create artificial data where NO subjects fall in the specified quantile range
-  # Need a large enough dataset to create a clear gap
-
-  # Create 100 subjects: 50 with 1 AE, 50 with 100 AEs (big gap in middle)
-  artificial_subj <- data.frame(
-    studyid = "TEST",
-    subjid = paste0("S", sprintf("%03d", 1:100)),
-    subjectid = paste0("TEST-S", sprintf("%03d", 1:100), "-001"),
-    enrollyn = "Y",
-    invid = rep("SITE01", 100),
-    siteid = rep("1", 100),
-    stringsAsFactors = FALSE
-  )
-
-  # First 50 subjects get 1 AE each, last 50 get 100 AEs each
-  artificial_ae <- data.frame(
-    studyid = "TEST",
-    subjid = c(
-      rep(paste0("S", sprintf("%03d", 1:50)), each = 1),
-      rep(paste0("S", sprintf("%03d", 51:100)), each = 100)
-    ),
-    stringsAsFactors = FALSE
-  )
-
-  lRaw_artificial <- list(
-    Raw_SUBJ = artificial_subj,
-    Raw_AE = artificial_ae
-  )
-
-  # With this distribution:
-  # 50% have 1 AE (quantile 0-0.5)
-  # 50% have 100 AEs (quantile 0.5-1.0)
-  # Request a narrow range around 0.51-0.54 which should catch the lower end of high-AE group
-  # Actually, let's target a gap: quantile 0.45-0.48 should be right at the boundary
-  # Even better: 0.01-0.02 will only include subjects with exactly 1 AE
-  # And then check if they're all filtered out somehow
-
-  # Actually, to get zero subjects, we need a range where NO ONE falls
-  # With 50 at count=1 and 50 at count=100, quantile 0.5 is the boundary
-  # Any range that spans neither group will be empty
-  # The issue is that quantile() with these values will always include someone
-
-  # Let me use a different approach: 98 subjects with 1 AE, 2 subjects with 100 AEs
-  # Then quantile 0.99-1.0 will be count=100, and 0.01-0.98 will be count=1
-  # Range 0.985-0.995 might work to catch the gap
-  skip("Quantile-based filtering always includes at least some subjects with this approach")
 })
 
 test_that("ResampleStudy works with site domain without invid", {
@@ -816,7 +767,7 @@ test_that("ResampleStudy handles invalid composite ID mappings", {
       lRaw,
       "STUDY001",
       nSubjects = 20,
-      strOversamplDomain = "Raw_AE_TEST",
+      strOversampleDomain = "Raw_AE_TEST",
       vOversamplQuantileRange = c(0, 1),
       seed = 123
     )

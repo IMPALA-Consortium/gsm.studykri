@@ -5,7 +5,7 @@ meta:
 
 steps:
   - output: lResults
-    name: gsm.reporting::BindResults
+    name: gsm.studykri::BindResults
     params:
       lAnalysis: lAnalyzed
       strName: "Analysis_Transformed"

@@ -12,22 +12,23 @@
 #' This visualization helps identify when a study's performance deviates from
 #' expected portfolio norms.
 #'
-#' @importFrom ggplot2 ggplot aes geom_ribbon geom_line geom_point labs theme_minimal theme element_text element_blank
-#' @importFrom rlang .data
-#'
 #' @param dfStudyKRI data.frame. Actual study-level metric data from `Transform_CumCount`.
 #'   Must contain columns specified by `strStudyMonthCol` and `strMetricCol`.
 #'   If a `StudyID` column exists, data will be automatically filtered to `strStudyID`.
 #' @param dfBoundsRef data.frame or NULL. Portfolio/comparison group confidence intervals
-#'   from `Analyze_StudyKRI_PredictBoundsRef` (optional, default: NULL). If provided, must contain: `StudyMonth`,
-#'   `MedianMetric`, `LowerBound`, `UpperBound`. If NULL, plot will show only study data without reference comparison.
+#'   from `Analyze_StudyKRI_PredictBoundsRef` or `Transform_Long` (optional, default: NULL).
+#'   If provided, must contain: `StudyMonth` and columns specified by `strMedianCol`,
+#'   `strLowerCol`, `strUpperCol`. If NULL, plot will show only study data without reference comparison.
 #' @param dfBounds data.frame or NULL. Individual study confidence intervals
-#'   from `Analyze_StudyKRI_PredictBounds` (optional). If a `StudyID` column exists,
+#'   from `Analyze_StudyKRI_PredictBounds` or `Transform_Long` (optional). If a `StudyID` column exists,
 #'   data will be automatically filtered to `strStudyID`. If provided, must contain:
-#'   `StudyMonth`, `MedianMetric`, `LowerBound`, `UpperBound`.
+#'   `StudyMonth` and columns specified by `strMedianCol`, `strLowerCol`, `strUpperCol`.
 #' @param strStudyID character. Study ID to filter data and display in title/subtitle.
 #' @param strStudyMonthCol character. Column name for study month (default: "StudyMonth").
 #' @param strMetricCol character. Column name for metric (default: "Metric").
+#' @param strMedianCol character. Column name for median in bounds dataframes (default: "Median").
+#' @param strLowerCol character. Column name for lower bound (default: "Lower").
+#' @param strUpperCol character. Column name for upper bound (default: "Upper").
 #' @param nMaxMonth integer or NULL. Maximum study month to display. If NULL (default),
 #'   shows all available months.
 #' @param strTitle character or NULL. Plot title. If NULL, generates default title.
@@ -39,7 +40,7 @@
 #' @return A ggplot2 object that can be displayed, saved, or further customized.
 #'
 #' @examples
-#' # Basic usage with reference bounds
+#' # Example 1: Using Transform_Long output (default column names)
 #' dfStudyKRI <- data.frame(
 #'   StudyID = rep("STUDY1", 5),
 #'   StudyMonth = 1:5,
@@ -48,19 +49,19 @@
 #'
 #' dfBoundsRef <- data.frame(
 #'   StudyMonth = 1:5,
-#'   MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
-#'   LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
-#'   UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17)
+#'   Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+#'   Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+#'   Upper = c(0.14, 0.16, 0.17, 0.18, 0.17)
 #' )
 #'
 #' dfBounds <- data.frame(
 #'   StudyMonth = 1:5,
-#'   MedianMetric = c(0.10, 0.12, 0.15, 0.14, 0.13),
-#'   LowerBound = c(0.08, 0.10, 0.12, 0.11, 0.10),
-#'   UpperBound = c(0.12, 0.14, 0.18, 0.17, 0.16)
+#'   Median = c(0.10, 0.12, 0.15, 0.14, 0.13),
+#'   Lower = c(0.08, 0.10, 0.12, 0.11, 0.10),
+#'   Upper = c(0.12, 0.14, 0.18, 0.17, 0.16)
 #' )
 #'
-#' # Plot with reference bounds
+#' # Plot with reference bounds (uses default column names)
 #' p1 <- Visualize_StudyKRI(
 #'   dfStudyKRI = dfStudyKRI,
 #'   dfBoundsRef = dfBoundsRef,
@@ -70,17 +71,26 @@
 #' )
 #' p1
 #'
-#' # Plot without reference bounds (only study data)
+#' # Example 2: Backward compatibility with old column names
+#' dfBoundsRef_old <- data.frame(
+#'   StudyMonth = 1:5,
+#'   MedianMetric = c(0.11, 0.13, 0.14, 0.15, 0.14),
+#'   LowerBound = c(0.08, 0.10, 0.11, 0.12, 0.11),
+#'   UpperBound = c(0.14, 0.16, 0.17, 0.18, 0.17)
+#' )
+#'
 #' p2 <- Visualize_StudyKRI(
 #'   dfStudyKRI = dfStudyKRI,
-#'   dfBoundsRef = NULL,
-#'   dfBounds = dfBounds,
+#'   dfBoundsRef = dfBoundsRef_old,
 #'   strStudyID = "STUDY1",
+#'   strMedianCol = "MedianMetric",
+#'   strLowerCol = "LowerBound",
+#'   strUpperCol = "UpperBound",
 #'   strYlab = "Cumulative AE Rate per Visit"
 #' )
 #' p2
 #'
-#' # Plot with only study data (no bounds at all)
+#' # Example 3: Plot with only study data (no bounds)
 #' p3 <- Visualize_StudyKRI(
 #'   dfStudyKRI = dfStudyKRI,
 #'   strStudyID = "STUDY1",
@@ -95,6 +105,9 @@ Visualize_StudyKRI <- function(
     strStudyID,
     strStudyMonthCol = "StudyMonth",
     strMetricCol = "Metric",
+    strMedianCol = "Median",
+    strLowerCol = "Lower",
+    strUpperCol = "Upper",
     nMaxMonth = NULL,
     strTitle = NULL,
     strSubtitle = NULL,
@@ -125,7 +138,7 @@ Visualize_StudyKRI <- function(
 
   # Check required columns in dfBoundsRef if provided
   if (!is.null(dfBoundsRef)) {
-    required_group <- c("StudyMonth", "LowerBound", "UpperBound", "MedianMetric")
+    required_group <- c("StudyMonth", strLowerCol, strUpperCol, strMedianCol)
     missing_group <- setdiff(required_group, names(dfBoundsRef))
     if (length(missing_group) > 0) {
       stop(sprintf(
@@ -137,7 +150,7 @@ Visualize_StudyKRI <- function(
 
   # Check required columns in dfBounds if provided
   if (!is.null(dfBounds)) {
-    required_study <- c("StudyMonth", "LowerBound", "UpperBound", "MedianMetric")
+    required_study <- c("StudyMonth", strLowerCol, strUpperCol, strMedianCol)
     missing_study <- setdiff(required_study, names(dfBounds))
     if (length(missing_study) > 0) {
       stop(sprintf(
@@ -210,12 +223,12 @@ Visualize_StudyKRI <- function(
     p <- ggplot2::ggplot(dfBoundsRef, ggplot2::aes(x = .data$StudyMonth)) +
       # Group CI ribbon (light blue background)
       ggplot2::geom_ribbon(
-        ggplot2::aes(ymin = .data$LowerBound, ymax = .data$UpperBound, fill = "Portfolio CI"),
+        ggplot2::aes(ymin = .data[[strLowerCol]], ymax = .data[[strUpperCol]], fill = "Portfolio CI"),
         alpha = 0.5
       ) +
       # Group median line (dashed blue)
       ggplot2::geom_line(
-        ggplot2::aes(y = .data$MedianMetric, color = "Portfolio Median"),
+        ggplot2::aes(y = .data[[strMedianCol]], color = "Portfolio Median"),
         linetype = "dashed",
         linewidth = 0.5
       )
@@ -231,8 +244,8 @@ Visualize_StudyKRI <- function(
         data = dfBounds,
         ggplot2::aes(
           x = .data$StudyMonth,
-          ymin = .data$LowerBound,
-          ymax = .data$UpperBound,
+          ymin = .data[[strLowerCol]],
+          ymax = .data[[strUpperCol]],
           fill = "Study CI"
         ),
         alpha = 0.4

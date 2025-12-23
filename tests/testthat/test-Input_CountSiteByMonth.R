@@ -633,124 +633,65 @@ test_that("Input_CountSiteByMonth errors when no enrolled subjects", {
   )
 })
 
-test_that("Input_CountSiteByMonth works with lazy tables", {
-  skip_if_not_installed("dbplyr")
-  skip_if_not_installed("duckdb")
+# Lazy table tests have been moved to test-dbplyr-compatibility.R
+test_that("Input_CountSiteByMonth includes DenominatorType when strDenominatorType is provided", {
+  # Setup test data
+  dfSubjects <- clindata::rawplus_dm
+  dfNumerator <- clindata::rawplus_ae
+  dfDenominator <- clindata::rawplus_visdt
 
-  # Create in-memory database
-  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
-
-  # Create test data
-  dfSubjects <- data.frame(
-    studyid = rep("STUDY001", 3),
-    invid = rep("SITE01", 3),
-    subjid = c("SUBJ001", "SUBJ002", "SUBJ003"),
-    enrollyn = c("Y", "Y", "Y"),
-    stringsAsFactors = FALSE
-  )
-
-  dfNumerator <- data.frame(
-    subjid = c("SUBJ001", "SUBJ002", "SUBJ003"),
-    aest_dt = as.Date(c("2024-01-15", "2024-01-20", "2024-02-10")),
-    stringsAsFactors = FALSE
-  )
-
-  dfDenominator <- data.frame(
-    subjid = c("SUBJ001", "SUBJ002", "SUBJ003"),
-    visit_dt = as.Date(c("2024-01-10", "2024-01-15", "2024-02-05")),
-    stringsAsFactors = FALSE
-  )
-
-  # Write to database
-  DBI::dbWriteTable(con, "subjects", dfSubjects)
-  DBI::dbWriteTable(con, "numerator", dfNumerator)
-  DBI::dbWriteTable(con, "denominator", dfDenominator)
-
-  # Create lazy tables
-  tblSubjects <- dplyr::tbl(con, "subjects")
-  tblNumerator <- dplyr::tbl(con, "numerator")
-  tblDenominator <- dplyr::tbl(con, "denominator")
-
-  # Execute with lazy tables
+  # Execute with strDenominatorType
   result <- Input_CountSiteByMonth(
-    dfSubjects = tblSubjects,
-    dfNumerator = tblNumerator,
-    dfDenominator = tblDenominator,
+    dfSubjects = dfSubjects,
+    dfNumerator = dfNumerator,
+    dfDenominator = dfDenominator,
+    strNumeratorDateCol = "aest_dt",
+    strDenominatorDateCol = "visit_dt",
+    strDenominatorType = "Visits"
+  )
+
+  # Assert DenominatorType column exists
+  expect_true("DenominatorType" %in% names(result))
+  expect_type(result$DenominatorType, "character")
+  expect_true(all(result$DenominatorType == "Visits"))
+})
+
+test_that("Input_CountSiteByMonth excludes DenominatorType when strDenominatorType is NULL", {
+  # Setup test data
+  dfSubjects <- clindata::rawplus_dm
+  dfNumerator <- clindata::rawplus_ae
+  dfDenominator <- clindata::rawplus_visdt
+
+  # Execute without strDenominatorType (default NULL)
+  result <- Input_CountSiteByMonth(
+    dfSubjects = dfSubjects,
+    dfNumerator = dfNumerator,
+    dfDenominator = dfDenominator,
     strNumeratorDateCol = "aest_dt",
     strDenominatorDateCol = "visit_dt"
   )
 
-  # Collect results
-  if (inherits(result, "tbl_lazy")) {
-    result <- dplyr::collect(result)
-  }
-
-  expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) > 0)
-  expect_true(all(c("GroupID", "Numerator", "Denominator", "MonthYYYYMM") %in% names(result)))
-
-  # Clean up
-  DBI::dbDisconnect(con, shutdown = TRUE)
+  # Assert DenominatorType column does not exist
+  expect_false("DenominatorType" %in% names(result))
 })
 
-test_that("calculate_days_by_month works with lazy tables", {
-  skip_if_not_installed("dbplyr")
-  skip_if_not_installed("duckdb")
+test_that("Input_CountSiteByMonth includes DenominatorType with days-based calculation", {
+  # Setup test data
+  dfSubjects <- clindata::rawplus_dm
+  dfNumerator <- clindata::rawplus_ae
 
-  # Create in-memory database
-  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
-
-  # Create test data
-  dfSubjects <- data.frame(
-    studyid = "STUDY001",
-    invid = "SITE01",
-    subjid = "SUBJ001",
-    enrollyn = "Y",
-    stringsAsFactors = FALSE
-  )
-
-  dfNumerator <- data.frame(
-    subjid = "SUBJ001",
-    aest_dt = as.Date("2024-01-15"),
-    stringsAsFactors = FALSE
-  )
-
-  dfDenominator <- data.frame(
-    subjid = "SUBJ001",
-    start_date = as.Date("2024-01-01"),
-    end_date = as.Date("2024-02-29"),
-    stringsAsFactors = FALSE
-  )
-
-  # Write to database
-  DBI::dbWriteTable(con, "subjects", dfSubjects)
-  DBI::dbWriteTable(con, "numerator", dfNumerator)
-  DBI::dbWriteTable(con, "denominator", dfDenominator)
-
-  # Create lazy tables
-  tblSubjects <- dplyr::tbl(con, "subjects")
-  tblNumerator <- dplyr::tbl(con, "numerator")
-  tblDenominator <- dplyr::tbl(con, "denominator")
-
-  # Execute with lazy tables and end date column
+  # Execute with strDenominatorType and end date column
   result <- Input_CountSiteByMonth(
-    dfSubjects = tblSubjects,
-    dfNumerator = tblNumerator,
-    dfDenominator = tblDenominator,
+    dfSubjects = dfSubjects,
+    dfNumerator = dfNumerator,
+    dfDenominator = dfSubjects,
     strNumeratorDateCol = "aest_dt",
-    strDenominatorDateCol = "start_date",
-    strDenominatorEndDateCol = "end_date"
+    strDenominatorDateCol = "firstparticipantdate",
+    strDenominatorEndDateCol = "lastparticipantdate",
+    strDenominatorType = "Days on Study"
   )
 
-  # Collect results
-  if (inherits(result, "tbl_lazy")) {
-    result <- dplyr::collect(result)
-  }
-
-  expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) >= 2) # Should have Jan and Feb
-  expect_true(all(result$Denominator > 0))
-
-  # Clean up
-  DBI::dbDisconnect(con, shutdown = TRUE)
+  # Assert DenominatorType column exists with correct value
+  expect_true("DenominatorType" %in% names(result))
+  expect_true(all(result$DenominatorType == "Days on Study"))
 })

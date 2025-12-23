@@ -1,4 +1,6 @@
-test_that("Analyze_StudyKRI returns correct structure", {
+test_that("BootstrapStudyKRI returns correct structure", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteA", "SiteB", "SiteB"),
     GroupLevel = "Site",
@@ -9,7 +11,7 @@ test_that("Analyze_StudyKRI returns correct structure", {
     MonthYYYYMM = c(202301, 202302, 202301, 202302)
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, seed = 42)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 42)
 
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
@@ -17,7 +19,8 @@ test_that("Analyze_StudyKRI returns correct structure", {
   expect_true(all(c("GroupID", "Numerator", "Denominator", "StudyID") %in% names(result)))
 })
 
-test_that("Analyze_StudyKRI generates correct number of replicates", {
+test_that("BootstrapStudyKRI generates correct number of replicates", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB"),
     StudyID = c("Study1", "Study1"),
@@ -27,13 +30,14 @@ test_that("Analyze_StudyKRI generates correct number of replicates", {
   )
 
   nReps <- 50
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = nReps, seed = 123)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = nReps, seed = 123)
 
   expect_equal(length(unique(result$BootstrapRep)), nReps)
   expect_true(all(result$BootstrapRep >= 1 & result$BootstrapRep <= nReps))
 })
 
-test_that("Analyze_StudyKRI resamples with replacement", {
+test_that("BootstrapStudyKRI resamples with replacement", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB", "SiteC"),
     StudyID = c("Study1", "Study1", "Study1"),
@@ -43,7 +47,7 @@ test_that("Analyze_StudyKRI resamples with replacement", {
   )
 
   # With many replicates, we should see some sites appearing multiple times
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 100, seed = 456)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 100, seed = 456)
 
   # Count sites per replicate
   site_counts <- result %>%
@@ -54,7 +58,8 @@ test_that("Analyze_StudyKRI resamples with replacement", {
   expect_true(any(site_counts$Count > 1))
 })
 
-test_that("Analyze_StudyKRI seed produces reproducible results", {
+test_that("BootstrapStudyKRI seed produces reproducible results", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB", "SiteC"),
     StudyID = c("Study1", "Study1", "Study1"),
@@ -63,13 +68,14 @@ test_that("Analyze_StudyKRI seed produces reproducible results", {
     MonthYYYYMM = c(202301, 202301, 202301)
   )
 
-  result1 <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, seed = 999)
-  result2 <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, seed = 999)
+  result1 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 999)
+  result2 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 999)
 
   expect_equal(result1, result2)
 })
 
-test_that("Analyze_StudyKRI without seed produces different results", {
+test_that("BootstrapStudyKRI without seed produces different results", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB", "SiteC"),
     StudyID = c("Study1", "Study1", "Study1"),
@@ -78,15 +84,16 @@ test_that("Analyze_StudyKRI without seed produces different results", {
     MonthYYYYMM = c(202301, 202301, 202301)
   )
 
-  result1 <- Analyze_StudyKRI(dfInput, nBootstrapReps = 50, seed = NULL)
-  result2 <- Analyze_StudyKRI(dfInput, nBootstrapReps = 50, seed = NULL)
+  result1 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 50, seed = NULL)
+  result2 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 50, seed = NULL)
 
   # Results should differ (though technically could be identical by chance)
   # Check at least one row differs
   expect_false(identical(result1, result2))
 })
 
-test_that("Analyze_StudyKRI handles multiple studies independently", {
+test_that("BootstrapStudyKRI handles multiple studies independently", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB", "SiteC", "SiteD"),
     StudyID = c("Study1", "Study1", "Study2", "Study2"),
@@ -95,7 +102,7 @@ test_that("Analyze_StudyKRI handles multiple studies independently", {
     MonthYYYYMM = c(202301, 202301, 202301, 202301)
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 20, seed = 111)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 20, seed = 111)
 
   # Check both studies present in all replicates
   study_counts <- result %>%
@@ -116,7 +123,8 @@ test_that("Analyze_StudyKRI handles multiple studies independently", {
   expect_true(all(study2_results$GroupID %in% study2_sites))
 })
 
-test_that("Analyze_StudyKRI nGroups parameter works for downsampling", {
+test_that("BootstrapStudyKRI nGroups parameter works for downsampling", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB", "SiteC", "SiteD"),
     StudyID = c("Study1", "Study1", "Study1", "Study1"),
@@ -125,7 +133,7 @@ test_that("Analyze_StudyKRI nGroups parameter works for downsampling", {
     MonthYYYYMM = c(202301, 202301, 202301, 202301)
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nGroups = 2, seed = 222)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, nGroups = 2, seed = 222)
 
   # Each replicate should have exactly 2 sites worth of data
   site_counts <- result %>%
@@ -135,7 +143,8 @@ test_that("Analyze_StudyKRI nGroups parameter works for downsampling", {
   expect_true(all(site_counts$UniqueSites <= 2))
 })
 
-test_that("Analyze_StudyKRI nGroups parameter works for upsampling", {
+test_that("BootstrapStudyKRI nGroups parameter works for upsampling", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB"),
     StudyID = c("Study1", "Study1"),
@@ -144,7 +153,7 @@ test_that("Analyze_StudyKRI nGroups parameter works for upsampling", {
     MonthYYYYMM = c(202301, 202301)
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nGroups = 5, seed = 333)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, nGroups = 5, seed = 333)
 
   # Each replicate should have 5 site selections (some will be duplicates)
   row_counts <- result %>%
@@ -154,7 +163,8 @@ test_that("Analyze_StudyKRI nGroups parameter works for upsampling", {
   expect_true(all(row_counts$RowCount == 5))
 })
 
-test_that("Analyze_StudyKRI handles single site per study", {
+test_that("BootstrapStudyKRI handles single site per study", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteA"),
     StudyID = c("Study1", "Study1"),
@@ -163,7 +173,7 @@ test_that("Analyze_StudyKRI handles single site per study", {
     MonthYYYYMM = c(202301, 202302)
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 5, seed = 444)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, seed = 444)
 
   expect_true(nrow(result) > 0)
   expect_equal(length(unique(result$BootstrapRep)), 5)
@@ -171,7 +181,8 @@ test_that("Analyze_StudyKRI handles single site per study", {
   expect_true(all(result$GroupID == "SiteA"))
 })
 
-test_that("Analyze_StudyKRI handles single study", {
+test_that("BootstrapStudyKRI handles single study", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB", "SiteC"),
     StudyID = c("Study1", "Study1", "Study1"),
@@ -180,13 +191,14 @@ test_that("Analyze_StudyKRI handles single study", {
     MonthYYYYMM = c(202301, 202301, 202301)
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, seed = 555)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 555)
 
   expect_true(all(result$StudyID == "Study1"))
   expect_equal(length(unique(result$BootstrapRep)), 10)
 })
 
-test_that("Analyze_StudyKRI preserves all original columns", {
+test_that("BootstrapStudyKRI preserves all original columns", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB"),
     GroupLevel = c("Site", "Site"),
@@ -198,14 +210,15 @@ test_that("Analyze_StudyKRI preserves all original columns", {
     CustomColumn = c("A", "B")
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 5, seed = 666)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, seed = 666)
 
   original_cols <- names(dfInput)
   expect_true(all(original_cols %in% names(result)))
   expect_true("BootstrapRep" %in% names(result))
 })
 
-test_that("Analyze_StudyKRI preserves data types", {
+test_that("BootstrapStudyKRI preserves data types", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB"),
     StudyID = c("Study1", "Study1"),
@@ -215,7 +228,7 @@ test_that("Analyze_StudyKRI preserves data types", {
     MonthYYYYMM = c(202301, 202301)
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 5, seed = 777)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, seed = 777)
 
   expect_type(result$GroupID, "character")
   expect_type(result$StudyID, "character")
@@ -225,7 +238,8 @@ test_that("Analyze_StudyKRI preserves data types", {
   expect_type(result$BootstrapRep, "integer")
 })
 
-test_that("Analyze_StudyKRI handles custom column names", {
+test_that("BootstrapStudyKRI handles custom column names", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     SiteCode = c("SiteA", "SiteB"),
     ProtocolID = c("PROTO1", "PROTO1"),
@@ -234,7 +248,7 @@ test_that("Analyze_StudyKRI handles custom column names", {
     MonthYYYYMM = c(202301, 202301)
   )
 
-  result <- Analyze_StudyKRI(
+  result <- BootstrapStudyKRI(
     dfInput,
     nBootstrapReps = 5,
     strStudyCol = "ProtocolID",
@@ -248,14 +262,16 @@ test_that("Analyze_StudyKRI handles custom column names", {
   expect_equal(length(unique(result$BootstrapRep)), 5)
 })
 
-test_that("Analyze_StudyKRI errors on missing dfInput", {
+test_that("BootstrapStudyKRI errors on missing dfInput", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   expect_error(
-    Analyze_StudyKRI(dfInput = NULL, nBootstrapReps = 10),
+    BootstrapStudyKRI(dfInput = NULL, nBootstrapReps = 10),
     "dfInput must be a data frame"
   )
 })
 
-test_that("Analyze_StudyKRI errors on empty dfInput", {
+test_that("BootstrapStudyKRI errors on empty dfInput", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = character(0),
     StudyID = character(0),
@@ -263,36 +279,39 @@ test_that("Analyze_StudyKRI errors on empty dfInput", {
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 10),
+    BootstrapStudyKRI(dfInput, nBootstrapReps = 10),
     "dfInput has no rows"
   )
 })
 
-test_that("Analyze_StudyKRI errors on missing StudyID column", {
+test_that("BootstrapStudyKRI errors on missing StudyID column", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB"),
     Numerator = c(1, 2)
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 10),
+    BootstrapStudyKRI(dfInput, nBootstrapReps = 10),
     "strStudyCol 'StudyID' not found in dfInput"
   )
 })
 
-test_that("Analyze_StudyKRI errors on missing GroupID column", {
+test_that("BootstrapStudyKRI errors on missing GroupID column", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     StudyID = c("Study1", "Study1"),
     Numerator = c(1, 2)
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 10),
+    BootstrapStudyKRI(dfInput, nBootstrapReps = 10),
     "strGroupCol 'GroupID' not found in dfInput"
   )
 })
 
-test_that("Analyze_StudyKRI errors on invalid nBootstrapReps", {
+test_that("BootstrapStudyKRI errors on invalid nBootstrapReps", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB"),
     StudyID = c("Study1", "Study1"),
@@ -300,22 +319,23 @@ test_that("Analyze_StudyKRI errors on invalid nBootstrapReps", {
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = -5),
+    BootstrapStudyKRI(dfInput, nBootstrapReps = -5),
     "nBootstrapReps must be a single positive integer"
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 0),
+    BootstrapStudyKRI(dfInput, nBootstrapReps = 0),
     "nBootstrapReps must be a single positive integer"
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = c(10, 20)),
+    BootstrapStudyKRI(dfInput, nBootstrapReps = c(10, 20)),
     "nBootstrapReps must be a single positive integer"
   )
 })
 
-test_that("Analyze_StudyKRI errors on invalid nGroups", {
+test_that("BootstrapStudyKRI errors on invalid nGroups", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB"),
     StudyID = c("Study1", "Study1"),
@@ -323,22 +343,23 @@ test_that("Analyze_StudyKRI errors on invalid nGroups", {
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nGroups = -1),
+    BootstrapStudyKRI(dfInput, nBootstrapReps = 10, nGroups = -1),
     "nGroups must be NULL or a single positive integer"
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nGroups = 0),
+    BootstrapStudyKRI(dfInput, nBootstrapReps = 10, nGroups = 0),
     "nGroups must be NULL or a single positive integer"
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 10, nGroups = c(2, 3)),
+    BootstrapStudyKRI(dfInput, nBootstrapReps = 10, nGroups = c(2, 3)),
     "nGroups must be NULL or a single positive integer"
   )
 })
 
-test_that("Analyze_StudyKRI errors on invalid seed", {
+test_that("BootstrapStudyKRI errors on invalid seed", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB"),
     StudyID = c("Study1", "Study1"),
@@ -346,12 +367,13 @@ test_that("Analyze_StudyKRI errors on invalid seed", {
   )
 
   expect_error(
-    Analyze_StudyKRI(dfInput, nBootstrapReps = 10, seed = c(1, 2)),
+    BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = c(1, 2)),
     "seed must be NULL or a single numeric value"
   )
 })
 
-test_that("Analyze_StudyKRI integrates with Input_CountSiteByMonth output", {
+test_that("BootstrapStudyKRI integrates with Input_CountSiteByMonth output", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   skip_if_not_installed("clindata")
 
   dfSubjects <- clindata::rawplus_dm
@@ -366,7 +388,7 @@ test_that("Analyze_StudyKRI integrates with Input_CountSiteByMonth output", {
     strDenominatorDateCol = "visit_dt"
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, seed = 12345)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 12345)
 
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
@@ -377,7 +399,8 @@ test_that("Analyze_StudyKRI integrates with Input_CountSiteByMonth output", {
   expect_true(all(names(dfInput) %in% names(result)))
 })
 
-test_that("Analyze_StudyKRI output works with Transform_CumCount", {
+test_that("BootstrapStudyKRI output works with Transform_CumCount", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   skip_if_not_installed("clindata")
 
   dfSubjects <- clindata::rawplus_dm
@@ -392,7 +415,7 @@ test_that("Analyze_StudyKRI output works with Transform_CumCount", {
     strDenominatorDateCol = "visit_dt"
   )
 
-  dfBootstrap <- Analyze_StudyKRI(dfInput, nBootstrapReps = 5, seed = 99999)
+  dfBootstrap <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, seed = 99999)
 
   # Should work with vBy including BootstrapRep
   dfTransformed <- Transform_CumCount(
@@ -408,7 +431,8 @@ test_that("Analyze_StudyKRI output works with Transform_CumCount", {
   expect_true("Metric" %in% names(dfTransformed))
 })
 
-test_that("Analyze_StudyKRI maintains correct row multiplier", {
+test_that("BootstrapStudyKRI maintains correct row multiplier", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteA", "SiteB"),
     StudyID = c("Study1", "Study1", "Study1"),
@@ -418,7 +442,7 @@ test_that("Analyze_StudyKRI maintains correct row multiplier", {
   )
 
   nReps <- 100
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = nReps, seed = 7777)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = nReps, seed = 7777)
 
   # Total rows should be approximately nReps * number of sites per study
   # (with variation due to sampling)
@@ -431,7 +455,8 @@ test_that("Analyze_StudyKRI maintains correct row multiplier", {
   expect_true(nrow(result) <= nReps * 6) # At maximum, if all sites sampled multiple times
 })
 
-test_that("Analyze_StudyKRI bootstrap distribution has expected properties", {
+test_that("BootstrapStudyKRI bootstrap distribution has expected properties", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB", "SiteC"),
     StudyID = c("Study1", "Study1", "Study1"),
@@ -441,7 +466,7 @@ test_that("Analyze_StudyKRI bootstrap distribution has expected properties", {
   )
 
   nReps <- 500
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = nReps, seed = 8888)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = nReps, seed = 8888)
 
   # Calculate mean numerator per replicate
   rep_means <- result %>%
@@ -456,7 +481,8 @@ test_that("Analyze_StudyKRI bootstrap distribution has expected properties", {
   expect_true(abs(bootstrap_mean - population_mean) < 2)
 })
 
-test_that("Analyze_StudyKRI handles multiple months correctly", {
+test_that("BootstrapStudyKRI handles multiple months correctly", {
+  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = rep(c("SiteA", "SiteB"), each = 3),
     StudyID = rep("Study1", 6),
@@ -465,7 +491,7 @@ test_that("Analyze_StudyKRI handles multiple months correctly", {
     MonthYYYYMM = rep(c(202301, 202302, 202303), 2)
   )
 
-  result <- Analyze_StudyKRI(dfInput, nBootstrapReps = 10, seed = 9999)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 9999)
 
   # All months should be represented in bootstrap samples
   expect_true(all(c(202301, 202302, 202303) %in% result$MonthYYYYMM))

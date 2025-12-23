@@ -1,0 +1,8 @@
+- the goal here is to create a new github issue based on a feature development plan produced from plan mode
+- the github token is in the .Renviron file load GITHUB_PAT as an evironment variable and pass it to the github API
+- make sure the clear token does not appear in any logs
+- before creating the issue check for uncommitted code, outside the .cursor folder
+- when there is uncommitted code ask user to commit or revert changes, do not open the issue
+- create issue with markdown development plan
+- create a mew branch starting with the issue number and a very short description e.g. 12_licence, 34_barchart (all lower caps)
+- switch to new branch
