@@ -19,15 +19,9 @@ spec:
       type: character
     MonthYYYYMM:
       type: numeric
-  Reporting_Metrics:
-    MetricID:
-      type: character
-    Denominator:
-      type: character
 steps:
   # Step 1: Join Analysis_Input by denominator
   - output: Joined_Analysis_Input
     name: gsm.studykri::JoinKRIByDenominator
     params:
       dfInput: Reporting_Input
-      dfMetrics: Reporting_Metrics

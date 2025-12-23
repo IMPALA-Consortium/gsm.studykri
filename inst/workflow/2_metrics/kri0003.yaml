@@ -54,6 +54,7 @@ steps:
       strSubjectCol: subjid
       strNumeratorDateCol: aest_dt
       strDenominatorDateCol: visit_dt
+      strDenominatorType: Denominator
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount
     params:

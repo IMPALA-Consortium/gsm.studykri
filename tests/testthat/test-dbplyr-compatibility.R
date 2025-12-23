@@ -616,7 +616,7 @@ test_that("JoinKRIByDenominator works with lazy tables", {
   # Create in-memory database
   con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
 
-  # Create test data
+  # Create test data (DenominatorType column is now required in dfInput)
   dfInput <- data.frame(
     MetricID = c("kri0001", "kri0001", "kri0003", "kri0003"),
     GroupID = c("Site1", "Site2", "Site1", "Site2"),
@@ -625,6 +625,7 @@ test_that("JoinKRIByDenominator works with lazy tables", {
     Denominator = c(100, 80, 100, 80),
     StudyID = "AA-1",
     MonthYYYYMM = 202301,
+    DenominatorType = "Visits",
     stringsAsFactors = FALSE
   )
 

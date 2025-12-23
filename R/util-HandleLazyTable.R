@@ -20,11 +20,9 @@ HandleLazyTable <- function(tblInput,
                             dfMem,
                             strTempTableName,
                             strTableType) {
+                              
   # For in-memory data frames, just return the in-memory data directly
   if (!inherits(tblInput, "tbl_lazy")) {
-    if (!is.null(tblUser) && is.data.frame(tblUser)) {
-      return(tblUser)
-    }
     return(dfMem)
   }
 

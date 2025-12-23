@@ -634,3 +634,64 @@ test_that("Input_CountSiteByMonth errors when no enrolled subjects", {
 })
 
 # Lazy table tests have been moved to test-dbplyr-compatibility.R
+test_that("Input_CountSiteByMonth includes DenominatorType when strDenominatorType is provided", {
+  # Setup test data
+  dfSubjects <- clindata::rawplus_dm
+  dfNumerator <- clindata::rawplus_ae
+  dfDenominator <- clindata::rawplus_visdt
+
+  # Execute with strDenominatorType
+  result <- Input_CountSiteByMonth(
+    dfSubjects = dfSubjects,
+    dfNumerator = dfNumerator,
+    dfDenominator = dfDenominator,
+    strNumeratorDateCol = "aest_dt",
+    strDenominatorDateCol = "visit_dt",
+    strDenominatorType = "Visits"
+  )
+
+  # Assert DenominatorType column exists
+  expect_true("DenominatorType" %in% names(result))
+  expect_type(result$DenominatorType, "character")
+  expect_true(all(result$DenominatorType == "Visits"))
+})
+
+test_that("Input_CountSiteByMonth excludes DenominatorType when strDenominatorType is NULL", {
+  # Setup test data
+  dfSubjects <- clindata::rawplus_dm
+  dfNumerator <- clindata::rawplus_ae
+  dfDenominator <- clindata::rawplus_visdt
+
+  # Execute without strDenominatorType (default NULL)
+  result <- Input_CountSiteByMonth(
+    dfSubjects = dfSubjects,
+    dfNumerator = dfNumerator,
+    dfDenominator = dfDenominator,
+    strNumeratorDateCol = "aest_dt",
+    strDenominatorDateCol = "visit_dt"
+  )
+
+  # Assert DenominatorType column does not exist
+  expect_false("DenominatorType" %in% names(result))
+})
+
+test_that("Input_CountSiteByMonth includes DenominatorType with days-based calculation", {
+  # Setup test data
+  dfSubjects <- clindata::rawplus_dm
+  dfNumerator <- clindata::rawplus_ae
+
+  # Execute with strDenominatorType and end date column
+  result <- Input_CountSiteByMonth(
+    dfSubjects = dfSubjects,
+    dfNumerator = dfNumerator,
+    dfDenominator = dfSubjects,
+    strNumeratorDateCol = "aest_dt",
+    strDenominatorDateCol = "firstparticipantdate",
+    strDenominatorEndDateCol = "lastparticipantdate",
+    strDenominatorType = "Days on Study"
+  )
+
+  # Assert DenominatorType column exists with correct value
+  expect_true("DenominatorType" %in% names(result))
+  expect_true(all(result$DenominatorType == "Days on Study"))
+})

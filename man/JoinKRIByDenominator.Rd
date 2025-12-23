@@ -27,13 +27,12 @@ dfInput <- data.frame(
   Numerator = c(5, 3, 2, 1),
   Denominator = c(100, 80, 100, 80),
   StudyID = "AA-1",
-  MonthYYYYMM = 202301
+  MonthYYYYMM = 202301,
+  DenominatorType = "Visit"
 )
-dfMetrics <- data.frame(
-  MetricID = c("kri0001", "kri0003"),
-  Denominator = c("Visits", "Visits")
-)
-lJoined <- JoinKRIByDenominator(dfInput, dfMetrics)
+
+lJoined <- JoinKRIByDenominator(dfInput)
+
 names(lJoined)
 
 }

@@ -44,6 +44,7 @@ steps:
       strNumeratorDateCol: aest_dt
       strDenominatorDateCol: firstparticipantdate
       strDenominatorEndDateCol: lastparticipantdate
+      strDenominatorType: Denominator
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount
     params:

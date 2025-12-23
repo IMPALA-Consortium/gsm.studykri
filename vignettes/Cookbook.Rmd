@@ -291,9 +291,9 @@ We assemble some data needed for reporting.
 
 ```{r cook5}
 
-dfInput <- gsm.reporting::BindResults(lAnalyzed, "Analysis_Input")
+dfInput <- gsm.studykri::BindResults(lAnalyzed, "Analysis_Input")
 
-dfTransformed <- gsm.reporting::BindResults(lAnalyzed, "Analysis_Transformed")
+dfTransformed <- gsm.studykri::BindResults(lAnalyzed, "Analysis_Transformed")
 
 dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
 
@@ -312,7 +312,7 @@ In order to make the bootstrapping more efficient we can combine all KRI that us
 
 ```{r}
 
-lJoined <- gsm.studykri::JoinKRIByDenominator(dfInput, dfMetrics)
+lJoined <- gsm.studykri::JoinKRIByDenominator(dfInput)
 
 str(lJoined)
 

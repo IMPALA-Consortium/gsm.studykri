@@ -118,7 +118,7 @@ test_that("ParseFunction works with gsm.studykri functions in workflow", {
   expect_type(func, "closure")
   expect_identical(func, gsm.studykri::JoinKRIByDenominator)
 
-  # Create simple test data
+  # Create simple test data (DenominatorType column is now required)
   dfInput <- data.frame(
     MetricID = "kri0001",
     GroupID = "Site1",
@@ -126,7 +126,8 @@ test_that("ParseFunction works with gsm.studykri functions in workflow", {
     Numerator = 5,
     Denominator = 100,
     StudyID = "AA-1",
-    MonthYYYYMM = 202301
+    MonthYYYYMM = 202301,
+    DenominatorType = "Visits"
   )
 
   dfMetrics <- data.frame(

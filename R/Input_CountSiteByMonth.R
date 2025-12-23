@@ -107,9 +107,13 @@ CalculateDaysByMonth <- function(dfData, strStartDateCol, strEndDateCol, vGroupC
 #' @param strSubjectCol character. Column name for subject identifier (default: "subjid").
 #' @param strNumeratorDateCol character. Date column name in numerator data.
 #' @param strDenominatorDateCol character. Date column name in denominator data (start date).
-#' @param strDenominatorEndDateCol character. End date column in denominator data (default: NULL). When provided, calculates sum of days between start/end dates per month instead of record counts.
+#' @param strDenominatorEndDateCol character. End date column in denominator data (default: NULL). 
+#' When provided, calculates sum of days between start/end dates per month instead of record counts.
+#' @param strDenominatorType character. Optional denominator type label (e.g., "Visits", "Days on Study").
+#' When provided, adds a DenominatorType column to the output.
 #'
-#' @return data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM
+#' @return data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.
+#' If strDenominatorType is provided, also includes DenominatorType column.
 #'
 #' @examples
 #' dfSubjects <- clindata::rawplus_dm
@@ -146,7 +150,8 @@ Input_CountSiteByMonth <- function(
     strSubjectCol = "subjid",
     strNumeratorDateCol,
     strDenominatorDateCol,
-    strDenominatorEndDateCol = NULL) {
+    strDenominatorEndDateCol = NULL,
+    strDenominatorType = NULL) {
   # Input validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfSubjects, c("data.frame", "tbl"))) {
     stop("dfSubjects must be a data.frame or tbl object")
@@ -193,11 +198,6 @@ Input_CountSiteByMonth <- function(
     ))
   }
 
-  # Helper to detect lazy tables
-  is_lazy_table <- function(x) {
-    inherits(x, "tbl_lazy")
-  }
-
   # Filter to enrolled subjects only (use colnames for lazy table compatibility)
   if ("enrollyn" %in% colnames(dfSubjects)) {
     dfSubjects <- dfSubjects %>%
@@ -218,21 +218,13 @@ Input_CountSiteByMonth <- function(
       by = stats::setNames(strSubjectCol, strSubjectCol)
     ) %>%
     dplyr::filter(!is.na(.data[[strNumeratorDateCol]])) %>%
-    # Conditional date handling for dbplyr compatibility
-    {
-      if (is_lazy_table(.)) {
-        dplyr::mutate(.,
-          year = lubridate::year(.data[[strNumeratorDateCol]]),
-          month = lubridate::month(.data[[strNumeratorDateCol]]),
-          MonthYYYYMM = .data$year * 100 + .data$month
-        ) %>%
-          dplyr::select(-"year", -"month")
-      } else {
-        dplyr::mutate(.,
-          MonthYYYYMM = as.numeric(format(as.Date(.data[[strNumeratorDateCol]]), "%Y%m"))
-        )
-      }
-    }
+    dplyr::mutate(
+      .date_parsed = as.Date(.data[[strNumeratorDateCol]]),
+      year = lubridate::year(.data$.date_parsed),
+      month = lubridate::month(.data$.date_parsed),
+      MonthYYYYMM = .data$year * 100 + .data$month
+    ) %>%
+    dplyr::select(-".date_parsed", -"year", -"month")
 
   # Count numerator events by site-month
   dfNum_counts <- dfNum_processed %>%
@@ -248,7 +240,7 @@ Input_CountSiteByMonth <- function(
 
   # Process denominator data - two modes: count or days
   if (is.null(strDenominatorEndDateCol)) {
-    # Mode 1: Count denominator records by month (existing logic)
+    # Mode 1: Count denominator records by month
     dfDenom_processed <- dfDenominator %>%
       dplyr::select(-dplyr::any_of(c(.env$strStudyCol, .env$strGroupCol))) %>%
       dplyr::inner_join(
@@ -256,21 +248,13 @@ Input_CountSiteByMonth <- function(
         by = stats::setNames(strSubjectCol, strSubjectCol)
       ) %>%
       dplyr::filter(!is.na(.data[[strDenominatorDateCol]])) %>%
-      # Conditional date handling for dbplyr compatibility
-      {
-        if (is_lazy_table(.)) {
-          dplyr::mutate(.,
-            year = lubridate::year(.data[[strDenominatorDateCol]]),
-            month = lubridate::month(.data[[strDenominatorDateCol]]),
-            MonthYYYYMM = .data$year * 100 + .data$month
-          ) %>%
-            dplyr::select(-"year", -"month")
-        } else {
-          dplyr::mutate(.,
-            MonthYYYYMM = as.numeric(format(as.Date(.data[[strDenominatorDateCol]]), "%Y%m"))
-          )
-        }
-      }
+      dplyr::mutate(
+        .date_parsed = as.Date(.data[[strDenominatorDateCol]]),
+        year = lubridate::year(.data$.date_parsed),
+        month = lubridate::month(.data$.date_parsed),
+        MonthYYYYMM = .data$year * 100 + .data$month
+      ) %>%
+      dplyr::select(-".date_parsed", -"year", -"month")
 
     # Count denominator events by site-month
     dfDenom_counts <- dfDenom_processed %>%
@@ -347,6 +331,12 @@ Input_CountSiteByMonth <- function(
       StudyID = dplyr::all_of(.env$strStudyCol),
       "MonthYYYYMM"
     )
+
+  # Add DenominatorType column if strDenominatorType is provided
+  if (!is.null(strDenominatorType)) {
+    dfFinal <- dfFinal %>%
+      dplyr::mutate(DenominatorType = .env$strDenominatorType)
+  }
 
   return(dfFinal)
 }

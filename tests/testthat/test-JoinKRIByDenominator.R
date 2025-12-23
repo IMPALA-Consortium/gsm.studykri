@@ -1,5 +1,5 @@
 test_that("JoinKRIByDenominator joins KRIs by denominator type", {
-  # Mock dfInput with 2 KRIs sharing same denominator
+  # Mock dfInput with 2 KRIs sharing same denominator (now includes DenominatorType)
   dfInput <- data.frame(
     MetricID = c("kri0001", "kri0001", "kri0003", "kri0003"),
     GroupID = c("Site1", "Site2", "Site1", "Site2"),
@@ -7,10 +7,11 @@ test_that("JoinKRIByDenominator joins KRIs by denominator type", {
     Numerator = c(5, 3, 2, 1),
     Denominator = c(100, 80, 100, 80),
     StudyID = "AA-1",
-    MonthYYYYMM = 202301
+    MonthYYYYMM = 202301,
+    DenominatorType = "Visits"
   )
 
-  # Mock dfMetrics mapping KRIs to denominator
+  # dfMetrics no longer used to get DenominatorType
   dfMetrics <- data.frame(
     MetricID = c("kri0001", "kri0003"),
     Denominator = c("Visits", "Visits")
@@ -41,7 +42,8 @@ test_that("JoinKRIByDenominator handles multiple denominator types", {
     Numerator = c(5, 10),
     Denominator = c(100, 500),
     StudyID = "AA-1",
-    MonthYYYYMM = 202301
+    MonthYYYYMM = 202301,
+    DenominatorType = c("Visits", "Days on Study")
   )
 
   dfMetrics <- data.frame(
@@ -57,6 +59,29 @@ test_that("JoinKRIByDenominator handles multiple denominator types", {
 
   expect_true("Numerator_kri0001" %in% names(lResult$Visits))
   expect_true("Numerator_kri0002" %in% names(lResult$`Days on Study`))
+})
+
+test_that("JoinKRIByDenominator errors when DenominatorType column is missing", {
+  # dfInput without DenominatorType column
+  dfInput <- data.frame(
+    MetricID = c("kri0001", "kri0001"),
+    GroupID = c("Site1", "Site2"),
+    GroupLevel = "Site",
+    Numerator = c(5, 3),
+    Denominator = c(100, 80),
+    StudyID = "AA-1",
+    MonthYYYYMM = 202301
+  )
+
+  dfMetrics <- data.frame(
+    MetricID = c("kri0001"),
+    Denominator = c("Visits")
+  )
+
+  expect_error(
+    JoinKRIByDenominator(dfInput, dfMetrics),
+    "dfInput must contain a 'DenominatorType' column"
+  )
 })
 
 

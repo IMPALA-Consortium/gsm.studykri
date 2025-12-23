@@ -14,7 +14,8 @@ Input_CountSiteByMonth(
   strSubjectCol = "subjid",
   strNumeratorDateCol,
   strDenominatorDateCol,
-  strDenominatorEndDateCol = NULL
+  strDenominatorEndDateCol = NULL,
+  strDenominatorType = NULL
 )
 }
 \arguments{
@@ -36,10 +37,15 @@ Input_CountSiteByMonth(
 
 \item{strDenominatorDateCol}{character. Date column name in denominator data (start date).}
 
-\item{strDenominatorEndDateCol}{character. End date column in denominator data (default: NULL). When provided, calculates sum of days between start/end dates per month instead of record counts.}
+\item{strDenominatorEndDateCol}{character. End date column in denominator data (default: NULL).
+When provided, calculates sum of days between start/end dates per month instead of record counts.}
+
+\item{strDenominatorType}{character. Optional denominator type label (e.g., "Visits", "Days on Study").
+When provided, adds a DenominatorType column to the output.}
 }
 \value{
-data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM
+data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.
+If strDenominatorType is provided, also includes DenominatorType column.
 }
 \description{
 Calculates monthly event counts and ratios by site and month for KRI analysis.

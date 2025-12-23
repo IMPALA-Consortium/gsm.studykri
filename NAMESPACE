@@ -3,6 +3,7 @@
 export(Analyze_StudyKRI_PredictBounds)
 export(Analyze_StudyKRI_PredictBoundsRef)
 export(Analyze_StudyKRI_PredictBoundsRefSet)
+export(BindResults)
 export(Input_CountSiteByMonth)
 export(JoinKRIByDenominator)
 export(MakeCharts_StudyKRI)

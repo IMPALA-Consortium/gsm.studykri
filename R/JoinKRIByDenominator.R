@@ -18,33 +18,30 @@
 #'   Numerator = c(5, 3, 2, 1),
 #'   Denominator = c(100, 80, 100, 80),
 #'   StudyID = "AA-1",
-#'   MonthYYYYMM = 202301
+#'   MonthYYYYMM = 202301,
+#'   DenominatorType = "Visit"
 #' )
-#' dfMetrics <- data.frame(
-#'   MetricID = c("kri0001", "kri0003"),
-#'   Denominator = c("Visits", "Visits")
-#' )
-#' lJoined <- JoinKRIByDenominator(dfInput, dfMetrics)
+#' 
+#' lJoined <- JoinKRIByDenominator(dfInput)
+#' 
 #' names(lJoined)
 #'
 #' @export
 JoinKRIByDenominator <- function(dfInput, dfMetrics) {
-  # Join to get denominator type
- dfJoined <- dfInput %>%
-    dplyr::left_join(
-      dfMetrics %>% dplyr::select("MetricID", DenominatorType = "Denominator"),
-      by = "MetricID"
-    )
+  # Validate DenominatorType column exists in dfInput
+  if (!"DenominatorType" %in% colnames(dfInput)) {
+    stop("dfInput must contain a 'DenominatorType' column. Use strDenominatorType parameter in Input_CountSiteByMonth.")
+  }
 
   # Get unique denominator types
-  vDenomTypes <- dfJoined %>%
+  vDenomTypes <- dfInput %>%
     dplyr::distinct(.data$DenominatorType) %>%
     dplyr::collect() %>%
     dplyr::pull(.data$DenominatorType)
 
   # Build output list
  lResult <- lapply(vDenomTypes, function(strDenomType) {
-    dfFiltered <- dfJoined %>%
+    dfFiltered <- dfInput %>%
       dplyr::filter(.data$DenominatorType == .env$strDenomType)
 
     # Pivot wider: Numerator becomes Numerator_<MetricID>
