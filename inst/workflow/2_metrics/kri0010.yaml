@@ -1,11 +1,11 @@
 meta:
   Type: Analysis
-  ID: kri0002
+  ID: kri0010
   GroupLevel: Site
-  Abbreviation: SAE
-  Metric: Serious Adverse Event Rate per Days on Study
-  Numerator: Serious Adverse Events
-  Denominator: Days on Study
+  Abbreviation: ODAT
+  Metric: Delayed Data Entry Rate
+  Numerator: Data Pages Entered > 10 Days
+  Denominator: Total Data Pages
   Model: Bootstrap CI
   Score: Bootstrap CI
   AnalysisType: rate
@@ -14,13 +14,13 @@ meta:
   AccrualMetric: Denominator
   BootstrapReps: 1000
 spec:
-  Mapped_AE:
+  Mapped_DATAENT:
     subjid:
       type: character
-    aest_dt:
+    data_entry_lag:
+      type: integer
+    min_entereddate:
       type: Date
-    aeser:
-      type: character
   Mapped_SUBJ:
     subjid:
       type: character
@@ -33,27 +33,23 @@ spec:
     lastparticipantdate:
       type: Date
 steps:
-  - output: Mapped_SAE
-    name: gsm.core::RunQuery
+  - output: Temp_LAG
+    name: RunQuery
     params:
-      df: Mapped_AE
-      strQuery: |
-        SELECT *
-        FROM df
-        WHERE aeser = 'Y'
+      df: Mapped_DATAENT
+      strQuery: "SELECT * FROM df WHERE data_entry_lag > 10"
   - output: Analysis_Input
     name: gsm.studykri::Input_CountSiteByMonth
     params:
       dfSubjects: Mapped_SUBJ
-      dfNumerator: Mapped_SAE
-      dfDenominator: Mapped_SUBJ
+      dfNumerator: Temp_LAG
+      dfDenominator: Mapped_DATAENT
       strStudyCol: studyid
       strGroupCol: invid
       strGroupLevel: GroupLevel
       strSubjectCol: subjid
-      strNumeratorDateCol: aest_dt
-      strDenominatorDateCol: firstparticipantdate
-      strDenominatorEndDateCol: lastparticipantdate
+      strNumeratorDateCol: min_entereddate
+      strDenominatorDateCol: min_entereddate
       strDenominatorType: Denominator
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount

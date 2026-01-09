@@ -14,11 +14,15 @@ spec:
       type: character
     invid:
       type: character
+    peperf:
+      type: character
+    studyid:
+      type: character
 steps:
   - output: Mapped_VISIT
-    name: gsm.core::RunQuery
+    name: =
     params:
-      df: Raw_VISIT
-      strQuery: "SELECT subjid, visit_dt, visit_folder, invid FROM df"
+      lhs: Mapped_VISIT
+      rhs: Raw_VISIT
 
 

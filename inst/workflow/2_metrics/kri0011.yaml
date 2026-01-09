@@ -1,11 +1,11 @@
 meta:
   Type: Analysis
-  ID: kri0002
+  ID: kri0011
   GroupLevel: Site
-  Abbreviation: SAE
-  Metric: Serious Adverse Event Rate per Days on Study
-  Numerator: Serious Adverse Events
-  Denominator: Days on Study
+  Abbreviation: CDAT
+  Metric: Data Change Rate
+  Numerator: Data Points with 1+ Change
+  Denominator: Total Data Points
   Model: Bootstrap CI
   Score: Bootstrap CI
   AnalysisType: rate
@@ -14,13 +14,13 @@ meta:
   AccrualMetric: Denominator
   BootstrapReps: 1000
 spec:
-  Mapped_AE:
+  Mapped_DATACHG:
     subjid:
       type: character
-    aest_dt:
+    min_entereddate:
       type: Date
-    aeser:
-      type: character
+    n_changes:
+      type: integer
   Mapped_SUBJ:
     subjid:
       type: character
@@ -33,27 +33,23 @@ spec:
     lastparticipantdate:
       type: Date
 steps:
-  - output: Mapped_SAE
-    name: gsm.core::RunQuery
+  - output: Temp_CHANGED
+    name: RunQuery
     params:
-      df: Mapped_AE
-      strQuery: |
-        SELECT *
-        FROM df
-        WHERE aeser = 'Y'
+      df: Mapped_DATACHG
+      strQuery: "SELECT * FROM df WHERE n_changes > 0"
   - output: Analysis_Input
     name: gsm.studykri::Input_CountSiteByMonth
     params:
       dfSubjects: Mapped_SUBJ
-      dfNumerator: Mapped_SAE
-      dfDenominator: Mapped_SUBJ
+      dfNumerator: Temp_CHANGED
+      dfDenominator: Mapped_DATACHG
       strStudyCol: studyid
       strGroupCol: invid
       strGroupLevel: GroupLevel
       strSubjectCol: subjid
-      strNumeratorDateCol: aest_dt
-      strDenominatorDateCol: firstparticipantdate
-      strDenominatorEndDateCol: lastparticipantdate
+      strNumeratorDateCol: min_entereddate
+      strDenominatorDateCol: min_entereddate
       strDenominatorType: Denominator
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount

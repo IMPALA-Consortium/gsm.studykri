@@ -4,6 +4,10 @@ test_that("SimulatePortfolio creates multiple studies", {
     Raw_AE = clindata::rawplus_ae,
     Raw_SITE = clindata::ctms_site
   )
+  
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
 
   result <- SimulatePortfolio(lRaw, nStudies = 3, seed = 999)
 
@@ -22,6 +26,10 @@ test_that("SimulatePortfolio respects custom configuration", {
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_SITE = clindata::ctms_site
   )
+  
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
 
   dfConfig <- data.frame(
     studyid = c("CUSTOM001", "CUSTOM002"),
@@ -47,6 +55,10 @@ test_that("SimulatePortfolio output works with mapping workflows", {
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study
   )
+  
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
 
   lPortfolio <- SimulatePortfolio(lRaw, nStudies = 2, seed = 777)
 
@@ -60,6 +72,10 @@ test_that("SimulatePortfolio output works with mapping workflows", {
 
 test_that("SimulatePortfolio validates inputs", {
   lRaw <- list(Raw_SUBJ = clindata::rawplus_dm)
+  
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
 
   # Missing Raw_SUBJ
   expect_error(
@@ -94,6 +110,10 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
     Raw_AE = clindata::rawplus_ae,
     Raw_SITE = clindata::ctms_site
   )
+  
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
 
   # Test with replacement parameter
   dfConfig <- data.frame(

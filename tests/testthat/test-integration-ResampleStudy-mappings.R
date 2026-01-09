@@ -1,3 +1,11 @@
+# Helper to prepare Raw_SUBJ with required vSubjectID columns
+get_test_raw_subj <- function() {
+  raw_subj <- clindata::rawplus_dm
+  raw_subj$subjectname <- raw_subj$subject_nsv
+  raw_subj$subjectenrollmentnumber <- raw_subj$subjectid
+  return(raw_subj)
+}
+
 test_that("ResampleStudy output works with mapping workflows", {
   # Load all raw data domains
   lRaw <- list(
@@ -7,7 +15,7 @@ test_that("ResampleStudy output works with mapping workflows", {
     Raw_DATAENT = clindata::edc_data_pages,
     Raw_QUERY = clindata::edc_queries,
     Raw_AE = clindata::rawplus_ae,
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_ENROLL = clindata::rawplus_enroll,
     Raw_Randomization = clindata::rawplus_ixrsrand,
     Raw_LB = clindata::rawplus_lb,
@@ -17,6 +25,14 @@ test_that("ResampleStudy output works with mapping workflows", {
     Raw_StudyRef = tibble::tibble(
       studyid = character(),
       studyrefid = character()
+    ),
+    Raw_DATACHG = tibble::tibble(
+      studyid = character(),
+      subjectname = character(),
+      n_changes = integer(),
+      visit_date = as.Date(character()),
+      visit = character(),
+      formoid = character()
     )
   )
 
@@ -87,7 +103,7 @@ test_that("ResampleStudy with oversampling works with mapping workflows", {
     Raw_DATAENT = clindata::edc_data_pages,
     Raw_QUERY = clindata::edc_queries,
     Raw_AE = clindata::rawplus_ae,
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_ENROLL = clindata::rawplus_enroll,
     Raw_Randomization = clindata::rawplus_ixrsrand,
     Raw_LB = clindata::rawplus_lb,
@@ -97,6 +113,14 @@ test_that("ResampleStudy with oversampling works with mapping workflows", {
     Raw_StudyRef = tibble::tibble(
       studyid = character(),
       studyrefid = character()
+    ),
+    Raw_DATACHG = tibble::tibble(
+      studyid = character(),
+      subjectname = character(),
+      n_changes = integer(),
+      visit_date = as.Date(character()),
+      visit = character(),
+      formoid = character()
     )
   )
 

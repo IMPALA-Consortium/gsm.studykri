@@ -11,6 +11,10 @@ spec:
       type: character
     compreas:
       type: character
+    mincreated_dts:
+      type: Date
+    studyid:
+      type: character
 steps:
   - output: Mapped_STUDCOMP
     name: =

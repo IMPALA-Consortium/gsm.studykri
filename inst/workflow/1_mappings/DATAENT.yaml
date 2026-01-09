@@ -10,6 +10,10 @@ spec:
       source_col: subjectname
     data_entry_lag:
       type: integer
+    min_entereddate:
+      type: Date
+    studyid:
+      type: character
   Mapped_SUBJ:
     subjid:
       type: character

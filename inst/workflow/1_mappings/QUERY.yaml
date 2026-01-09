@@ -12,6 +12,12 @@ spec:
       type: character
     queryage:
       type: integer
+    created:
+      type: Date
+    resolved:
+      type: Date
+    studyid:
+      type: character
   Mapped_SUBJ:
     subjid:
       type: character

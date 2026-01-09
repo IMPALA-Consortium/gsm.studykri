@@ -1,11 +1,11 @@
 meta:
   Type: Analysis
-  ID: kri0002
+  ID: kri0012
   GroupLevel: Site
-  Abbreviation: SAE
-  Metric: Serious Adverse Event Rate per Days on Study
-  Numerator: Serious Adverse Events
-  Denominator: Days on Study
+  Abbreviation: SF
+  Metric: Screen Failure Rate
+  Numerator: Screen Failures
+  Denominator: Screened Subjects
   Model: Bootstrap CI
   Score: Bootstrap CI
   AnalysisType: rate
@@ -14,13 +14,15 @@ meta:
   AccrualMetric: Denominator
   BootstrapReps: 1000
 spec:
-  Mapped_AE:
-    subjid:
+  Mapped_ENROLL:
+    subjectid:
       type: character
-    aest_dt:
+    invid:
+      type: character
+    enrollyn:
+      type: character
+    enroll_dt:
       type: Date
-    aeser:
-      type: character
   Mapped_SUBJ:
     subjid:
       type: character
@@ -33,27 +35,23 @@ spec:
     lastparticipantdate:
       type: Date
 steps:
-  - output: Mapped_SAE
-    name: gsm.core::RunQuery
+  - output: Temp_SCREENED
+    name: RunQuery
     params:
-      df: Mapped_AE
-      strQuery: |
-        SELECT *
-        FROM df
-        WHERE aeser = 'Y'
+      df: Mapped_ENROLL
+      strQuery: "SELECT * FROM df WHERE enrollyn = 'N'"
   - output: Analysis_Input
     name: gsm.studykri::Input_CountSiteByMonth
     params:
       dfSubjects: Mapped_SUBJ
-      dfNumerator: Mapped_SAE
-      dfDenominator: Mapped_SUBJ
+      dfNumerator: Temp_SCREENED
+      dfDenominator: Mapped_ENROLL
       strStudyCol: studyid
       strGroupCol: invid
       strGroupLevel: GroupLevel
       strSubjectCol: subjid
-      strNumeratorDateCol: aest_dt
-      strDenominatorDateCol: firstparticipantdate
-      strDenominatorEndDateCol: lastparticipantdate
+      strNumeratorDateCol: enroll_dt
+      strDenominatorDateCol: enroll_dt
       strDenominatorType: Denominator
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount

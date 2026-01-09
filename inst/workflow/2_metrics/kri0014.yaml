@@ -1,11 +1,10 @@
 meta:
   Type: Analysis
-  ID: kri0002
-  GroupLevel: Site
-  Abbreviation: SAE
-  Metric: Serious Adverse Event Rate per Days on Study
-  Numerator: Serious Adverse Events
-  Denominator: Days on Study
+  ID: kri0014
+  Abbreviation: IE
+  Metric: Inclusion/Exclusion Violation Rate
+  Numerator: Number of subjects ineligible
+  Denominator: Enrolled Subjects
   Model: Bootstrap CI
   Score: Bootstrap CI
   AnalysisType: rate
@@ -14,13 +13,25 @@ meta:
   AccrualMetric: Denominator
   BootstrapReps: 1000
 spec:
-  Mapped_AE:
+  Mapped_EXCLUSION:
     subjid:
       type: character
-    aest_dt:
-      type: Date
-    aeser:
+    subjectid:
       type: character
+    Source:
+      type: character
+    studyid:
+      type: character
+    invid:
+      type: character
+    country:
+      type: character
+    companycategory:
+      type: character
+    ie_violation:
+      type: character
+    enroll_dt:
+      type: Date
   Mapped_SUBJ:
     subjid:
       type: character
@@ -33,27 +44,23 @@ spec:
     lastparticipantdate:
       type: Date
 steps:
-  - output: Mapped_SAE
+  - output: TEMP_VIOLATIONS
     name: gsm.core::RunQuery
     params:
-      df: Mapped_AE
-      strQuery: |
-        SELECT *
-        FROM df
-        WHERE aeser = 'Y'
+      df: Mapped_EXCLUSION
+      strQuery: "SELECT * FROM df WHERE Source != 'Neither'"
   - output: Analysis_Input
     name: gsm.studykri::Input_CountSiteByMonth
     params:
       dfSubjects: Mapped_SUBJ
-      dfNumerator: Mapped_SAE
+      dfNumerator: TEMP_VIOLATIONS
       dfDenominator: Mapped_SUBJ
       strStudyCol: studyid
       strGroupCol: invid
       strGroupLevel: GroupLevel
       strSubjectCol: subjid
-      strNumeratorDateCol: aest_dt
+      strNumeratorDateCol: enroll_dt
       strDenominatorDateCol: firstparticipantdate
-      strDenominatorEndDateCol: lastparticipantdate
       strDenominatorType: Denominator
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount

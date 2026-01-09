@@ -198,12 +198,6 @@ Input_CountSiteByMonth <- function(
     ))
   }
 
-  # Filter to enrolled subjects only (use colnames for lazy table compatibility)
-  if ("enrollyn" %in% colnames(dfSubjects)) {
-    dfSubjects <- dfSubjects %>%
-      dplyr::filter(.data$enrollyn == "Y")
-  }
-
   # For in-memory data frames, check for empty results
   # For lazy tables, skip this check as it would force evaluation
   if (is.data.frame(dfSubjects) && nrow(dfSubjects) == 0) {

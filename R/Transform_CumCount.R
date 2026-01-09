@@ -192,11 +192,13 @@ Transform_CumCount <- function(
     dplyr::filter(.data$Denominator > .env$nMinDenominator)
 
   # Re-rank StudyMonth after filtering
-  dfReranked <- dfFiltered %>%
-    dplyr::mutate(
-      StudyMonth = dplyr::dense_rank(.data$StudyMonth),
-      .by = dplyr::all_of(.env$vBy)
-    )
+  # dfReranked <- dfFiltered %>%
+  #   dplyr::mutate(
+  #     StudyMonth = dplyr::dense_rank(.data$StudyMonth),
+  #     .by = dplyr::all_of(.env$vBy)
+  #   )
+
+  dfReranked <- dfFiltered
 
   # Generate Metric columns using across with .names
   vMetricCols <- gsub("^Numerator", "Metric", vNumeratorCols)

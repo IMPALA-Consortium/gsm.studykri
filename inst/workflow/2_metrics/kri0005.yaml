@@ -1,11 +1,11 @@
 meta:
   Type: Analysis
-  ID: kri0002
+  ID: kri0005
   GroupLevel: Site
-  Abbreviation: SAE
-  Metric: Serious Adverse Event Rate per Days on Study
-  Numerator: Serious Adverse Events
-  Denominator: Days on Study
+  Abbreviation: LB
+  Metric: Grade 3+ Lab Abnormality Rate
+  Numerator: Grade 3+ Abnormal Labs Samples
+  Denominator: Total Lab Samples
   Model: Bootstrap CI
   Score: Bootstrap CI
   AnalysisType: rate
@@ -14,46 +14,41 @@ meta:
   AccrualMetric: Denominator
   BootstrapReps: 1000
 spec:
-  Mapped_AE:
-    subjid:
-      type: character
-    aest_dt:
-      type: Date
-    aeser:
-      type: character
   Mapped_SUBJ:
     subjid:
       type: character
     invid:
       type: character
-    studyid:
+  Mapped_LB:
+    subjid:
       type: character
-    firstparticipantdate:
-      type: Date
-    lastparticipantdate:
+    toxgrg_nsv:
+      type: character
+    lb_dt:
       type: Date
 steps:
-  - output: Mapped_SAE
-    name: gsm.core::RunQuery
+  - output: Temp_ABNORMAL
+    name: RunQuery
     params:
-      df: Mapped_AE
-      strQuery: |
-        SELECT *
-        FROM df
-        WHERE aeser = 'Y'
+      df: Mapped_LB
+      strQuery: "SELECT * FROM df WHERE toxgrg_nsv IN ('3', '4')"
+  - output: Temp_LB
+    name: RunQuery
+    params:
+      df: Mapped_LB
+      strQuery: "SELECT * FROM df WHERE toxgrg_nsv IN ('0', '1', '2', '3', '4')"
   - output: Analysis_Input
     name: gsm.studykri::Input_CountSiteByMonth
     params:
       dfSubjects: Mapped_SUBJ
-      dfNumerator: Mapped_SAE
-      dfDenominator: Mapped_SUBJ
+      dfNumerator: Temp_ABNORMAL
+      dfDenominator: Temp_LB
       strStudyCol: studyid
       strGroupCol: invid
       strGroupLevel: GroupLevel
       strSubjectCol: subjid
-      strNumeratorDateCol: aest_dt
-      strDenominatorDateCol: firstparticipantdate
-      strDenominatorEndDateCol: lastparticipantdate
+      strNumeratorDateCol: lb_dt
+      strDenominatorDateCol: lb_dt
       strDenominatorType: Denominator
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount
