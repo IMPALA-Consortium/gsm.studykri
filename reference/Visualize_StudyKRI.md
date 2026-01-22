@@ -29,7 +29,8 @@ Visualize_StudyKRI(
   strTitle = NULL,
   strSubtitle = NULL,
   strYlab = "Metric",
-  strXlab = "Study Month"
+  strXlab = "Study Month",
+  bLogY = FALSE
 )
 ```
 
@@ -104,6 +105,10 @@ Visualize_StudyKRI(
 - strXlab:
 
   character. X-axis label (default: "Study Month").
+
+- bLogY:
+
+  logical. If TRUE, apply logarithmic scale to y-axis (default: FALSE).
 
 ## Value
 

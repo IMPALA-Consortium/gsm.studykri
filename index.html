@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -82,8 +83,9 @@
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"IMPALA-Consortium/gsm.studykri"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example-days-on-study">Example: Days on Study<a class="anchor" aria-label="anchor" href="#example-days-on-study"></a>
+<h2 id="example-adverse-event-rate-per-visit">Example: Adverse Event Rate per Visit<a class="anchor" aria-label="anchor" href="#example-adverse-event-rate-per-visit"></a>
 </h2>
+<p>This example demonstrates calculating a single KRI (AE per visit) using the script-based approach without YAML workflows.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -94,95 +96,199 @@
 <span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://gilead-biostats.github.io/gsm.core" class="external-link">gsm.core</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Gilead-BioStats/gsm.kri" class="external-link">gsm.kri</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://impala-consortium.github.io/gsm.studykri/">gsm.studykri</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Load raw data from clindata package</span></span>
+<span><span class="co"># Simulate portfolio with 4 studies</span></span>
 <span><span class="va">lRaw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  Raw_SITE <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/ctms_site.html" class="external-link">ctms_site</a></span>,</span>
+<span>  Raw_STUDY <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/ctms_study.html" class="external-link">ctms_study</a></span>,</span>
 <span>  Raw_AE <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/rawplus_ae.html" class="external-link">rawplus_ae</a></span>,</span>
-<span>  Raw_SUBJ <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/rawplus_dm.html" class="external-link">rawplus_dm</a></span></span>
+<span>  Raw_SUBJ <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/rawplus_dm.html" class="external-link">rawplus_dm</a></span>,</span>
+<span>  Raw_VISIT <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/rawplus_visdt.html" class="external-link">rawplus_visdt</a></span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Simulate portfolio with 4 studies, AA-4 oversampled for low AE counts</span></span>
+<span><span class="co"># Add required subject identifier columns for resampling</span></span>
+<span><span class="va">lRaw</span><span class="op">$</span><span class="va">Raw_SUBJ</span><span class="op">$</span><span class="va">subjectname</span> <span class="op">&lt;-</span> <span class="va">lRaw</span><span class="op">$</span><span class="va">Raw_SUBJ</span><span class="op">$</span><span class="va">subject_nsv</span></span>
+<span><span class="va">lRaw</span><span class="op">$</span><span class="va">Raw_SUBJ</span><span class="op">$</span><span class="va">subjectenrollmentnumber</span> <span class="op">&lt;-</span> <span class="va">lRaw</span><span class="op">$</span><span class="va">Raw_SUBJ</span><span class="op">$</span><span class="va">subjectid</span></span>
+<span></span>
 <span><span class="va">lPortfolio</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/SimulatePortfolio.html">SimulatePortfolio</a></span><span class="op">(</span></span>
 <span>  lRaw <span class="op">=</span> <span class="va">lRaw</span>,</span>
 <span>  nStudies <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  vSubjectIDs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"subjid"</span>, <span class="st">"subjectenrollmentnumber"</span>, <span class="st">"subject_nsv"</span>, <span class="st">"subjectname"</span>, <span class="st">"subjectid"</span><span class="op">)</span>,</span>
 <span>  dfConfig <span class="op">=</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>    studyid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-1"</span>, <span class="st">"AA-2"</span>, <span class="st">"AA-3"</span>, <span class="st">"AA-4"</span><span class="op">)</span>,</span>
 <span>    nSubjects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">750</span>, <span class="fl">150</span>, <span class="fl">200</span><span class="op">)</span>,</span>
-<span>    strOversampleDomain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Raw_AE"</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>    strOversamplDomain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Raw_AE"</span>, <span class="fl">4</span><span class="op">)</span>,</span>
 <span>    vOversamplQuantileRange_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
 <span>    vOversamplQuantileRange_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0.75</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
-<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
-<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
-<span><span class="co">#&gt; Filtered to 773 subjects with Raw_AE records in 0.00-0.75 quantile range (1-6 records)</span></span>
 <span></span>
-<span><span class="co"># Calculate site-level counts by month using days on study as denominator</span></span>
-<span><span class="co"># Pass subjects as denominator with start and end dates to calculate person-days</span></span>
-<span><span class="va">dfInputDays</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Input_CountSiteByMonth.html">Input_CountSiteByMonth</a></span><span class="op">(</span></span>
+<span><span class="co"># Calculate site-level counts by month for AE per visit</span></span>
+<span><span class="va">dfInput</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Input_CountSiteByMonth.html">Input_CountSiteByMonth</a></span><span class="op">(</span></span>
 <span>  dfSubjects <span class="op">=</span> <span class="va">lPortfolio</span><span class="op">$</span><span class="va">Raw_SUBJ</span>,</span>
 <span>  dfNumerator <span class="op">=</span> <span class="va">lPortfolio</span><span class="op">$</span><span class="va">Raw_AE</span>,</span>
-<span>  dfDenominator <span class="op">=</span> <span class="va">lPortfolio</span><span class="op">$</span><span class="va">Raw_SUBJ</span>,</span>
+<span>  dfDenominator <span class="op">=</span> <span class="va">lPortfolio</span><span class="op">$</span><span class="va">Raw_VISIT</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>visit_dt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">visit_dt</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  strStudyCol <span class="op">=</span> <span class="st">"studyid"</span>,</span>
 <span>  strGroupCol <span class="op">=</span> <span class="st">"invid"</span>,</span>
 <span>  strGroupLevel <span class="op">=</span> <span class="st">"Site"</span>,</span>
 <span>  strSubjectCol <span class="op">=</span> <span class="st">"subjid"</span>,</span>
 <span>  strNumeratorDateCol <span class="op">=</span> <span class="st">"aest_dt"</span>,</span>
-<span>  strDenominatorDateCol <span class="op">=</span> <span class="st">"firstparticipantdate"</span>,</span>
-<span>  strDenominatorEndDateCol <span class="op">=</span> <span class="st">"lastparticipantdate"</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  strDenominatorDateCol <span class="op">=</span> <span class="st">"visit_dt"</span>,</span>
+<span>  nMinDenominator <span class="op">=</span> <span class="fl">25</span>  <span class="co"># Normalize dates at the threshold</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Aggregate to study-level cumulative KRI by month</span></span>
+<span><span class="co"># Aggregate to study-level cumulative counts</span></span>
 <span><span class="va">dfTransformed</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Transform_CumCount.html">Transform_CumCount</a></span><span class="op">(</span></span>
-<span>  <span class="va">dfInputDays</span>,</span>
-<span>  nMinDenominator <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  <span class="va">dfInput</span>,</span>
 <span>  vBy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"StudyID"</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Generate bootstrap resamples at site-level (1000 iterations)</span></span>
-<span><span class="va">df_Analyzed_Bootstrap_Site</span> <span class="op">&lt;-</span> <span class="va">dfInputDays</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu">Analyze_StudyKRI</span><span class="op">(</span>nBootstrapReps <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co"># Calculate 95% confidence bounds using bootstrap</span></span>
+<span><span class="va">dfBounds</span> <span class="op">&lt;-</span> <span class="va">dfInput</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Using all 4 studies found in dfInput</span></span>
 <span></span>
-<span><span class="co"># Aggregate each bootstrap iteration to study-level</span></span>
-<span><span class="va">df_Analyzed_Bootstrap_Study</span> <span class="op">&lt;-</span> <span class="va">df_Analyzed_Bootstrap_Site</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="reference/Transform_CumCount.html">Transform_CumCount</a></span><span class="op">(</span></span>
-<span>    nMinDenominator <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>    vBy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"StudyID"</span>, <span class="st">"BootstrapRep"</span><span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co"># Calculate reference bounds from AA-2, AA-3, AA-4</span></span>
+<span><span class="va">dfStudyRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  study <span class="op">=</span> <span class="st">"AA-1"</span>,</span>
+<span>  studyref <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-2"</span>, <span class="st">"AA-3"</span>, <span class="st">"AA-4"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Calculate 95% confidence intervals from bootstrap distribution</span></span>
-<span><span class="va">df_Bounds</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds</a></span><span class="op">(</span></span>
-<span>  <span class="va">df_Analyzed_Bootstrap_Study</span>,</span>
-<span>  vBy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"StudyID"</span><span class="op">)</span>,</span>
-<span>  nConfLevel <span class="op">=</span> <span class="fl">0.95</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">dfBoundsRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span><span class="va">dfInput</span>, <span class="va">dfStudyRef</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Resampling with minimum group count: 76</span></span>
 <span></span>
-<span><span class="co"># Calculate reference portfolio bounds from studies AA-1, AA-2, AA-3</span></span>
-<span><span class="co"># Reference bounds equalize site counts across studies for fair comparison</span></span>
-<span><span class="va">df_Bounds_Ref</span> <span class="op">&lt;-</span> <span class="va">dfInputDays</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="reference/Analyze_StudyKRI_PredictBoundsRefSet.html">Analyze_StudyKRI_PredictBoundsRefSet</a></span><span class="op">(</span></span>
-<span>    vStudyFilter <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-1"</span>, <span class="st">"AA-2"</span>, <span class="st">"AA-3"</span><span class="op">)</span>,</span>
-<span>    nBootstrapReps <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>    nConfLevel <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>    nMinDenominator <span class="op">=</span> <span class="fl">25</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 66</span></span>
-<span></span>
-<span><span class="co"># Plot AA-4 KRI vs reference portfolio confidence intervals</span></span>
+<span><span class="co"># Plot AA-1 vs reference portfolio</span></span>
 <span><span class="fu"><a href="reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
 <span>  dfStudyKRI <span class="op">=</span> <span class="va">dfTransformed</span>,</span>
-<span>  dfBoundsRef <span class="op">=</span> <span class="va">df_Bounds_Ref</span>,</span>
-<span>  dfBounds <span class="op">=</span> <span class="va">df_Bounds</span>,</span>
-<span>  strStudyID <span class="op">=</span> <span class="st">"AA-4"</span></span>
+<span>  dfBounds <span class="op">=</span> <span class="va">dfBounds</span>,</span>
+<span>  dfBoundsRef <span class="op">=</span> <span class="va">dfBoundsRef</span>,</span>
+<span>  strStudyID <span class="op">=</span> <span class="st">"AA-1"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-example-1.png" width="100%"></p>
+</div>
+<div class="section level2">
+<h2 id="implemented-kris">Implemented KRIs<a class="anchor" aria-label="anchor" href="#implemented-kris"></a>
+</h2>
+<p>The package includes 14 pre-configured KRI workflows:</p>
+<table class="table">
+<colgroup>
+<col width="7%">
+<col width="11%">
+<col width="36%">
+<col width="28%">
+<col width="16%">
+</colgroup>
+<thead><tr class="header">
+<th>ID</th>
+<th>Abbreviation</th>
+<th>Metric</th>
+<th>Numerator</th>
+<th>Denominator</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>kri0001</td>
+<td>AE</td>
+<td>Adverse Event Rate per Days on Study</td>
+<td>Adverse Events</td>
+<td>Days on Study</td>
+</tr>
+<tr class="even">
+<td>kri0002</td>
+<td>SAE</td>
+<td>Serious Adverse Event Rate per Days on Study</td>
+<td>Serious Adverse Events</td>
+<td>Days on Study</td>
+</tr>
+<tr class="odd">
+<td>kri0003</td>
+<td>PD</td>
+<td>Non-Important Protocol Deviation Rate</td>
+<td>Non-Important Protocol Deviations</td>
+<td>Days on Study</td>
+</tr>
+<tr class="even">
+<td>kri0004</td>
+<td>IPD</td>
+<td>Important Protocol Deviation Rate</td>
+<td>Important Protocol Deviations</td>
+<td>Days on Study</td>
+</tr>
+<tr class="odd">
+<td>kri0005</td>
+<td>LB</td>
+<td>Grade 3+ Lab Abnormality Rate</td>
+<td>Grade 3+ Abnormal Labs Samples</td>
+<td>Total Lab Samples</td>
+</tr>
+<tr class="even">
+<td>kri0006</td>
+<td>SDSC</td>
+<td>Study Discontinuation Rate</td>
+<td>Subjects Discontinued - Study</td>
+<td>Enrolled Subjects</td>
+</tr>
+<tr class="odd">
+<td>kri0007</td>
+<td>TDSC</td>
+<td>Treatment Discontinuation Rate</td>
+<td>Subjects Discontinued - Treatment</td>
+<td>Enrolled Subjects</td>
+</tr>
+<tr class="even">
+<td>kri0008</td>
+<td>QRY</td>
+<td>Query Rate</td>
+<td>Queries</td>
+<td>Total Data Points</td>
+</tr>
+<tr class="odd">
+<td>kri0009</td>
+<td>OQRY</td>
+<td>Delayed Query Resolution Rate</td>
+<td>Queries That Were Open &gt; 30 Days</td>
+<td>Total Queries</td>
+</tr>
+<tr class="even">
+<td>kri0010</td>
+<td>ODAT</td>
+<td>Delayed Data Entry Rate</td>
+<td>Data Pages Entered &gt; 10 Days</td>
+<td>Total Data Pages</td>
+</tr>
+<tr class="odd">
+<td>kri0011</td>
+<td>CDAT</td>
+<td>Data Change Rate</td>
+<td>Data Points with 1+ Change</td>
+<td>Total Data Points</td>
+</tr>
+<tr class="even">
+<td>kri0012</td>
+<td>SF</td>
+<td>Screen Failure Rate</td>
+<td>Screen Failures</td>
+<td>Screened Subjects</td>
+</tr>
+<tr class="odd">
+<td>kri0013</td>
+<td>PK</td>
+<td>PK Collection Compliance Rate</td>
+<td>PK Samples Collected</td>
+<td>PK Samples Expected</td>
+</tr>
+<tr class="even">
+<td>kri0014</td>
+<td>IE</td>
+<td>Inclusion/Exclusion Violation Rate</td>
+<td>Number of subjects ineligible</td>
+<td>Enrolled Subjects</td>
+</tr>
+</tbody>
+</table>
+<p>All KRIs use bootstrap-based confidence intervals at site level with a default of 1000 bootstrap replicates and 95% confidence level.</p>
 </div>
 <div class="section level2">
 <h2 id="ai-disclaimer">AI Disclaimer<a class="anchor" aria-label="anchor" href="#ai-disclaimer"></a>
@@ -261,7 +367,7 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Bjoern Koneswarakantha <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/YOUR-ORCID-ID" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Bjoern Koneswarakantha <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-4585-7799" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 </ul>
 </div>
 

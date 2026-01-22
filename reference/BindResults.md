@@ -1,9 +1,8 @@
 # Helper function to bind results from multiple workflows
 
 Used to stack results (e.g. `dfSummary`) from a list of analysis
-pipeline output formatted like the result of
-[`RunWorkflows()`](https://gilead-biostats.github.io/gsm.core/reference/RunWorkflows.html).
-Also adds study level metadata when provided.
+pipeline output formatted like the result of `RunWorkflows()`. Also adds
+study level metadata when provided.
 
 ## Usage
 

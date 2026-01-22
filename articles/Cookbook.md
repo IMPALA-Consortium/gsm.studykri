@@ -62,9 +62,16 @@ lRaw <- list(
   Raw_VISIT = clindata::rawplus_visdt
 )
 
+# to ensure proper resampling we need to make sure that lRaw$Raw_SUBJ
+# can be used as a proper lookup table for all subject identifier aliases
+
+lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
+
 lPortfolio <- SimulatePortfolio(
   lRaw = lRaw,
   nStudies = 4,
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4"),
     nSubjects = c(500, 750, 150, 200),
@@ -94,17 +101,19 @@ denominator per month
 dfInput <- gsm.studykri::Input_CountSiteByMonth(
   dfSubjects = lPortfolio$Raw_SUBJ,
   dfNumerator = lPortfolio$Raw_AE,
-  dfDenominator = lPortfolio$Raw_VISIT,
+  dfDenominator = lPortfolio$Raw_VISIT %>%
+    mutate(visit_dt = as.Date(visit_dt)),
   strStudyCol = "studyid",
   strGroupCol = "invid",
   strGroupLevel = "Site",
   strSubjectCol = "subjid",
   strNumeratorDateCol = "aest_dt",
   strDenominatorDateCol = "visit_dt",
+  nMinDenominator = 25 # Normalize dates at the threshold
 )
 
 dfInput
-#> # A tibble: 19,901 × 7
+#> # A tibble: 19,811 × 7
 #>    GroupID    GroupLevel Numerator Denominator Metric StudyID MonthYYYYMM
 #>    <chr>      <chr>          <int>       <int>  <dbl> <chr>         <dbl>
 #>  1 AA-1_0X001 Site               1           1    1   AA-1         201610
@@ -117,7 +126,7 @@ dfInput
 #>  8 AA-1_0X003 Site               1           1    1   AA-1         200602
 #>  9 AA-1_0X003 Site               1           2    0.5 AA-1         200605
 #> 10 AA-1_0X003 Site               1           1    1   AA-1         200907
-#> # ℹ 19,891 more rows
+#> # ℹ 19,801 more rows
 ```
 
 Alternatively we can also use days on study as a denominator by passing
@@ -134,11 +143,12 @@ dfInputDays <- gsm.studykri::Input_CountSiteByMonth(
   strSubjectCol = "subjid",
   strNumeratorDateCol = "aest_dt",
   strDenominatorDateCol = "firstparticipantdate",
-  strDenominatorEndDateCol = "lastparticipantdate"
+  strDenominatorEndDateCol = "lastparticipantdate",
+  nMinDenominator = 25 # Normalize dates at the threshold
 )
 
 dfInputDays
-#> # A tibble: 24,486 × 7
+#> # A tibble: 24,266 × 7
 #>    GroupID    GroupLevel Numerator Denominator Metric StudyID MonthYYYYMM
 #>    <chr>      <chr>          <int>       <int>  <dbl> <chr>         <dbl>
 #>  1 AA-1_0X001 Site               1          31 0.0323 AA-1         201610
@@ -151,40 +161,38 @@ dfInputDays
 #>  8 AA-1_0X003 Site               1          56 0.0179 AA-1         200602
 #>  9 AA-1_0X003 Site               1          62 0.0161 AA-1         200605
 #> 10 AA-1_0X003 Site               1          31 0.0323 AA-1         200907
-#> # ℹ 24,476 more rows
+#> # ℹ 24,256 more rows
 ```
 
 Next we transform the data to return the cumulated event counts on
-study-level by study month. We define the first study month to be the
-month in which we have reached the first 25 Denominator counts across
-all sites to account for data artifacts.
+study-level by study month. Date normalization is now done at the input
+level, so Transform_CumCount performs pure aggregation.
 
 ``` r
 dfTransformed <- gsm.studykri::Transform_CumCount(
   dfInput,
-  nMinDenominator = 25,
   vBy = c("StudyID")
 )
 
 dfTransformed
-#> # A tibble: 740 × 7
+#> # A tibble: 742 × 7
 #>    StudyID MonthYYYYMM StudyMonth Numerator Denominator Metric GroupCount
 #>    <chr>         <dbl>      <int>     <int>       <int>  <dbl>      <int>
-#>  1 AA-1         200404          1         6          39  0.154         13
-#>  2 AA-1         200405          2        12          60  0.2           16
-#>  3 AA-1         200406          3        12          80  0.15          16
-#>  4 AA-1         200407          4        16         106  0.151         18
-#>  5 AA-1         200408          5        19         137  0.139         22
-#>  6 AA-1         200409          6        26         168  0.155         23
-#>  7 AA-1         200410          7        31         200  0.155         24
-#>  8 AA-1         200411          8        34         233  0.146         24
-#>  9 AA-1         200412          9        36         268  0.134         22
-#> 10 AA-1         200501         10        40         300  0.133         23
-#> # ℹ 730 more rows
+#>  1 AA-1         200403          1         2          25  0.08          10
+#>  2 AA-1         200404          2         6          39  0.154         13
+#>  3 AA-1         200405          3        12          60  0.2           16
+#>  4 AA-1         200406          4        12          80  0.15          16
+#>  5 AA-1         200407          5        16         106  0.151         18
+#>  6 AA-1         200408          6        19         137  0.139         22
+#>  7 AA-1         200409          7        26         168  0.155         23
+#>  8 AA-1         200410          8        31         200  0.155         24
+#>  9 AA-1         200411          9        34         233  0.146         24
+#> 10 AA-1         200412         10        36         268  0.134         22
+#> # ℹ 732 more rows
 ```
 
 Analyze_StudyKRI_PredictBounds calculates upper and lower confidence
-intervalls of the study metrics KRI using a bootstrap technique.
+intervals of the study metrics KRI using a bootstrap technique.
 
 ``` r
 dfBounds <- dfInput %>%
@@ -192,27 +200,27 @@ dfBounds <- dfInput %>%
 #> Using all 4 studies found in dfInput
 
 dfBounds
-#> # A tibble: 752 × 6
+#> # A tibble: 742 × 6
 #>    StudyID StudyMonth Median  Lower Upper BootstrapCount
 #>    <chr>        <int>  <dbl>  <dbl> <dbl>          <int>
-#>  1 AA-1             1  0.111 0      0.281           1000
-#>  2 AA-1             2  0.162 0.0435 0.318           1000
-#>  3 AA-1             3  0.159 0.0428 0.318           1000
-#>  4 AA-1             4  0.143 0.0550 0.286           1000
-#>  5 AA-1             5  0.142 0.0575 0.255           1000
-#>  6 AA-1             6  0.146 0.0703 0.243           1000
-#>  7 AA-1             7  0.152 0.0710 0.244           1000
-#>  8 AA-1             8  0.146 0.0644 0.240           1000
-#>  9 AA-1             9  0.138 0.0588 0.228           1000
-#> 10 AA-1            10  0.133 0.0544 0.220           1000
-#> # ℹ 742 more rows
+#>  1 AA-1             1 0.0741 0      0.211           1000
+#>  2 AA-1             2 0.15   0      0.308           1000
+#>  3 AA-1             3 0.194  0.0556 0.343           1000
+#>  4 AA-1             4 0.144  0.0385 0.269           1000
+#>  5 AA-1             5 0.146  0.0547 0.261           1000
+#>  6 AA-1             6 0.135  0.0552 0.234           1000
+#>  7 AA-1             7 0.152  0.0684 0.242           1000
+#>  8 AA-1             8 0.152  0.0732 0.242           1000
+#>  9 AA-1             9 0.143  0.0647 0.227           1000
+#> 10 AA-1            10 0.132  0.0596 0.209           1000
+#> # ℹ 732 more rows
 ```
 
 We can plot the preliminary results.
 
 ``` r
 gsm.studykri::Visualize_StudyKRI(
-  dfStudyKRI = dfTransformed ,
+  dfStudyKRI = dfTransformed,
   dfBounds = dfBounds,
   strStudyID = "AA-1"
 )
@@ -224,7 +232,6 @@ We then calculate a reference confidence interval based on a set of
 reference studies.
 
 ``` r
-
 dfStudyRef <- tibble(
   study = "AA-1",
   studyref = c("AA-2", "AA-3", "AA-4")
@@ -234,28 +241,28 @@ dfBoundsRef <- gsm.studykri::Analyze_StudyKRI_PredictBoundsRef(dfInput, dfStudyR
 #> Resampling with minimum group count: 78
 
 dfBoundsRef
-#> # A tibble: 191 × 9
+#> # A tibble: 189 × 9
 #>    StudyMonth Median  Lower Upper BootstrapCount GroupCount StudyCount StudyID
 #>         <int>  <dbl>  <dbl> <dbl>          <int>      <int>      <int> <chr>  
-#>  1          1  0.135 0.0286 0.289           1000         78          3 AA-1   
-#>  2          2  0.137 0.0227 0.279           1000         78          3 AA-1   
-#>  3          3  0.143 0.0428 0.276           1000         78          3 AA-1   
-#>  4          4  0.143 0.0476 0.260           1000         78          3 AA-1   
-#>  5          5  0.137 0.048  0.245           1000         78          3 AA-1   
-#>  6          6  0.133 0.0530 0.224           1000         78          3 AA-1   
-#>  7          7  0.136 0.0642 0.213           1000         78          3 AA-1   
-#>  8          8  0.134 0.0728 0.208           1000         78          3 AA-1   
-#>  9          9  0.130 0.0703 0.202           1000         78          3 AA-1   
-#> 10         10  0.121 0.0701 0.186           1000         78          3 AA-1   
-#> # ℹ 181 more rows
+#>  1          1  0.125 0      0.25            1000         78          3 AA-1   
+#>  2          2  0.179 0      0.429           1000         78          3 AA-1   
+#>  3          3  0.182 0      0.421           1000         78          3 AA-1   
+#>  4          4  0.172 0.0171 0.407           1000         78          3 AA-1   
+#>  5          5  0.185 0.0455 0.353           1000         78          3 AA-1   
+#>  6          6  0.156 0.0482 0.286           1000         78          3 AA-1   
+#>  7          7  0.118 0.0392 0.206           1000         78          3 AA-1   
+#>  8          8  0.133 0.0650 0.211           1000         78          3 AA-1   
+#>  9          9  0.143 0.0759 0.220           1000         78          3 AA-1   
+#> 10         10  0.136 0.0782 0.203           1000         78          3 AA-1   
+#> # ℹ 179 more rows
 #> # ℹ 1 more variable: StudyRefID <chr>
 ```
 
-And add the reference confidence interval to out plot
+And add the reference confidence interval to our plot
 
 ``` r
 gsm.studykri::Visualize_StudyKRI(
-  dfStudyKRI = dfTransformed ,
+  dfStudyKRI = dfTransformed,
   dfBounds = dfBounds,
   dfBoundsRef = dfBoundsRef,
   strStudyID = "AA-1"
@@ -264,36 +271,31 @@ gsm.studykri::Visualize_StudyKRI(
 
 ![](Cookbook_files/figure-html/unnamed-chunk-8-1.png)
 
-We can also plot the members of the reference portfolio.
+Bringing it together for Days on Study
 
 ``` r
-p1 <- gsm.studykri::Visualize_StudyKRI(
-  dfStudyKRI = dfTransformed ,
-  dfBounds = dfBounds,
-  dfBoundsRef = dfBoundsRef,
-  strStudyID = "AA-2"
+dfTransformed <- gsm.studykri::Transform_CumCount(
+  dfInputDays,
+  vBy = c("StudyID")
 )
 
-p2 <- gsm.studykri::Visualize_StudyKRI(
-  dfStudyKRI = dfTransformed ,
+dfBounds <- dfInputDays %>%
+  gsm.studykri::Analyze_StudyKRI_PredictBounds()
+#> Using all 4 studies found in dfInput
+
+dfBoundsRef <- gsm.studykri::Analyze_StudyKRI_PredictBoundsRef(dfInputDays, dfStudyRef)
+#> Resampling with minimum group count: 78
+
+library(ggplot2)
+
+p <- gsm.studykri::Visualize_StudyKRI(
+  dfStudyKRI = dfTransformed,
   dfBounds = dfBounds,
   dfBoundsRef = dfBoundsRef,
-  strStudyID = "AA-3"
+  strStudyID = "AA-1",
+  bLogY = TRUE
 )
-
-p3 <- gsm.studykri::Visualize_StudyKRI(
-  dfStudyKRI = dfTransformed ,
-  dfBounds = dfBounds,
-  dfBoundsRef = dfBoundsRef,
-  strStudyID = "AA-4"
-)
-
-library(patchwork)
-
-p1 + p2 + p3 + patchwork::plot_layout(guides = "collect")
 ```
-
-![](Cookbook_files/figure-html/unnamed-chunk-9-1.png)
 
 ## Calculate KRI using yaml workflows
 
@@ -311,31 +313,45 @@ lRaw_original <- list(
   Raw_STUDY = clindata::ctms_study,
   Raw_PD = clindata::ctms_protdev,
   Raw_DATAENT = clindata::edc_data_pages,
+  Raw_DATACHG = clindata::edc_data_points,
   Raw_QUERY = clindata::edc_queries,
   Raw_ENROLL = clindata::rawplus_enroll,
   Raw_Randomization = clindata::rawplus_ixrsrand,
   Raw_LB = clindata::rawplus_lb,
   Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
-  Raw_STUDCOMP = clindata::rawplus_studcomp
+  Raw_STUDCOMP = clindata::rawplus_studcomp,
+  Raw_IE = clindata::rawplus_ie
 )
+
+lRaw_original$Raw_SUBJ$subjectname <- lRaw_original$Raw_SUBJ$subject_nsv
+lRaw_original$Raw_SUBJ$subjectenrollmentnumber <- lRaw_original$Raw_SUBJ$subjid
 
 # Create a portfolio with 3 studies
 lRaw <- SimulatePortfolio(
   lRaw = lRaw_original,
   nStudies = 3,
   seed = 123,
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4", "AA-5", "AA-6"),
     nSubjects = c(500, 750, 150, 200, 250, 300),
     strOversamplDomain = rep("Raw_AE", 6),
     vOversamplQuantileRange_min = c(0, 0, 0, 0, 0, 0),
-    vOversamplQuantileRange_max = c(1, 0.75, 1, 1, 0.95, 0.9)
+    vOversamplQuantileRange_max = c(1, 0.75, 1, 1, 0.95, 0.9),
+    nScreeningFailureRatio = c(0.2, 0.2, 0.2, 0.2, 0.2, 0.2)
   )
 )
 
 lRaw$Raw_StudyRef <- tibble(
   studyid = c(rep("AA-1", 3), rep("AA-2", 4)),
   studyrefid = c("AA-3", "AA-4", "AA-5", "AA-3", "AA-4", "AA-5", "AA-6")
+)
+
+lRaw$Raw_ENROLL <- AddScreeningFailures(
+  lRaw$Raw_ENROLL,
+  lRaw_original$Raw_ENROLL,
+  strSiteCol = "siteid",
+  strStudyCol = "studyid"
 )
 
 # Run mapping workflows
@@ -352,7 +368,11 @@ lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for ENROLL.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 1819 rows returned.
+#> ✔ SQL Query complete: 3909 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> ℹ Ingesting data for IE.
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 42143 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for LB.
 #> Creating a new temporary DuckDB connection.
@@ -360,7 +380,7 @@ lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for PD.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 0 rows returned.
+#> ✔ SQL Query complete: 6314 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for Randomization.
 #> Creating a new temporary DuckDB connection.
@@ -387,17 +407,33 @@ lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
 #> Warning: Field `visit_dt`: 27 unparsable Date(s) set to NA
 #> ✔ SQL Query complete: 39431 rows returned.
 #> Disconnected from temporary DuckDB connection.
+#> ℹ Ingesting data for DATACHG.
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 2968624 rows returned.
+#> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for DATAENT.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 1484772 rows returned.
+#> ✔ SQL Query complete: 347360 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for SUBJ.
 #> Creating a new temporary DuckDB connection.
 #> ✔ SQL Query complete: 1819 rows returned.
 #> Disconnected from temporary DuckDB connection.
+#> ℹ Ingesting data for IE.
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 42143 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> ℹ Ingesting data for ENROLL.
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 3909 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> ℹ Ingesting data for PD.
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 6314 rows returned.
+#> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for QUERY.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 253554 rows returned.
+#> ✔ SQL Query complete: 59403 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for SITE.
 #> Creating a new temporary DuckDB connection.
@@ -411,14 +447,14 @@ lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
 
 lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
-#> ── Running 15 Workflows ────────────────────────────────────────────────────────
+#> ── Running 18 Workflows ────────────────────────────────────────────────────────
 #> 
 #> ── Initializing `Mapped_AE` Workflow ───────────────────────────────────────────
 #> 
 #> ── Checking data against spec
 #> → All 1 data.frame(s) in the spec are present in the data: Raw_AE
 #> → All specified columns in Raw_AE are in the expected format
-#> → All 7 specified column(s) in the spec are present in the data: Raw_AE$subjid, Raw_AE$aeser, Raw_AE$aest_dt, Raw_AE$aeen_dt, Raw_AE$mdrpt_nsv, Raw_AE$mdrsoc_nsv, Raw_AE$aetoxgr
+#> → All 8 specified column(s) in the spec are present in the data: Raw_AE$subjid, Raw_AE$aeser, Raw_AE$aest_dt, Raw_AE$aeen_dt, Raw_AE$mdrpt_nsv, Raw_AE$mdrsoc_nsv, Raw_AE$aetoxgr, Raw_AE$studyid
 #> 
 #> ── Workflow Step 1 of 1: `=` ──
 #> 
@@ -428,9 +464,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 6688x7 data.frame saved as `lData$Mapped_AE`.
+#> ── 6688x8 data.frame saved as `lData$Mapped_AE`.
 #> 
-#> ── Returning results from final step: 6688x7 data.frame`. ──
+#> ── Returning results from final step: 6688x8 data.frame`. ──
 #> 
 #> ── Completed `Mapped_AE` Workflow ──────────────────────────────────────────────
 #> 
@@ -439,7 +475,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> ── Checking data against spec
 #> → All 1 data.frame(s) in the spec are present in the data: Raw_ENROLL
 #> → All specified columns in Raw_ENROLL are in the expected format
-#> → All 6 specified column(s) in the spec are present in the data: Raw_ENROLL$studyid, Raw_ENROLL$invid, Raw_ENROLL$country, Raw_ENROLL$subjid, Raw_ENROLL$subjectid, Raw_ENROLL$enrollyn
+#> → All 7 specified column(s) in the spec are present in the data: Raw_ENROLL$studyid, Raw_ENROLL$invid, Raw_ENROLL$country, Raw_ENROLL$subjid, Raw_ENROLL$subjectid, Raw_ENROLL$enrollyn, Raw_ENROLL$enroll_dt
 #> 
 #> ── Workflow Step 1 of 1: `=` ──
 #> 
@@ -449,18 +485,55 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 1819x6 data.frame saved as `lData$Mapped_ENROLL`.
+#> ── 3909x7 data.frame saved as `lData$Mapped_ENROLL`.
 #> 
-#> ── Returning results from final step: 1819x6 data.frame`. ──
+#> ── Returning results from final step: 3909x7 data.frame`. ──
 #> 
 #> ── Completed `Mapped_ENROLL` Workflow ──────────────────────────────────────────
+#> 
+#> ── Initializing `Mapped_IE` Workflow ───────────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 1 data.frame(s) in the spec are present in the data: Raw_IE
+#> → All specified columns in Raw_IE are in the expected format
+#> → All 5 specified column(s) in the spec are present in the data: Raw_IE$studyid, Raw_IE$subjid, Raw_IE$tiver, Raw_IE$ieorres, Raw_IE$iecat
+#> 
+#> ── Workflow Step 1 of 2: `gsm.core::RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
+#> ✔ df = Raw_IE: Passing lData$Raw_IE.
+#> ℹ strQuery = SELECT * , CASE WHEN iecat = 'EXCL' AND ieorres = '1' then 'Y' WHEN iecat = 'INCL' AND ieorres = '0' then 'Y' END as ie_violation FROM df: No matching data found. Passing 'SELECT * , CASE WHEN iecat = 'EXCL' AND ieorres = '1' then 'Y' WHEN iecat = 'INCL' AND ieorres = '0' then 'Y' END as ie_violation FROM df' as a string.
+#> 
+#> ── Calling `gsm.core::RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 42143 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 42143x6 data.frame saved as `lData$ie_violation`.
+#> 
+#> ── Workflow Step 2 of 2: `gsm.core::RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
+#> ✔ df = ie_violation: Passing lData$ie_violation.
+#> ℹ strQuery = SELECT * FROM df WHERE subjid IS NOT NULL AND ie_violation = 'Y': No matching data found. Passing 'SELECT * FROM df WHERE subjid IS NOT NULL AND ie_violation = 'Y'' as a string.
+#> 
+#> ── Calling `gsm.core::RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 0 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 0x6 data.frame saved as `lData$Mapped_IE`.
+#> 
+#> ── Returning results from final step: 0x6 data.frame`. ──
+#> 
+#> ── Completed `Mapped_IE` Workflow ──────────────────────────────────────────────
 #> 
 #> ── Initializing `Mapped_LB` Workflow ───────────────────────────────────────────
 #> 
 #> ── Checking data against spec
 #> → All 1 data.frame(s) in the spec are present in the data: Raw_LB
 #> → All specified columns in Raw_LB are in the expected format
-#> → All 2 specified column(s) in the spec are present in the data: Raw_LB$subjid, Raw_LB$toxgrg_nsv
+#> → All 4 specified column(s) in the spec are present in the data: Raw_LB$subjid, Raw_LB$toxgrg_nsv, Raw_LB$lb_dt, Raw_LB$studyid
 #> 
 #> ── Workflow Step 1 of 1: `=` ──
 #> 
@@ -470,9 +543,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 1585395x2 data.frame saved as `lData$Mapped_LB`.
+#> ── 1585395x4 data.frame saved as `lData$Mapped_LB`.
 #> 
-#> ── Returning results from final step: 1585395x2 data.frame`. ──
+#> ── Returning results from final step: 1585395x4 data.frame`. ──
 #> 
 #> ── Completed `Mapped_LB` Workflow ──────────────────────────────────────────────
 #> 
@@ -481,7 +554,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> ── Checking data against spec
 #> → All 1 data.frame(s) in the spec are present in the data: Raw_PD
 #> → All specified columns in Raw_PD are in the expected format
-#> → All 2 specified column(s) in the spec are present in the data: Raw_PD$subjid, Raw_PD$deemedimportant
+#> → All 5 specified column(s) in the spec are present in the data: Raw_PD$subjid, Raw_PD$deemedimportant, Raw_PD$deviationdate, Raw_PD$companycategory, Raw_PD$studyid
 #> 
 #> ── Workflow Step 1 of 1: `=` ──
 #> 
@@ -491,9 +564,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 0x2 data.frame saved as `lData$Mapped_PD`.
+#> ── 6314x5 data.frame saved as `lData$Mapped_PD`.
 #> 
-#> ── Returning results from final step: 0x2 data.frame`. ──
+#> ── Returning results from final step: 6314x5 data.frame`. ──
 #> 
 #> ── Completed `Mapped_PD` Workflow ──────────────────────────────────────────────
 #> 
@@ -526,7 +599,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> ── Checking data against spec
 #> → All 1 data.frame(s) in the spec are present in the data: Raw_SDRGCOMP
 #> → All specified columns in Raw_SDRGCOMP are in the expected format
-#> → All 3 specified column(s) in the spec are present in the data: Raw_SDRGCOMP$subjid, Raw_SDRGCOMP$sdrgyn, Raw_SDRGCOMP$phase
+#> → All 5 specified column(s) in the spec are present in the data: Raw_SDRGCOMP$subjid, Raw_SDRGCOMP$sdrgyn, Raw_SDRGCOMP$phase, Raw_SDRGCOMP$mincreated_dts, Raw_SDRGCOMP$studyid
 #> 
 #> ── Workflow Step 1 of 1: `=` ──
 #> 
@@ -536,9 +609,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 964x3 data.frame saved as `lData$Mapped_SDRGCOMP`.
+#> ── 964x5 data.frame saved as `lData$Mapped_SDRGCOMP`.
 #> 
-#> ── Returning results from final step: 964x3 data.frame`. ──
+#> ── Returning results from final step: 964x5 data.frame`. ──
 #> 
 #> ── Completed `Mapped_SDRGCOMP` Workflow ────────────────────────────────────────
 #> 
@@ -547,7 +620,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> ── Checking data against spec
 #> → All 1 data.frame(s) in the spec are present in the data: Raw_STUDCOMP
 #> → All specified columns in Raw_STUDCOMP are in the expected format
-#> → All 3 specified column(s) in the spec are present in the data: Raw_STUDCOMP$subjid, Raw_STUDCOMP$compyn, Raw_STUDCOMP$compreas
+#> → All 5 specified column(s) in the spec are present in the data: Raw_STUDCOMP$subjid, Raw_STUDCOMP$compyn, Raw_STUDCOMP$compreas, Raw_STUDCOMP$mincreated_dts, Raw_STUDCOMP$studyid
 #> 
 #> ── Workflow Step 1 of 1: `=` ──
 #> 
@@ -557,9 +630,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 193x3 data.frame saved as `lData$Mapped_STUDCOMP`.
+#> ── 193x5 data.frame saved as `lData$Mapped_STUDCOMP`.
 #> 
-#> ── Returning results from final step: 193x3 data.frame`. ──
+#> ── Returning results from final step: 193x5 data.frame`. ──
 #> 
 #> ── Completed `Mapped_STUDCOMP` Workflow ────────────────────────────────────────
 #> 
@@ -616,24 +689,68 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> ── Checking data against spec
 #> → All 1 data.frame(s) in the spec are present in the data: Raw_VISIT
 #> → All specified columns in Raw_VISIT are in the expected format
-#> → All 4 specified column(s) in the spec are present in the data: Raw_VISIT$subjid, Raw_VISIT$visit_dt, Raw_VISIT$visit_folder, Raw_VISIT$invid
+#> → All 6 specified column(s) in the spec are present in the data: Raw_VISIT$subjid, Raw_VISIT$visit_dt, Raw_VISIT$visit_folder, Raw_VISIT$invid, Raw_VISIT$peperf, Raw_VISIT$studyid
 #> 
-#> ── Workflow Step 1 of 1: `gsm.core::RunQuery` ──
+#> ── Workflow Step 1 of 1: `=` ──
 #> 
-#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
-#> ✔ df = Raw_VISIT: Passing lData$Raw_VISIT.
-#> ℹ strQuery = SELECT subjid, visit_dt, visit_folder, invid FROM df: No matching data found. Passing 'SELECT subjid, visit_dt, visit_folder, invid FROM df' as a string.
+#> ── Evaluating 2 parameter(s) for `=`
+#> ℹ lhs = Mapped_VISIT: No matching data found. Passing 'Mapped_VISIT' as a string.
+#> ✔ rhs = Raw_VISIT: Passing lData$Raw_VISIT.
 #> 
-#> ── Calling `gsm.core::RunQuery`
-#> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 39431 rows returned.
-#> Disconnected from temporary DuckDB connection.
+#> ── Calling `=`
 #> 
-#> ── 39431x4 data.frame saved as `lData$Mapped_VISIT`.
+#> ── 39431x6 data.frame saved as `lData$Mapped_VISIT`.
 #> 
-#> ── Returning results from final step: 39431x4 data.frame`. ──
+#> ── Returning results from final step: 39431x6 data.frame`. ──
 #> 
 #> ── Completed `Mapped_Visit` Workflow ───────────────────────────────────────────
+#> 
+#> ── Initializing `Mapped_DATACHG` Workflow ──────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 3 data.frame(s) in the spec are present in the data: Raw_DATACHG, Raw_DATAENT, Mapped_SUBJ
+#> → All specified columns in Raw_DATACHG are in the expected format
+#> → All specified columns in Raw_DATAENT are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 14 specified column(s) in the spec are present in the data: Raw_DATACHG$studyid, Raw_DATACHG$subject_nsv, Raw_DATACHG$n_changes, Raw_DATACHG$visit_date, Raw_DATACHG$visit, Raw_DATACHG$formoid, Raw_DATAENT$studyid, Raw_DATAENT$subject_nsv, Raw_DATAENT$formoid, Raw_DATAENT$min_entereddate, Raw_DATAENT$visit, Mapped_SUBJ$studyid, Mapped_SUBJ$subjid, Mapped_SUBJ$subject_nsv
+#> 
+#> ── Workflow Step 1 of 3: `dplyr::select` ──
+#> 
+#> ── Evaluating 4 parameter(s) for `dplyr::select`
+#> ✔ .data = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ℹ subjid = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ subject_nsv = subject_nsv: No matching data found. Passing 'subject_nsv' as a string.
+#> ℹ studyid = studyid: No matching data found. Passing 'studyid' as a string.
+#> 
+#> ── Calling `dplyr::select`
+#> 
+#> ── 1819x3 data.frame saved as `lData$Temp_SubjectLookup`.
+#> 
+#> ── Workflow Step 2 of 3: `dplyr::left_join` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `dplyr::left_join`
+#> ✔ x = Raw_DATACHG: Passing lData$Raw_DATACHG.
+#> ✔ y = Temp_SubjectLookup: Passing lData$Temp_SubjectLookup.
+#> ℹ by is of length 2: Parameter is a vector. Passing as is.
+#> 
+#> ── Calling `dplyr::left_join`
+#> 
+#> ── 2968624x7 data.frame saved as `lData$Temp_DATACHG`.
+#> 
+#> ── Workflow Step 3 of 3: `dplyr::left_join` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `dplyr::left_join`
+#> ✔ x = Temp_DATACHG: Passing lData$Temp_DATACHG.
+#> ✔ y = Raw_DATAENT: Passing lData$Raw_DATAENT.
+#> ℹ by is of length 4: Parameter is a vector. Passing as is.
+#> 
+#> ── Calling `dplyr::left_join`
+#> 
+#> ── 2968624x9 data.frame saved as `lData$Mapped_DATACHG`.
+#> 
+#> ── Returning results from final step: 2968624x9 data.frame`. ──
+#> 
+#> ── Completed `Mapped_DATACHG` Workflow ─────────────────────────────────────────
 #> 
 #> ── Initializing `Mapped_DATAENT` Workflow ──────────────────────────────────────
 #> 
@@ -641,7 +758,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> → All 2 data.frame(s) in the spec are present in the data: Raw_DATAENT, Mapped_SUBJ
 #> → All specified columns in Raw_DATAENT are in the expected format
 #> → All specified columns in Mapped_SUBJ are in the expected format
-#> → All 4 specified column(s) in the spec are present in the data: Raw_DATAENT$subject_nsv, Raw_DATAENT$data_entry_lag, Mapped_SUBJ$subjid, Mapped_SUBJ$subject_nsv
+#> → All 6 specified column(s) in the spec are present in the data: Raw_DATAENT$subject_nsv, Raw_DATAENT$data_entry_lag, Raw_DATAENT$min_entereddate, Raw_DATAENT$studyid, Mapped_SUBJ$subjid, Mapped_SUBJ$subject_nsv
 #> 
 #> ── Workflow Step 1 of 2: `dplyr::select` ──
 #> 
@@ -663,11 +780,85 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::left_join`
 #> 
-#> ── 1484772x3 data.frame saved as `lData$Mapped_DATAENT`.
+#> ── 347360x7 data.frame saved as `lData$Mapped_DATAENT`.
 #> 
-#> ── Returning results from final step: 1484772x3 data.frame`. ──
+#> ── Returning results from final step: 347360x7 data.frame`. ──
 #> 
 #> ── Completed `Mapped_DATAENT` Workflow ─────────────────────────────────────────
+#> 
+#> ── Initializing `Mapped_EXCLUSION` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 3 data.frame(s) in the spec are present in the data: Mapped_IE, Mapped_ENROLL, Mapped_PD
+#> → All specified columns in Mapped_IE are in the expected format
+#> → All specified columns in Mapped_ENROLL are in the expected format
+#> → All specified columns in Mapped_PD are in the expected format
+#> → All 18 specified column(s) in the spec are present in the data: Mapped_IE$studyid, Mapped_IE$subjid, Mapped_IE$tiver, Mapped_IE$ieorres, Mapped_IE$iecat, Mapped_IE$ie_violation, Mapped_ENROLL$studyid, Mapped_ENROLL$subjectid, Mapped_ENROLL$subjid, Mapped_ENROLL$invid, Mapped_ENROLL$enrollyn, Mapped_ENROLL$country, Mapped_ENROLL$enroll_dt, Mapped_PD$studyid, Mapped_PD$subjid, Mapped_PD$companycategory, Mapped_PD$deemedimportant, Mapped_PD$deviationdate
+#> 
+#> ── Workflow Step 1 of 5: `gsm.core::RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
+#> ✔ df = Mapped_IE: Passing lData$Mapped_IE.
+#> ℹ strQuery = SELECT subjid, studyid, array_to_string(array_agg(iecat), ',') AS iecat_concat, ie_violation FROM df GROUP BY studyid, subjid, ie_violation: No matching data found. Passing 'SELECT subjid, studyid, array_to_string(array_agg(iecat), ',') AS iecat_concat, ie_violation FROM df GROUP BY studyid, subjid, ie_violation' as a string.
+#> 
+#> ── Calling `gsm.core::RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 0 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 0x4 data.frame saved as `lData$pivot_ie`.
+#> 
+#> ── Workflow Step 2 of 5: `dplyr::left_join` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `dplyr::left_join`
+#> ✔ x = Mapped_ENROLL: Passing lData$Mapped_ENROLL.
+#> ✔ y = pivot_ie: Passing lData$pivot_ie.
+#> ℹ by is of length 2: Parameter is a vector. Passing as is.
+#> 
+#> ── Calling `dplyr::left_join`
+#> 
+#> ── 3909x9 data.frame saved as `lData$add_ie`.
+#> 
+#> ── Workflow Step 3 of 5: `gsm.core::RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
+#> ✔ df = Mapped_PD: Passing lData$Mapped_PD.
+#> ℹ strQuery = SELECT DISTINCT studyid, subjid, companycategory FROM df WHERE companycategory = 'ELIGIBILITY CRITERIA': No matching data found. Passing 'SELECT DISTINCT studyid, subjid, companycategory FROM df WHERE companycategory = 'ELIGIBILITY CRITERIA'' as a string.
+#> 
+#> ── Calling `gsm.core::RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 66 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 66x3 data.frame saved as `lData$pivot_pd`.
+#> 
+#> ── Workflow Step 4 of 5: `dplyr::left_join` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `dplyr::left_join`
+#> ✔ x = add_ie: Passing lData$add_ie.
+#> ✔ y = pivot_pd: Passing lData$pivot_pd.
+#> ℹ by is of length 2: Parameter is a vector. Passing as is.
+#> 
+#> ── Calling `dplyr::left_join`
+#> 
+#> ── 3909x10 data.frame saved as `lData$premapped`.
+#> 
+#> ── Workflow Step 5 of 5: `gsm.core::RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
+#> ✔ df = premapped: Passing lData$premapped.
+#> ℹ strQuery = SELECT *, CASE WHEN ie_violation = 'Y' AND companycategory IS NULL THEN 'EDC I/E' WHEN ie_violation IS NULL AND companycategory IS NOT NULL THEN 'Eligibility IPD' WHEN ie_violation = 'Y' AND companycategory IS NOT NULL THEN 'Ineligible, Both Criteria' ELSE 'Neither' END AS Source  FROM df WHERE enrollyn = 'Y': No matching data found. Passing 'SELECT *, CASE WHEN ie_violation = 'Y' AND companycategory IS NULL THEN 'EDC I/E' WHEN ie_violation IS NULL AND companycategory IS NOT NULL THEN 'Eligibility IPD' WHEN ie_violation = 'Y' AND companycategory IS NOT NULL THEN 'Ineligible, Both Criteria' ELSE 'Neither' END AS Source  FROM df WHERE enrollyn = 'Y'' as a string.
+#> 
+#> ── Calling `gsm.core::RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 1819 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 1819x11 data.frame saved as `lData$Mapped_EXCLUSION`.
+#> 
+#> ── Returning results from final step: 1819x11 data.frame`. ──
+#> 
+#> ── Completed `Mapped_EXCLUSION` Workflow ───────────────────────────────────────
 #> 
 #> ── Initializing `Mapped_QUERY` Workflow ────────────────────────────────────────
 #> 
@@ -675,7 +866,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> → All 2 data.frame(s) in the spec are present in the data: Raw_QUERY, Mapped_SUBJ
 #> → All specified columns in Raw_QUERY are in the expected format
 #> → All specified columns in Mapped_SUBJ are in the expected format
-#> → All 5 specified column(s) in the spec are present in the data: Raw_QUERY$subject_nsv, Raw_QUERY$querystatus, Raw_QUERY$queryage, Mapped_SUBJ$subjid, Mapped_SUBJ$subject_nsv
+#> → All 8 specified column(s) in the spec are present in the data: Raw_QUERY$subject_nsv, Raw_QUERY$querystatus, Raw_QUERY$queryage, Raw_QUERY$created, Raw_QUERY$resolved, Raw_QUERY$studyid, Mapped_SUBJ$subjid, Mapped_SUBJ$subject_nsv
 #> 
 #> ── Workflow Step 1 of 2: `dplyr::select` ──
 #> 
@@ -697,9 +888,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::left_join`
 #> 
-#> ── 253554x4 data.frame saved as `lData$Mapped_QUERY`.
+#> ── 59403x7 data.frame saved as `lData$Mapped_QUERY`.
 #> 
-#> ── Returning results from final step: 253554x4 data.frame`. ──
+#> ── Returning results from final step: 59403x7 data.frame`. ──
 #> 
 #> ── Completed `Mapped_QUERY` Workflow ───────────────────────────────────────────
 #> 
@@ -934,45 +1125,45 @@ metrics_wf <- gsm.core::MakeWorkflowList(
 # Combine lMapped with metrics workflows for comprehensive result
 lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
-#> ── Running 4 Workflows ─────────────────────────────────────────────────────────
+#> ── Running 14 Workflows ────────────────────────────────────────────────────────
 #> 
 #> ── Initializing `Analysis_kri0001` Workflow ────────────────────────────────────
 #> 
 #> ── Checking data against spec
-#> → All 3 data.frame(s) in the spec are present in the data: Mapped_AE, Mapped_SUBJ, Mapped_Visit
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_AE, Mapped_SUBJ
 #> → All specified columns in Mapped_AE are in the expected format
 #> → All specified columns in Mapped_SUBJ are in the expected format
-#> → All specified columns in Mapped_Visit are in the expected format
-#> → All 7 specified column(s) in the spec are present in the data: Mapped_AE$subjid, Mapped_AE$aest_dt, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_Visit$subjid, Mapped_Visit$visit_dt
+#> → All 7 specified column(s) in the spec are present in the data: Mapped_AE$subjid, Mapped_AE$aest_dt, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
 #> 
 #> ── Workflow Step 1 of 3: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
-#> ── Evaluating 10 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ── Evaluating 12 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
 #> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
 #> ✔ dfNumerator = Mapped_AE: Passing lData$Mapped_AE.
-#> ✔ dfDenominator = Mapped_Visit: Passing lData$Mapped_Visit.
+#> ✔ dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
 #> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
 #> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
 #> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
 #> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
 #> ℹ strNumeratorDateCol = aest_dt: No matching data found. Passing 'aest_dt' as a string.
-#> ℹ strDenominatorDateCol = visit_dt: No matching data found. Passing 'visit_dt' as a string.
+#> ℹ strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.
+#> ℹ strDenominatorEndDateCol = lastparticipantdate: No matching data found. Passing 'lastparticipantdate' as a string.
 #> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 28119x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 34632x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 2 of 3: `gsm.studykri::Transform_CumCount` ──
 #> 
-#> ── Evaluating 3 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
 #> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
 #> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
-#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1124x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 3 of 3: `list` ──
 #> 
@@ -990,131 +1181,6 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> ── Completed `Analysis_kri0001` Workflow ───────────────────────────────────────
 #> 
 #> ── Initializing `Analysis_kri0002` Workflow ────────────────────────────────────
-#> 
-#> ── Checking data against spec
-#> → All 2 data.frame(s) in the spec are present in the data: Mapped_AE, Mapped_SUBJ
-#> → All specified columns in Mapped_AE are in the expected format
-#> → All specified columns in Mapped_SUBJ are in the expected format
-#> → All 7 specified column(s) in the spec are present in the data: Mapped_AE$subjid, Mapped_AE$aest_dt, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
-#> 
-#> ── Workflow Step 1 of 3: `gsm.studykri::Input_CountSiteByMonth` ──
-#> 
-#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
-#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
-#> ✔ dfNumerator = Mapped_AE: Passing lData$Mapped_AE.
-#> ✔ dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
-#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
-#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
-#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
-#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
-#> ℹ strNumeratorDateCol = aest_dt: No matching data found. Passing 'aest_dt' as a string.
-#> ℹ strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.
-#> ℹ strDenominatorEndDateCol = lastparticipantdate: No matching data found. Passing 'lastparticipantdate' as a string.
-#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
-#> 
-#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
-#> 
-#> ── 34657x8 data.frame saved as `lData$Analysis_Input`.
-#> 
-#> ── Workflow Step 2 of 3: `gsm.studykri::Transform_CumCount` ──
-#> 
-#> ── Evaluating 3 parameter(s) for `gsm.studykri::Transform_CumCount`
-#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
-#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
-#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
-#> 
-#> ── Calling `gsm.studykri::Transform_CumCount`
-#> 
-#> ── 1136x7 data.frame saved as `lData$Analysis_Transformed`.
-#> 
-#> ── Workflow Step 3 of 3: `list` ──
-#> 
-#> ── Evaluating 3 parameter(s) for `list`
-#> ✔ ID = ID: Passing lMeta$ID.
-#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
-#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
-#> 
-#> ── Calling `list`
-#> 
-#> ── list of length 3 saved as `lData$lAnalysis`.
-#> 
-#> ── Returning results from final step: list of length 3`. ──
-#> 
-#> ── Completed `Analysis_kri0002` Workflow ───────────────────────────────────────
-#> 
-#> ── Initializing `Analysis_kri0003` Workflow ────────────────────────────────────
-#> 
-#> ── Checking data against spec
-#> → All 3 data.frame(s) in the spec are present in the data: Mapped_AE, Mapped_SUBJ, Mapped_Visit
-#> → All specified columns in Mapped_AE are in the expected format
-#> → All specified columns in Mapped_SUBJ are in the expected format
-#> → All specified columns in Mapped_Visit are in the expected format
-#> → All 8 specified column(s) in the spec are present in the data: Mapped_AE$subjid, Mapped_AE$aest_dt, Mapped_AE$aeser, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_Visit$subjid, Mapped_Visit$visit_dt
-#> 
-#> ── Workflow Step 1 of 4: `gsm.core::RunQuery` ──
-#> 
-#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
-#> ✔ df = Mapped_AE: Passing lData$Mapped_AE.
-#> ℹ strQuery = SELECT *
-#> FROM df
-#> WHERE aeser = 'Y'
-#> : No matching data found. Passing 'SELECT *
-#> FROM df
-#> WHERE aeser = 'Y'
-#> ' as a string.
-#> 
-#> ── Calling `gsm.core::RunQuery`
-#> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 193 rows returned.
-#> Disconnected from temporary DuckDB connection.
-#> 
-#> ── 193x7 data.frame saved as `lData$Mapped_SAE`.
-#> 
-#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
-#> 
-#> ── Evaluating 10 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
-#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
-#> ✔ dfNumerator = Mapped_SAE: Passing lData$Mapped_SAE.
-#> ✔ dfDenominator = Mapped_Visit: Passing lData$Mapped_Visit.
-#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
-#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
-#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
-#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
-#> ℹ strNumeratorDateCol = aest_dt: No matching data found. Passing 'aest_dt' as a string.
-#> ℹ strDenominatorDateCol = visit_dt: No matching data found. Passing 'visit_dt' as a string.
-#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
-#> 
-#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
-#> 
-#> ── 27665x8 data.frame saved as `lData$Analysis_Input`.
-#> 
-#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
-#> 
-#> ── Evaluating 3 parameter(s) for `gsm.studykri::Transform_CumCount`
-#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
-#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
-#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
-#> 
-#> ── Calling `gsm.studykri::Transform_CumCount`
-#> 
-#> ── 1124x7 data.frame saved as `lData$Analysis_Transformed`.
-#> 
-#> ── Workflow Step 4 of 4: `list` ──
-#> 
-#> ── Evaluating 3 parameter(s) for `list`
-#> ✔ ID = ID: Passing lMeta$ID.
-#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
-#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
-#> 
-#> ── Calling `list`
-#> 
-#> ── list of length 3 saved as `lData$lAnalysis`.
-#> 
-#> ── Returning results from final step: list of length 3`. ──
-#> 
-#> ── Completed `Analysis_kri0003` Workflow ───────────────────────────────────────
-#> 
-#> ── Initializing `Analysis_kri0004` Workflow ────────────────────────────────────
 #> 
 #> ── Checking data against spec
 #> → All 2 data.frame(s) in the spec are present in the data: Mapped_AE, Mapped_SUBJ
@@ -1139,11 +1205,11 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> ✔ SQL Query complete: 193 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 193x7 data.frame saved as `lData$Mapped_SAE`.
+#> ── 193x8 data.frame saved as `lData$Mapped_SAE`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
-#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ── Evaluating 12 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
 #> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
 #> ✔ dfNumerator = Mapped_SAE: Passing lData$Mapped_SAE.
 #> ✔ dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
@@ -1155,21 +1221,153 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> ℹ strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.
 #> ℹ strDenominatorEndDateCol = lastparticipantdate: No matching data found. Passing 'lastparticipantdate' as a string.
 #> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 34657x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 34632x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
-#> ── Evaluating 3 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
 #> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
 #> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
-#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1136x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 4 of 4: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0002` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0003` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_PD, Mapped_SUBJ
+#> → All specified columns in Mapped_PD are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 8 specified column(s) in the spec are present in the data: Mapped_PD$subjid, Mapped_PD$deemedimportant, Mapped_PD$deviationdate, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
+#> 
+#> ── Workflow Step 1 of 4: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_PD: Passing lData$Mapped_PD.
+#> ℹ strQuery = SELECT * FROM df WHERE deemedimportant = 'No': No matching data found. Passing 'SELECT * FROM df WHERE deemedimportant = 'No'' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 5650 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 5650x5 data.frame saved as `lData$Temp_NONIMPORTANT`.
+#> 
+#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 12 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = Temp_NONIMPORTANT: Passing lData$Temp_NONIMPORTANT.
+#> ✔ dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = deviationdate: No matching data found. Passing 'deviationdate' as a string.
+#> ℹ strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.
+#> ℹ strDenominatorEndDateCol = lastparticipantdate: No matching data found. Passing 'lastparticipantdate' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 34771x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 4 of 4: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0003` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0004` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_PD, Mapped_SUBJ
+#> → All specified columns in Mapped_PD are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 8 specified column(s) in the spec are present in the data: Mapped_PD$subjid, Mapped_PD$deemedimportant, Mapped_PD$deviationdate, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
+#> 
+#> ── Workflow Step 1 of 4: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_PD: Passing lData$Mapped_PD.
+#> ℹ strQuery = SELECT * FROM df WHERE deemedimportant = 'Yes': No matching data found. Passing 'SELECT * FROM df WHERE deemedimportant = 'Yes'' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 664 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 664x5 data.frame saved as `lData$Temp_IMPORTANT`.
+#> 
+#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 12 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = Temp_IMPORTANT: Passing lData$Temp_IMPORTANT.
+#> ✔ dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = deviationdate: No matching data found. Passing 'deviationdate' as a string.
+#> ℹ strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.
+#> ℹ strDenominatorEndDateCol = lastparticipantdate: No matching data found. Passing 'lastparticipantdate' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 34645x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -1185,6 +1383,682 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> ── Returning results from final step: list of length 3`. ──
 #> 
 #> ── Completed `Analysis_kri0004` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0005` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_SUBJ, Mapped_LB
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All specified columns in Mapped_LB are in the expected format
+#> → All 5 specified column(s) in the spec are present in the data: Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_LB$subjid, Mapped_LB$toxgrg_nsv, Mapped_LB$lb_dt
+#> 
+#> ── Workflow Step 1 of 5: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_LB: Passing lData$Mapped_LB.
+#> ℹ strQuery = SELECT * FROM df WHERE toxgrg_nsv IN ('3', '4'): No matching data found. Passing 'SELECT * FROM df WHERE toxgrg_nsv IN ('3', '4')' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 2235 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 2235x4 data.frame saved as `lData$Temp_ABNORMAL`.
+#> 
+#> ── Workflow Step 2 of 5: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_LB: Passing lData$Mapped_LB.
+#> ℹ strQuery = SELECT * FROM df WHERE toxgrg_nsv IN ('0', '1', '2', '3', '4'): No matching data found. Passing 'SELECT * FROM df WHERE toxgrg_nsv IN ('0', '1', '2', '3', '4')' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 800395 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 800395x4 data.frame saved as `lData$Temp_LB`.
+#> 
+#> ── Workflow Step 3 of 5: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = Temp_ABNORMAL: Passing lData$Temp_ABNORMAL.
+#> ✔ dfDenominator = Temp_LB: Passing lData$Temp_LB.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = lb_dt: No matching data found. Passing 'lb_dt' as a string.
+#> ℹ strDenominatorDateCol = lb_dt: No matching data found. Passing 'lb_dt' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 27746x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 4 of 5: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1145x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 5 of 5: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0005` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0006` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_STUDCOMP, Mapped_SUBJ
+#> → All specified columns in Mapped_STUDCOMP are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 8 specified column(s) in the spec are present in the data: Mapped_STUDCOMP$subjid, Mapped_STUDCOMP$compyn, Mapped_STUDCOMP$mincreated_dts, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
+#> 
+#> ── Workflow Step 1 of 4: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_STUDCOMP: Passing lData$Mapped_STUDCOMP.
+#> ℹ strQuery = SELECT * FROM df WHERE compyn = 'N': No matching data found. Passing 'SELECT * FROM df WHERE compyn = 'N'' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 177 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 177x5 data.frame saved as `lData$Temp_DROPOUT`.
+#> 
+#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = Temp_DROPOUT: Passing lData$Temp_DROPOUT.
+#> ✔ dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = mincreated_dts: No matching data found. Passing 'mincreated_dts' as a string.
+#> ℹ strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 1960x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1032x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 4 of 4: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0006` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0007` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_SDRGCOMP, Mapped_SUBJ
+#> → All specified columns in Mapped_SDRGCOMP are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 9 specified column(s) in the spec are present in the data: Mapped_SDRGCOMP$subjid, Mapped_SDRGCOMP$sdrgyn, Mapped_SDRGCOMP$phase, Mapped_SDRGCOMP$mincreated_dts, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
+#> 
+#> ── Workflow Step 1 of 4: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_SDRGCOMP: Passing lData$Mapped_SDRGCOMP.
+#> ℹ strQuery = SELECT * FROM df WHERE sdrgyn = 'N': No matching data found. Passing 'SELECT * FROM df WHERE sdrgyn = 'N'' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 189 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 189x5 data.frame saved as `lData$Temp_DISCONTINUED`.
+#> 
+#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = Temp_DISCONTINUED: Passing lData$Temp_DISCONTINUED.
+#> ✔ dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = mincreated_dts: No matching data found. Passing 'mincreated_dts' as a string.
+#> ℹ strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 1971x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1040x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 4 of 4: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0007` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0008` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 3 data.frame(s) in the spec are present in the data: Mapped_QUERY, Mapped_DATACHG, Mapped_SUBJ
+#> → All specified columns in Mapped_QUERY are in the expected format
+#> → All specified columns in Mapped_DATACHG are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 10 specified column(s) in the spec are present in the data: Mapped_QUERY$subjid, Mapped_QUERY$querystatus, Mapped_QUERY$created, Mapped_DATACHG$subjid, Mapped_DATACHG$min_entereddate, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
+#> 
+#> ── Workflow Step 1 of 4: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_QUERY: Passing lData$Mapped_QUERY.
+#> ℹ strQuery = SELECT * FROM df WHERE querystatus IN ('Open','Answered','Closed'): No matching data found. Passing 'SELECT * FROM df WHERE querystatus IN ('Open','Answered','Closed')' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 59403 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 59403x7 data.frame saved as `lData$Temp_QUERY`.
+#> 
+#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = Temp_QUERY: Passing lData$Temp_QUERY.
+#> ✔ dfDenominator = Mapped_DATACHG: Passing lData$Mapped_DATACHG.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = created: No matching data found. Passing 'created' as a string.
+#> ℹ strDenominatorDateCol = min_entereddate: No matching data found. Passing 'min_entereddate' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 32247x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1139x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 4 of 4: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0008` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0009` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_QUERY, Mapped_SUBJ
+#> → All specified columns in Mapped_QUERY are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 9 specified column(s) in the spec are present in the data: Mapped_QUERY$subjid, Mapped_QUERY$querystatus, Mapped_QUERY$created, Mapped_QUERY$queryage, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
+#> 
+#> ── Workflow Step 1 of 5: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_QUERY: Passing lData$Mapped_QUERY.
+#> ℹ strQuery = SELECT * FROM df WHERE querystatus IN ('Open','Answered','Closed') AND queryage > 30: No matching data found. Passing 'SELECT * FROM df WHERE querystatus IN ('Open','Answered','Closed') AND queryage > 30' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 1173 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 1173x7 data.frame saved as `lData$Temp_OLDQUERY`.
+#> 
+#> ── Workflow Step 2 of 5: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_QUERY: Passing lData$Mapped_QUERY.
+#> ℹ strQuery = SELECT * FROM df WHERE querystatus IN ('Open','Answered','Closed'): No matching data found. Passing 'SELECT * FROM df WHERE querystatus IN ('Open','Answered','Closed')' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 59403 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 59403x7 data.frame saved as `lData$Temp_QUERY`.
+#> 
+#> ── Workflow Step 3 of 5: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = Temp_OLDQUERY: Passing lData$Temp_OLDQUERY.
+#> ✔ dfDenominator = Temp_QUERY: Passing lData$Temp_QUERY.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = created: No matching data found. Passing 'created' as a string.
+#> ℹ strDenominatorDateCol = created: No matching data found. Passing 'created' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 23336x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 4 of 5: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1102x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 5 of 5: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0009` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0010` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_DATAENT, Mapped_SUBJ
+#> → All specified columns in Mapped_DATAENT are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 8 specified column(s) in the spec are present in the data: Mapped_DATAENT$subjid, Mapped_DATAENT$data_entry_lag, Mapped_DATAENT$min_entereddate, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
+#> 
+#> ── Workflow Step 1 of 4: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_DATAENT: Passing lData$Mapped_DATAENT.
+#> ℹ strQuery = SELECT * FROM df WHERE data_entry_lag > 10: No matching data found. Passing 'SELECT * FROM df WHERE data_entry_lag > 10' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 14516 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 14516x7 data.frame saved as `lData$Temp_LAG`.
+#> 
+#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = Temp_LAG: Passing lData$Temp_LAG.
+#> ✔ dfDenominator = Mapped_DATAENT: Passing lData$Mapped_DATAENT.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = min_entereddate: No matching data found. Passing 'min_entereddate' as a string.
+#> ℹ strDenominatorDateCol = min_entereddate: No matching data found. Passing 'min_entereddate' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 30350x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1135x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 4 of 4: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0010` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0011` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_DATACHG, Mapped_SUBJ
+#> → All specified columns in Mapped_DATACHG are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 8 specified column(s) in the spec are present in the data: Mapped_DATACHG$subjid, Mapped_DATACHG$min_entereddate, Mapped_DATACHG$n_changes, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
+#> 
+#> ── Workflow Step 1 of 4: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_DATACHG: Passing lData$Mapped_DATACHG.
+#> ℹ strQuery = SELECT * FROM df WHERE n_changes > 0: No matching data found. Passing 'SELECT * FROM df WHERE n_changes > 0' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 770726 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 770726x9 data.frame saved as `lData$Temp_CHANGED`.
+#> 
+#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = Temp_CHANGED: Passing lData$Temp_CHANGED.
+#> ✔ dfDenominator = Mapped_DATACHG: Passing lData$Mapped_DATACHG.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = min_entereddate: No matching data found. Passing 'min_entereddate' as a string.
+#> ℹ strDenominatorDateCol = min_entereddate: No matching data found. Passing 'min_entereddate' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 30366x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1139x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 4 of 4: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0011` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0012` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 1 data.frame(s) in the spec are present in the data: Mapped_ENROLL
+#> → All specified columns in Mapped_ENROLL are in the expected format
+#> → All 4 specified column(s) in the spec are present in the data: Mapped_ENROLL$subjectid, Mapped_ENROLL$invid, Mapped_ENROLL$enrollyn, Mapped_ENROLL$enroll_dt
+#> 
+#> ── Workflow Step 1 of 4: `RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `RunQuery`
+#> ✔ df = Mapped_ENROLL: Passing lData$Mapped_ENROLL.
+#> ℹ strQuery = SELECT * FROM df WHERE enrollyn = 'N': No matching data found. Passing 'SELECT * FROM df WHERE enrollyn = 'N'' as a string.
+#> 
+#> ── Calling `RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 2090 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 2090x7 data.frame saved as `lData$Temp_SCREENED`.
+#> 
+#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_ENROLL: Passing lData$Mapped_ENROLL.
+#> ✔ dfNumerator = Temp_SCREENED: Passing lData$Temp_SCREENED.
+#> ✔ dfDenominator = Mapped_ENROLL: Passing lData$Mapped_ENROLL.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjectid: No matching data found. Passing 'subjectid' as a string.
+#> ℹ strNumeratorDateCol = enroll_dt: No matching data found. Passing 'enroll_dt' as a string.
+#> ℹ strDenominatorDateCol = enroll_dt: No matching data found. Passing 'enroll_dt' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 3493x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1018x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 4 of 4: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0012` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0013` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_Visit, Mapped_SUBJ
+#> → All specified columns in Mapped_Visit are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 8 specified column(s) in the spec are present in the data: Mapped_Visit$subjid, Mapped_Visit$peperf, Mapped_Visit$visit_dt, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
+#> 
+#> ── Workflow Step 1 of 4: `gsm.core::RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
+#> ✔ df = Mapped_Visit: Passing lData$Mapped_Visit.
+#> ℹ strQuery = SELECT * FROM df WHERE peperf = 'Y': No matching data found. Passing 'SELECT * FROM df WHERE peperf = 'Y'' as a string.
+#> 
+#> ── Calling `gsm.core::RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 11453 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 11453x6 data.frame saved as `lData$PK_Collected`.
+#> 
+#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = PK_Collected: Passing lData$PK_Collected.
+#> ✔ dfDenominator = Mapped_Visit: Passing lData$Mapped_Visit.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = visit_dt: No matching data found. Passing 'visit_dt' as a string.
+#> ℹ strDenominatorDateCol = visit_dt: No matching data found. Passing 'visit_dt' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 27201x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 1089x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 4 of 4: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0013` Workflow ───────────────────────────────────────
+#> 
+#> ── Initializing `Analysis_kri0014` Workflow ────────────────────────────────────
+#> 
+#> ── Checking data against spec
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_EXCLUSION, Mapped_SUBJ
+#> → All specified columns in Mapped_EXCLUSION are in the expected format
+#> → All specified columns in Mapped_SUBJ are in the expected format
+#> → All 14 specified column(s) in the spec are present in the data: Mapped_EXCLUSION$subjid, Mapped_EXCLUSION$subjectid, Mapped_EXCLUSION$Source, Mapped_EXCLUSION$studyid, Mapped_EXCLUSION$invid, Mapped_EXCLUSION$country, Mapped_EXCLUSION$companycategory, Mapped_EXCLUSION$ie_violation, Mapped_EXCLUSION$enroll_dt, Mapped_SUBJ$subjid, Mapped_SUBJ$invid, Mapped_SUBJ$studyid, Mapped_SUBJ$firstparticipantdate, Mapped_SUBJ$lastparticipantdate
+#> 
+#> ── Workflow Step 1 of 4: `gsm.core::RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
+#> ✔ df = Mapped_EXCLUSION: Passing lData$Mapped_EXCLUSION.
+#> ℹ strQuery = SELECT * FROM df WHERE Source != 'Neither': No matching data found. Passing 'SELECT * FROM df WHERE Source != 'Neither'' as a string.
+#> 
+#> ── Calling `gsm.core::RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 10 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 10x11 data.frame saved as `lData$TEMP_VIOLATIONS`.
+#> 
+#> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
+#> 
+#> ── Evaluating 11 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ✔ dfNumerator = TEMP_VIOLATIONS: Passing lData$TEMP_VIOLATIONS.
+#> ✔ dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
+#> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
+#> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
+#> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
+#> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
+#> ℹ strNumeratorDateCol = enroll_dt: No matching data found. Passing 'enroll_dt' as a string.
+#> ℹ strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.
+#> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
+#> 
+#> ── Calling `gsm.studykri::Input_CountSiteByMonth`
+#> 
+#> ── 1787x8 data.frame saved as `lData$Analysis_Input`.
+#> 
+#> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
+#> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
+#> 
+#> ── Calling `gsm.studykri::Transform_CumCount`
+#> 
+#> ── 993x7 data.frame saved as `lData$Analysis_Transformed`.
+#> 
+#> ── Workflow Step 4 of 4: `list` ──
+#> 
+#> ── Evaluating 3 parameter(s) for `list`
+#> ✔ ID = ID: Passing lMeta$ID.
+#> ✔ Analysis_Input = Analysis_Input: Passing lData$Analysis_Input.
+#> ✔ Analysis_Transformed = Analysis_Transformed: Passing lData$Analysis_Transformed.
+#> 
+#> ── Calling `list`
+#> 
+#> ── list of length 3 saved as `lData$lAnalysis`.
+#> 
+#> ── Returning results from final step: list of length 3`. ──
+#> 
+#> ── Completed `Analysis_kri0014` Workflow ───────────────────────────────────────
 ```
 
 ## Generate KRI report using scripts
@@ -1194,7 +2068,6 @@ and subsequently generate a KRI report using {gsm.reporting}.
 We assemble some data needed for reporting.
 
 ``` r
-
 dfInput <- gsm.studykri::BindResults(lAnalyzed, "Analysis_Input")
 
 dfTransformed <- gsm.studykri::BindResults(lAnalyzed, "Analysis_Transformed")
@@ -1224,27 +2097,72 @@ In order to make the bootstrapping more efficient we can combine all KRI
 that use the same denominator.
 
 ``` r
-
-lJoined <- gsm.studykri::JoinKRIByDenominator(dfInput)
+lJoined <- gsm.studykri::JoinKRIByDenominator(dfInput, dfMetrics)
 
 str(lJoined)
-#> List of 2
-#>  $ Visits       : tibble [28,119 × 7] (S3: tbl_df/tbl/data.frame)
-#>   ..$ GroupID                   : chr [1:28119] "AA-1_0X001" "AA-1_0X003" "AA-1_0X003" "AA-1_0X003" ...
-#>   ..$ GroupLevel                : chr [1:28119] "Site" "Site" "Site" "Site" ...
-#>   ..$ Denominator               : int [1:28119] 1 1 1 3 2 3 2 2 1 2 ...
-#>   ..$ StudyID                   : chr [1:28119] "AA-1" "AA-1" "AA-1" "AA-1" ...
-#>   ..$ MonthYYYYMM               : num [1:28119] 201105 200706 200712 200804 200806 ...
-#>   ..$ Numerator_Analysis_kri0001: int [1:28119] 1 1 1 2 4 2 6 1 2 2 ...
-#>   ..$ Numerator_Analysis_kri0003: int [1:28119] 0 0 0 0 0 0 0 0 0 0 ...
-#>  $ Days on Study: tibble [34,657 × 7] (S3: tbl_df/tbl/data.frame)
-#>   ..$ GroupID                   : chr [1:34657] "AA-1_0X001" "AA-1_0X003" "AA-1_0X003" "AA-1_0X003" ...
-#>   ..$ GroupLevel                : chr [1:34657] "Site" "Site" "Site" "Site" ...
-#>   ..$ Denominator               : int [1:34657] 31 30 31 60 60 62 60 62 60 62 ...
-#>   ..$ StudyID                   : chr [1:34657] "AA-1" "AA-1" "AA-1" "AA-1" ...
-#>   ..$ MonthYYYYMM               : num [1:34657] 201105 200706 200712 200804 200806 ...
-#>   ..$ Numerator_Analysis_kri0002: int [1:34657] 1 1 1 2 4 2 6 1 2 2 ...
-#>   ..$ Numerator_Analysis_kri0004: int [1:34657] 0 0 0 0 0 0 0 0 0 0 ...
+#> List of 8
+#>  $ Days on Study      : tibble [34,783 × 9] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:34783] "AA-1_0X001" "AA-1_0X003" "AA-1_0X003" "AA-1_0X003" ...
+#>   ..$ GroupLevel                : chr [1:34783] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:34783] 31 30 31 60 60 62 60 62 60 62 ...
+#>   ..$ StudyID                   : chr [1:34783] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:34783] 201105 200706 200712 200804 200806 ...
+#>   ..$ Numerator_Analysis_kri0001: int [1:34783] 1 1 1 2 4 2 6 1 2 2 ...
+#>   ..$ Numerator_Analysis_kri0002: int [1:34783] 0 0 0 0 0 0 0 0 0 0 ...
+#>   ..$ Numerator_Analysis_kri0003: int [1:34783] 0 0 0 0 0 0 0 0 0 0 ...
+#>   ..$ Numerator_Analysis_kri0004: int [1:34783] 0 0 0 0 0 0 0 0 0 0 ...
+#>  $ Total Lab Samples  : tibble [27,746 × 6] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:27746] "AA-1_0X003" "AA-1_0X003" "AA-1_0X005" "AA-1_0X005" ...
+#>   ..$ GroupLevel                : chr [1:27746] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:27746] 42 72 21 38 55 22 21 23 21 37 ...
+#>   ..$ StudyID                   : chr [1:27746] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:27746] 200804 200805 201008 201009 201010 ...
+#>   ..$ Numerator_Analysis_kri0005: int [1:27746] 2 5 1 4 6 2 2 2 2 2 ...
+#>  $ Enrolled Subjects  : tibble [2,008 × 8] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:2008] "AA-1_0X001" "AA-1_0X005" "AA-1_0X010" "AA-1_0X023" ...
+#>   ..$ GroupLevel                : chr [1:2008] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:2008] 0 0 0 0 0 0 0 0 0 0 ...
+#>   ..$ StudyID                   : chr [1:2008] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:2008] 201411 201101 200511 200710 201205 ...
+#>   ..$ Numerator_Analysis_kri0006: int [1:2008] 1 1 1 1 1 1 1 1 1 1 ...
+#>   ..$ Numerator_Analysis_kri0007: int [1:2008] 1 NA NA NA NA 1 1 1 1 1 ...
+#>   ..$ Numerator_Analysis_kri0014: int [1:2008] NA NA NA NA NA NA NA NA NA NA ...
+#>  $ Total Data Points  : tibble [32,247 × 7] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:32247] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...
+#>   ..$ GroupLevel                : chr [1:32247] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:32247] 35 50 93 77 77 69 85 77 77 22 ...
+#>   ..$ StudyID                   : chr [1:32247] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:32247] 201007 201008 201010 201011 201012 ...
+#>   ..$ Numerator_Analysis_kri0008: int [1:32247] 2 5 1 5 3 1 1 1 3 1 ...
+#>   ..$ Numerator_Analysis_kri0011: int [1:32247] 8 12 29 16 18 23 21 25 18 6 ...
+#>  $ Total Queries      : tibble [23,336 × 6] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:23336] "AA-1_0X003" "AA-1_0X005" "AA-1_0X007" "AA-1_0X010" ...
+#>   ..$ GroupLevel                : chr [1:23336] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:23336] 3 2 2 3 2 1 5 2 5 4 ...
+#>   ..$ StudyID                   : chr [1:23336] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:23336] 201303 201708 201508 200806 200901 ...
+#>   ..$ Numerator_Analysis_kri0009: int [1:23336] 1 1 1 1 1 1 1 1 2 1 ...
+#>  $ Total Data Pages   : tibble [30,350 × 6] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:30350] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...
+#>   ..$ GroupLevel                : chr [1:30350] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:30350] 9 10 9 9 3 1 10 9 9 11 ...
+#>   ..$ StudyID                   : chr [1:30350] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:30350] 201012 201102 201104 201105 201108 ...
+#>   ..$ Numerator_Analysis_kri0010: int [1:30350] 2 1 2 1 1 1 2 1 1 2 ...
+#>  $ Screened Subjects  : tibble [3,493 × 6] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:3493] "0X002" "0X002" "0X003" "0X004" ...
+#>   ..$ GroupLevel                : chr [1:3493] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:3493] 4 50 9 4 1 16 4 18 9 4 ...
+#>   ..$ StudyID                   : chr [1:3493] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:3493] 201109 201407 201305 201205 201407 ...
+#>   ..$ Numerator_Analysis_kri0012: int [1:3493] 2 10 3 2 1 4 2 6 3 2 ...
+#>  $ PK Samples Expected: tibble [27,201 × 6] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:27201] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...
+#>   ..$ GroupLevel                : chr [1:27201] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:27201] 1 1 1 2 1 1 2 1 1 1 ...
+#>   ..$ StudyID                   : chr [1:27201] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:27201] 201007 201008 201102 201107 201201 ...
+#>   ..$ Numerator_Analysis_kri0013: int [1:27201] 1 1 1 1 1 1 2 1 1 1 ...
 ```
 
 Using the study references we can calculate the bootstrapped confidence
@@ -1257,19 +2175,30 @@ BoundsRef_Wide <- purrr::map(lJoined, ~ Analyze_StudyKRI_PredictBoundsRef(., dfS
 #> Resampling with minimum group count: 80
 #> Resampling with minimum group count: 80
 #> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 164
+#> Resampling with minimum group count: 164
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
 
 dfBounds <- Transform_Long(Bounds_Wide)
 dfBoundsRef <- Transform_Long(BoundsRef_Wide)
 ```
 
 ``` r
-
 lCharts <- gsm.studykri::MakeCharts_StudyKRI(
-    dfResults = dfTransformed, 
-    dfBounds = dfBounds,
-    dfBoundsRef = dfBoundsRef,
-    dfMetrics = dfMetrics
-  )
+  dfResults = dfTransformed,
+  dfBounds = dfBounds,
+  dfBoundsRef = dfBoundsRef,
+  dfMetrics = dfMetrics
+)
 
 gsm.studykri::Report_StudyKRI(
   lCharts = lCharts,
@@ -1280,13 +2209,13 @@ gsm.studykri::Report_StudyKRI(
   strInputPath = system.file("report", "Report_KRI.Rmd", package = "gsm.studykri")
 )
 #> processing file: Report_KRI.Rmd
-#> output file: /tmp/RtmpQoRpSs/Report_KRI.knit.md
-#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpQoRpSs/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpQoRpSs/rmarkdown-str21c31864c2dc.html --variable code_folding=hide --variable code_menu=1
+#> output file: /tmp/RtmphCBDvW/Report_KRI.knit.md
+#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmphCBDvW/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmphCBDvW/rmarkdown-str205b699ffea5.html --variable code_folding=hide --variable code_menu=1
 #> 
 #> Output created: report_studykri_AA-1.html
 #> processing file: Report_KRI.Rmd
-#> output file: /tmp/RtmpQoRpSs/Report_KRI.knit.md
-#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpQoRpSs/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpQoRpSs/rmarkdown-str21c345407775.html --variable code_folding=hide --variable code_menu=1
+#> output file: /tmp/RtmphCBDvW/Report_KRI.knit.md
+#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmphCBDvW/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmphCBDvW/rmarkdown-str205b53463940.html --variable code_folding=hide --variable code_menu=1
 #> 
 #> Output created: report_studykri_AA-2.html
 #>                        AA-1                        AA-2 
@@ -1326,9 +2255,9 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `gsm.studykri::BindResults`
 #> 
-#> ── 4520x9 data.frame saved as `lData$lResults`.
+#> ── 15364x9 data.frame saved as `lData$lResults`.
 #> 
-#> ── Returning results from final step: 4520x9 data.frame`. ──
+#> ── Returning results from final step: 15364x9 data.frame`. ──
 #> 
 #> ── Completed `Reporting_Results` Workflow ──────────────────────────────────────
 #> 
@@ -1365,9 +2294,9 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `gsm.studykri::BindResults`
 #> 
-#> ── 125098x10 data.frame saved as `lData$Reporting_Input`.
+#> ── 319137x10 data.frame saved as `lData$Reporting_Input`.
 #> 
-#> ── Returning results from final step: 125098x10 data.frame`. ──
+#> ── Returning results from final step: 319137x10 data.frame`. ──
 #> 
 #> ── Completed `Reporting_Input` Workflow ────────────────────────────────────────
 #> 
@@ -1382,29 +2311,30 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `gsm.reporting::MakeMetric`
 #> 
-#> ── 4x16 data.frame saved as `lData$dfMetrics`.
+#> ── 14x16 data.frame saved as `lData$Reporting_Metrics`.
 #> 
-#> ── Returning results from final step: 4x16 data.frame`. ──
+#> ── Returning results from final step: 14x16 data.frame`. ──
 #> 
 #> ── Completed `Reporting_Metrics` Workflow ──────────────────────────────────────
 #> 
 #> ── Initializing `Reporting_Join` Workflow ──────────────────────────────────────
 #> 
 #> ── Checking data against spec
-#> → All 1 data.frame(s) in the spec are present in the data: Reporting_Input
+#> → All 2 data.frame(s) in the spec are present in the data: Reporting_Input, Reporting_Metrics
 #> → All specified columns in Reporting_Input are in the expected format
 #> → All 7 specified column(s) in the spec are present in the data: Reporting_Input$MetricID, Reporting_Input$GroupID, Reporting_Input$GroupLevel, Reporting_Input$Numerator, Reporting_Input$Denominator, Reporting_Input$StudyID, Reporting_Input$MonthYYYYMM
 #> 
 #> ── Workflow Step 1 of 1: `gsm.studykri::JoinKRIByDenominator` ──
 #> 
-#> ── Evaluating 1 parameter(s) for `gsm.studykri::JoinKRIByDenominator`
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::JoinKRIByDenominator`
 #> ✔ dfInput = Reporting_Input: Passing lData$Reporting_Input.
+#> ✔ dfMetrics = Reporting_Metrics: Passing lData$Reporting_Metrics.
 #> 
 #> ── Calling `gsm.studykri::JoinKRIByDenominator`
 #> 
-#> ── list of length 2 saved as `lData$Joined_Analysis_Input`.
+#> ── list of length 8 saved as `lData$Joined_Analysis_Input`.
 #> 
-#> ── Returning results from final step: list of length 2`. ──
+#> ── Returning results from final step: list of length 8`. ──
 #> 
 #> ── Completed `Reporting_Join` Workflow ─────────────────────────────────────────
 #> 
@@ -1426,18 +2356,17 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Workflow Step 2 of 3: `purrr::map` ──
 #> 
-#> ── Evaluating 7 parameter(s) for `purrr::map`
+#> ── Evaluating 6 parameter(s) for `purrr::map`
 #> ✔ .x = Reporting_Join: Passing lData$Reporting_Join.
 #> ✔ .f = PredictBounds_Func: Passing lData$PredictBounds_Func.
 #> ✔ dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.
 #> ✔ nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.
 #> ✔ nConfLevel = Threshold: Passing lMeta$Threshold.
-#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
 #> ℹ seed = 42: No matching data found. Passing '42' as a string.
 #> 
 #> ── Calling `purrr::map`
 #> 
-#> ── list of length 2 saved as `lData$Analysis_Bounds_Wide`.
+#> ── list of length 8 saved as `lData$Analysis_Bounds_Wide`.
 #> 
 #> ── Workflow Step 3 of 3: `gsm.studykri::Transform_Long` ──
 #> 
@@ -1446,9 +2375,9 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `gsm.studykri::Transform_Long`
 #> 
-#> ── 1544x8 data.frame saved as `lData$Reporting_Bounds`.
+#> ── 5232x8 data.frame saved as `lData$Reporting_Bounds`.
 #> 
-#> ── Returning results from final step: 1544x8 data.frame`. ──
+#> ── Returning results from final step: 5232x8 data.frame`. ──
 #> 
 #> ── Completed `Reporting_Bounds` Workflow ───────────────────────────────────────
 #> 
@@ -1470,13 +2399,12 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Workflow Step 2 of 3: `purrr::map` ──
 #> 
-#> ── Evaluating 7 parameter(s) for `purrr::map`
+#> ── Evaluating 6 parameter(s) for `purrr::map`
 #> ✔ .x = Reporting_Join: Passing lData$Reporting_Join.
 #> ✔ .f = PredictBoundsRef_Func: Passing lData$PredictBoundsRef_Func.
 #> ✔ dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.
 #> ✔ nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.
 #> ✔ nConfLevel = Threshold: Passing lMeta$Threshold.
-#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
 #> ℹ seed = 42: No matching data found. Passing '42' as a string.
 #> 
 #> ── Calling `purrr::map`
@@ -1484,8 +2412,20 @@ lReporting <- gsm.core::RunWorkflows(
 #> Resampling with minimum group count: 80
 #> Resampling with minimum group count: 80
 #> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 164
+#> Resampling with minimum group count: 164
+#> Resampling with minimum group count: 80
+#> Resampling with minimum group count: 80
 #> 
-#> ── list of length 2 saved as `lData$Analysis_BoundsRef_Wide`.
+#> ── list of length 8 saved as `lData$Analysis_BoundsRef_Wide`.
 #> 
 #> ── Workflow Step 3 of 3: `gsm.studykri::Transform_Long` ──
 #> 
@@ -1494,9 +2434,9 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `gsm.studykri::Transform_Long`
 #> 
-#> ── 1536x11 data.frame saved as `lData$Reporting_BoundsRef`.
+#> ── 5133x11 data.frame saved as `lData$Reporting_BoundsRef`.
 #> 
-#> ── Returning results from final step: 1536x11 data.frame`. ──
+#> ── Returning results from final step: 5133x11 data.frame`. ──
 #> 
 #> ── Completed `Reporting_BoundsRef` Workflow ────────────────────────────────────
 
@@ -1520,10 +2460,92 @@ lModule <- gsm.core::RunWorkflows(module_wf_gsm, lReporting)
 #> 
 #> ── No spec found in workflow. Proceeding without checking data.
 #> 
-#> ── Workflow Step 1 of 2: `gsm.studykri::MakeCharts_StudyKRI` ──
+#> ── Workflow Step 1 of 6: `gsm.core::RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
+#> ✔ df = Reporting_Results: Passing lData$Reporting_Results.
+#> ℹ strQuery = SELECT * FROM df 
+#> WHERE MetricID IN (
+#>   'Analysis_kri0001', 
+#>   'Analysis_kri0002', 
+#>   'Analysis_kri0003', 
+#>   'Analysis_kri0004', 
+#>   'Analysis_kri0005', 
+#>   'Analysis_kri0007', 
+#>   'Analysis_kri0008', 
+#>   'Analysis_kri0011'
+#> )
+#> : No matching data found. Passing 'SELECT * FROM df 
+#> WHERE MetricID IN (
+#>   'Analysis_kri0001', 
+#>   'Analysis_kri0002', 
+#>   'Analysis_kri0003', 
+#>   'Analysis_kri0004', 
+#>   'Analysis_kri0005', 
+#>   'Analysis_kri0007', 
+#>   'Analysis_kri0008', 
+#>   'Analysis_kri0011'
+#> )
+#> ' as a string.
+#> 
+#> ── Calling `gsm.core::RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 8995 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 8995x9 data.frame saved as `lData$ResultsLog`.
+#> 
+#> ── Workflow Step 2 of 6: `gsm.core::RunQuery` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `gsm.core::RunQuery`
+#> ✔ df = Reporting_Results: Passing lData$Reporting_Results.
+#> ℹ strQuery = SELECT * FROM df 
+#> WHERE MetricID NOT IN (
+#>   'Analysis_kri0001', 
+#>   'Analysis_kri0002', 
+#>   'Analysis_kri0003', 
+#>   'Analysis_kri0004', 
+#>   'Analysis_kri0005', 
+#>   'Analysis_kri0007', 
+#>   'Analysis_kri0011'
+#> )
+#> : No matching data found. Passing 'SELECT * FROM df 
+#> WHERE MetricID NOT IN (
+#>   'Analysis_kri0001', 
+#>   'Analysis_kri0002', 
+#>   'Analysis_kri0003', 
+#>   'Analysis_kri0004', 
+#>   'Analysis_kri0005', 
+#>   'Analysis_kri0007', 
+#>   'Analysis_kri0011'
+#> )
+#> ' as a string.
+#> 
+#> ── Calling `gsm.core::RunQuery`
+#> Creating a new temporary DuckDB connection.
+#> ✔ SQL Query complete: 7508 rows returned.
+#> Disconnected from temporary DuckDB connection.
+#> 
+#> ── 7508x9 data.frame saved as `lData$ResultsNorm`.
+#> 
+#> ── Workflow Step 3 of 6: `gsm.studykri::MakeCharts_StudyKRI` ──
+#> 
+#> ── Evaluating 6 parameter(s) for `gsm.studykri::MakeCharts_StudyKRI`
+#> ✔ dfResults = ResultsLog: Passing lData$ResultsLog.
+#> ✔ dfBounds = Reporting_Bounds: Passing lData$Reporting_Bounds.
+#> ✔ dfBoundsRef = Reporting_BoundsRef: Passing lData$Reporting_BoundsRef.
+#> ✔ dfMetrics = Reporting_Metrics: Passing lData$Reporting_Metrics.
+#> ℹ nMaxMonth is of length 0: Parameter is a vector. Passing as is.
+#> ℹ bLogY = TRUE: No matching data found. Passing 'TRUE' as a string.
+#> 
+#> ── Calling `gsm.studykri::MakeCharts_StudyKRI`
+#> 
+#> ── list of length 16 saved as `lData$lChartsLog`.
+#> 
+#> ── Workflow Step 4 of 6: `gsm.studykri::MakeCharts_StudyKRI` ──
 #> 
 #> ── Evaluating 5 parameter(s) for `gsm.studykri::MakeCharts_StudyKRI`
-#> ✔ dfResults = Reporting_Results: Passing lData$Reporting_Results.
+#> ✔ dfResults = ResultsNorm: Passing lData$ResultsNorm.
 #> ✔ dfBounds = Reporting_Bounds: Passing lData$Reporting_Bounds.
 #> ✔ dfBoundsRef = Reporting_BoundsRef: Passing lData$Reporting_BoundsRef.
 #> ✔ dfMetrics = Reporting_Metrics: Passing lData$Reporting_Metrics.
@@ -1531,9 +2553,19 @@ lModule <- gsm.core::RunWorkflows(module_wf_gsm, lReporting)
 #> 
 #> ── Calling `gsm.studykri::MakeCharts_StudyKRI`
 #> 
-#> ── list of length 8 saved as `lData$lCharts`.
+#> ── list of length 14 saved as `lData$lChartsNorm`.
 #> 
-#> ── Workflow Step 2 of 2: `gsm.studykri::Report_StudyKRI` ──
+#> ── Workflow Step 5 of 6: `BindLists` ──
+#> 
+#> ── Evaluating 2 parameter(s) for `BindLists`
+#> ✔ a = lChartsLog: Passing lData$lChartsLog.
+#> ✔ b = lChartsNorm: Passing lData$lChartsNorm.
+#> 
+#> ── Calling `BindLists`
+#> 
+#> ── list of length 30 saved as `lData$lCharts`.
+#> 
+#> ── Workflow Step 6 of 6: `gsm.studykri::Report_StudyKRI` ──
 #> 
 #> ── Evaluating 6 parameter(s) for `gsm.studykri::Report_StudyKRI`
 #> ✔ lCharts = lCharts: Passing lData$lCharts.
@@ -1545,13 +2577,13 @@ lModule <- gsm.core::RunWorkflows(module_wf_gsm, lReporting)
 #> 
 #> ── Calling `gsm.studykri::Report_StudyKRI`
 #> processing file: Report_KRI.Rmd
-#> output file: /tmp/RtmpQoRpSs/Report_KRI.knit.md
-#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpQoRpSs/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpQoRpSs/rmarkdown-str21c3baf6ec1.html --variable code_folding=hide --variable code_menu=1
+#> output file: /tmp/RtmphCBDvW/Report_KRI.knit.md
+#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmphCBDvW/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmphCBDvW/rmarkdown-str205b5098a91.html --variable code_folding=hide --variable code_menu=1
 #> 
 #> Output created: report_studykri_AA-1.html
 #> processing file: Report_KRI.Rmd
-#> output file: /tmp/RtmpQoRpSs/Report_KRI.knit.md
-#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpQoRpSs/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpQoRpSs/rmarkdown-str21c316ad76eb.html --variable code_folding=hide --variable code_menu=1
+#> output file: /tmp/RtmphCBDvW/Report_KRI.knit.md
+#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmphCBDvW/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmphCBDvW/rmarkdown-str205b641f98a7.html --variable code_folding=hide --variable code_menu=1
 #> 
 #> Output created: report_studykri_AA-2.html
 #> 

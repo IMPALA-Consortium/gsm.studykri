@@ -16,7 +16,8 @@ ResampleStudy(
   strOversampleDomain = NULL,
   vOversamplQuantileRange = c(0, 1),
   seed = NULL,
-  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv"),
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname",
+    "subjectid"),
   vSiteIDs = c("invid", "siteid", "site_num")
 )
 ```
@@ -66,7 +67,11 @@ ResampleStudy(
 - vSubjectIDs:
 
   Character vector defining hierarchical order for subject ID column
-  lookup. Default: c("subjid", "subjectenrollmentnumber", "subject_nsv")
+  lookup. Default: c("subjid", "subjectenrollmentnumber", "subject_nsv",
+  "subjectname", "subjectid"). **Important:** All columns in vSubjectIDs
+  must exist in Raw_SUBJ for proper mapping. If a column is missing, add
+  it to Raw_SUBJ before calling this function. For example:
+  `lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv`
 
 - vSiteIDs:
 
@@ -135,6 +140,10 @@ lRaw <- list(
   Raw_SITE = clindata::ctms_site,
   Raw_STUDY = clindata::ctms_study
 )
+
+# Add required columns to Raw_SUBJ (required for vSubjectIDs)
+lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
 
 # Standard resampling
 lStudy1 <- ResampleStudy(lRaw, "STUDY001", seed = 123)

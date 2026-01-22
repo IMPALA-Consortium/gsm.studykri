@@ -2,12 +2,16 @@
 
 ## All functions
 
+- [`AddScreeningFailures()`](https://impala-consortium.github.io/gsm.studykri/reference/AddScreeningFailures.md)
+  : Add Screening Failures to Enrolled Subjects
 - [`Analyze_StudyKRI_PredictBounds()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBounds.md)
   : Calculate Bootstrap-Based Confidence Bounds for Study-Level KRI
 - [`Analyze_StudyKRI_PredictBoundsRef()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRef.md)
   : Predict Bounds for Multiple Studies Using Reference Study Mappings
 - [`Analyze_StudyKRI_PredictBoundsRefSet()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRefSet.md)
   : Predict Bounds for Combined Group of Studies
+- [`BindLists()`](https://impala-consortium.github.io/gsm.studykri/reference/BindLists.md)
+  : BindLists
 - [`BindResults()`](https://impala-consortium.github.io/gsm.studykri/reference/BindResults.md)
   : Helper function to bind results from multiple workflows
 - [`Input_CountSiteByMonth()`](https://impala-consortium.github.io/gsm.studykri/reference/Input_CountSiteByMonth.md)

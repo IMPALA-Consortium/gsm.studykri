@@ -23,7 +23,10 @@ pak::pak("Gilead-BioStats/gsm.reporting")
 pak::pak("IMPALA-Consortium/gsm.studykri")
 ```
 
-## Example: Days on Study
+## Example: Adverse Event Rate per Visit
+
+This example demonstrates calculating a single KRI (AE per visit) using
+the script-based approach without YAML workflows.
 
 ``` r
 library(dplyr)
@@ -35,97 +38,103 @@ library(dplyr)
 #> The following objects are masked from 'package:base':
 #> 
 #>     intersect, setdiff, setequal, union
-library(gsm.core)
-library(gsm.kri)
 library(gsm.studykri)
 
-# Load raw data from clindata package
+# Simulate portfolio with 4 studies
 lRaw <- list(
+  Raw_SITE = clindata::ctms_site,
+  Raw_STUDY = clindata::ctms_study,
   Raw_AE = clindata::rawplus_ae,
-  Raw_SUBJ = clindata::rawplus_dm
+  Raw_SUBJ = clindata::rawplus_dm,
+  Raw_VISIT = clindata::rawplus_visdt
 )
 
-# Simulate portfolio with 4 studies, AA-4 oversampled for low AE counts
+# Add required subject identifier columns for resampling
+lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
+
 lPortfolio <- SimulatePortfolio(
   lRaw = lRaw,
   nStudies = 4,
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4"),
     nSubjects = c(500, 750, 150, 200),
-    strOversampleDomain = rep("Raw_AE", 4),
+    strOversamplDomain = rep("Raw_AE", 4),
     vOversamplQuantileRange_min = c(0, 0, 0, 0),
     vOversamplQuantileRange_max = c(1, 1, 1, 0.75)
   )
 )
-#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
-#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
-#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
-#> Filtered to 773 subjects with Raw_AE records in 0.00-0.75 quantile range (1-6 records)
 
-# Calculate site-level counts by month using days on study as denominator
-# Pass subjects as denominator with start and end dates to calculate person-days
-dfInputDays <- Input_CountSiteByMonth(
+# Calculate site-level counts by month for AE per visit
+dfInput <- Input_CountSiteByMonth(
   dfSubjects = lPortfolio$Raw_SUBJ,
   dfNumerator = lPortfolio$Raw_AE,
-  dfDenominator = lPortfolio$Raw_SUBJ,
+  dfDenominator = lPortfolio$Raw_VISIT |>
+    mutate(visit_dt = as.Date(visit_dt)),
   strStudyCol = "studyid",
   strGroupCol = "invid",
   strGroupLevel = "Site",
   strSubjectCol = "subjid",
   strNumeratorDateCol = "aest_dt",
-  strDenominatorDateCol = "firstparticipantdate",
-  strDenominatorEndDateCol = "lastparticipantdate"
-) %>% tibble()
+  strDenominatorDateCol = "visit_dt",
+  nMinDenominator = 25  # Normalize dates at the threshold
+)
 
-# Aggregate to study-level cumulative KRI by month
+# Aggregate to study-level cumulative counts
 dfTransformed <- Transform_CumCount(
-  dfInputDays,
-  nMinDenominator = 25,
+  dfInput,
   vBy = c("StudyID")
-) %>% tibble()
+)
 
-# Generate bootstrap resamples at site-level (1000 iterations)
-df_Analyzed_Bootstrap_Site <- dfInputDays %>%
-  Analyze_StudyKRI(nBootstrapReps = 1000) %>%
-  tibble()
+# Calculate 95% confidence bounds using bootstrap
+dfBounds <- dfInput |>
+  Analyze_StudyKRI_PredictBounds()
+#> Using all 4 studies found in dfInput
 
-# Aggregate each bootstrap iteration to study-level
-df_Analyzed_Bootstrap_Study <- df_Analyzed_Bootstrap_Site %>%
-  Transform_CumCount(
-    nMinDenominator = 25,
-    vBy = c("StudyID", "BootstrapRep")
-  ) %>%
-  tibble()
+# Calculate reference bounds from AA-2, AA-3, AA-4
+dfStudyRef <- tibble(
+  study = "AA-1",
+  studyref = c("AA-2", "AA-3", "AA-4")
+)
 
-# Calculate 95% confidence intervals from bootstrap distribution
-df_Bounds <- Analyze_StudyKRI_PredictBounds(
-  df_Analyzed_Bootstrap_Study,
-  vBy = c("StudyID"),
-  nConfLevel = 0.95
-) %>% tibble()
+dfBoundsRef <- Analyze_StudyKRI_PredictBoundsRef(dfInput, dfStudyRef)
+#> Resampling with minimum group count: 76
 
-# Calculate reference portfolio bounds from studies AA-1, AA-2, AA-3
-# Reference bounds equalize site counts across studies for fair comparison
-df_Bounds_Ref <- dfInputDays %>%
-  Analyze_StudyKRI_PredictBoundsRefSet(
-    vStudyFilter = c("AA-1", "AA-2", "AA-3"),
-    nBootstrapReps = 1000,
-    nConfLevel = 0.95,
-    nMinDenominator = 25
-  ) %>%
-  tibble()
-#> Resampling with minimum group count: 66
-
-# Plot AA-4 KRI vs reference portfolio confidence intervals
+# Plot AA-1 vs reference portfolio
 Visualize_StudyKRI(
   dfStudyKRI = dfTransformed,
-  dfBoundsRef = df_Bounds_Ref,
-  dfBounds = df_Bounds,
-  strStudyID = "AA-4"
+  dfBounds = dfBounds,
+  dfBoundsRef = dfBoundsRef,
+  strStudyID = "AA-1"
 )
 ```
 
 ![](reference/figures/README-example-1.png)
+
+## Implemented KRIs
+
+The package includes 14 pre-configured KRI workflows:
+
+| ID      | Abbreviation | Metric                                       | Numerator                         | Denominator         |
+|---------|--------------|----------------------------------------------|-----------------------------------|---------------------|
+| kri0001 | AE           | Adverse Event Rate per Days on Study         | Adverse Events                    | Days on Study       |
+| kri0002 | SAE          | Serious Adverse Event Rate per Days on Study | Serious Adverse Events            | Days on Study       |
+| kri0003 | PD           | Non-Important Protocol Deviation Rate        | Non-Important Protocol Deviations | Days on Study       |
+| kri0004 | IPD          | Important Protocol Deviation Rate            | Important Protocol Deviations     | Days on Study       |
+| kri0005 | LB           | Grade 3+ Lab Abnormality Rate                | Grade 3+ Abnormal Labs Samples    | Total Lab Samples   |
+| kri0006 | SDSC         | Study Discontinuation Rate                   | Subjects Discontinued - Study     | Enrolled Subjects   |
+| kri0007 | TDSC         | Treatment Discontinuation Rate               | Subjects Discontinued - Treatment | Enrolled Subjects   |
+| kri0008 | QRY          | Query Rate                                   | Queries                           | Total Data Points   |
+| kri0009 | OQRY         | Delayed Query Resolution Rate                | Queries That Were Open \> 30 Days | Total Queries       |
+| kri0010 | ODAT         | Delayed Data Entry Rate                      | Data Pages Entered \> 10 Days     | Total Data Pages    |
+| kri0011 | CDAT         | Data Change Rate                             | Data Points with 1+ Change        | Total Data Points   |
+| kri0012 | SF           | Screen Failure Rate                          | Screen Failures                   | Screened Subjects   |
+| kri0013 | PK           | PK Collection Compliance Rate                | PK Samples Collected              | PK Samples Expected |
+| kri0014 | IE           | Inclusion/Exclusion Violation Rate           | Number of subjects ineligible     | Enrolled Subjects   |
+
+All KRIs use bootstrap-based confidence intervals at site level with a
+default of 1000 bootstrap replicates and 95% confidence level.
 
 ## AI Disclaimer
 
@@ -194,12 +203,16 @@ control steps:
 
 ## All functions
 
+- [`AddScreeningFailures()`](https://impala-consortium.github.io/gsm.studykri/reference/AddScreeningFailures.md)
+  : Add Screening Failures to Enrolled Subjects
 - [`Analyze_StudyKRI_PredictBounds()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBounds.md)
   : Calculate Bootstrap-Based Confidence Bounds for Study-Level KRI
 - [`Analyze_StudyKRI_PredictBoundsRef()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRef.md)
   : Predict Bounds for Multiple Studies Using Reference Study Mappings
 - [`Analyze_StudyKRI_PredictBoundsRefSet()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRefSet.md)
   : Predict Bounds for Combined Group of Studies
+- [`BindLists()`](https://impala-consortium.github.io/gsm.studykri/reference/BindLists.md)
+  : BindLists
 - [`BindResults()`](https://impala-consortium.github.io/gsm.studykri/reference/BindResults.md)
   : Helper function to bind results from multiple workflows
 - [`Input_CountSiteByMonth()`](https://impala-consortium.github.io/gsm.studykri/reference/Input_CountSiteByMonth.md)

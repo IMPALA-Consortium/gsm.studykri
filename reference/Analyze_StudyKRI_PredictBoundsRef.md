@@ -14,7 +14,6 @@ Analyze_StudyKRI_PredictBoundsRef(
   nConfLevel = 0.95,
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
-  nMinDenominator = 25,
   seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL
@@ -51,10 +50,6 @@ Analyze_StudyKRI_PredictBoundsRef(
 - strStudyMonthCol:
 
   character. Column name for study month (default: "StudyMonth").
-
-- nMinDenominator:
-
-  numeric. Minimum denominator (default: 25).
 
 - seed:
 
@@ -114,13 +109,13 @@ dfBounds <- Analyze_StudyKRI_PredictBoundsRef(
 
 print(head(dfBounds))
 #> # A tibble: 6 × 9
-#>   StudyMonth Median  Lower Upper BootstrapCount GroupCount StudyCount StudyID
-#>        <int>  <dbl>  <dbl> <dbl>          <int>      <int>      <int> <chr>  
-#> 1          1  0.146 0.0820 0.176            100         10          2 STUDY1 
-#> 2          2  0.146 0.123  0.184            100         10          2 STUDY1 
-#> 3          3  0.150 0.128  0.170            100         10          2 STUDY1 
-#> 4          4  0.149 0.131  0.166            100         10          2 STUDY1 
-#> 5          5  0.150 0.126  0.169            100         10          2 STUDY1 
-#> 6          6  0.153 0.138  0.170             98         10          2 STUDY1 
+#>   StudyMonth Median Lower Upper BootstrapCount GroupCount StudyCount StudyID
+#>        <int>  <dbl> <dbl> <dbl>          <int>      <int>      <int> <chr>  
+#> 1          1  0.144 0.110 0.160            100         10          2 STUDY1 
+#> 2          2  0.156 0.133 0.172            100         10          2 STUDY1 
+#> 3          3  0.148 0.126 0.166            100         10          2 STUDY1 
+#> 4          4  0.140 0.124 0.158            100         10          2 STUDY1 
+#> 5          5  0.147 0.131 0.160            100         10          2 STUDY1 
+#> 6          6  0.147 0.134 0.159             98         10          2 STUDY1 
 #> # ℹ 1 more variable: StudyRefID <chr>
 ```

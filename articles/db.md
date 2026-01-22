@@ -45,6 +45,7 @@ lRaw <- list(
   Raw_STUDY = clindata::ctms_study,
   Raw_PD = clindata::ctms_protdev,
   Raw_DATAENT = clindata::edc_data_pages,
+  Raw_DATACHG = clindata::edc_data_points,
   Raw_QUERY = clindata::edc_queries,
   Raw_AE = clindata::rawplus_ae,
   Raw_SUBJ = clindata::rawplus_dm,
@@ -53,13 +54,19 @@ lRaw <- list(
   Raw_LB = clindata::rawplus_lb,
   Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
   Raw_STUDCOMP = clindata::rawplus_studcomp,
+  Raw_IE = clindata::rawplus_ie,
   Raw_VISIT = clindata::rawplus_visdt %>%
     mutate(visit_dt = lubridate::ymd(visit_dt))
 )
 
+# Add required subject identifier columns for resampling
+lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
+
 lPortfolio <- SimulatePortfolio(
   lRaw = lRaw,
   nStudies = 4,
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4"),
     nSubjects = c(500, 750, 150, 200),
@@ -80,7 +87,6 @@ names(dbPortfolio) <- names(lPortfolio)
 Here we create our data set.
 
 ``` r
-
 tblInput1 <- gsm.studykri::Input_CountSiteByMonth(
   dfSubjects = dbPortfolio$Raw_SUBJ,
   dfNumerator = dbPortfolio$Raw_AE,
@@ -115,15 +121,16 @@ tblInput <- dplyr::union_all(
     mutate(MetricID = "kri0002"),
 )
 
-dfMetrics <- tibble(
-  MetricID = c("kri0001", "kri0002"),
-  Denominator = "Visits"
+# Load metric metadata from workflow files
+metrics_wf <- gsm.core::MakeWorkflowList(
+  strNames = c("kri0001.yaml", "kri0002.yaml"),
+  strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
+  strPackage = NULL
 )
 
-DBI::dbWriteTable(con, "Metrics", dfMetrics)
+dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
 
-
-lJoined <- JoinKRIByDenominator(tblInput)
+lJoined <- JoinKRIByDenominator(tblInput, dfMetrics)
 
 lJoined
 #> $Visit
@@ -131,16 +138,16 @@ lJoined
 #> # Database: DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]
 #>    GroupID    GroupLevel Denominator StudyID MonthYYYYMM Numerator_kri0002
 #>    <chr>      <chr>            <dbl> <chr>         <dbl>             <dbl>
-#>  1 AA-1_0X170 Site                 1 AA-1         201208                 0
-#>  2 AA-1_0X178 Site                 2 AA-1         200606                 0
-#>  3 AA-1_0X069 Site                 2 AA-1         200803                 0
-#>  4 AA-1_0X162 Site                 1 AA-1         201106                 0
-#>  5 AA-1_0X162 Site                 1 AA-1         201211                 0
-#>  6 AA-1_0X076 Site                 2 AA-1         200808                 0
-#>  7 AA-1_0X178 Site                 1 AA-1         200504                 0
-#>  8 AA-1_0X003 Site                 2 AA-1         200605                 0
-#>  9 AA-1_0X126 Site                 3 AA-1         200602                 0
-#> 10 AA-1_0X180 Site                 2 AA-1         201205                 0
+#>  1 AA-1_0X035 Site                 2 AA-1         201602                 0
+#>  2 AA-1_0X178 Site                 2 AA-1         200604                 0
+#>  3 AA-1_0X178 Site                 1 AA-1         200705                 0
+#>  4 AA-1_0X162 Site                 1 AA-1         201107                 0
+#>  5 AA-1_0X162 Site                 1 AA-1         201204                 0
+#>  6 AA-1_0X162 Site                 1 AA-1         201304                 0
+#>  7 AA-1_0X080 Site                 2 AA-1         200409                 0
+#>  8 AA-1_0X113 Site                 1 AA-1         201210                 0
+#>  9 AA-1_0X178 Site                 1 AA-1         200506                 0
+#> 10 AA-1_0X065 Site                 3 AA-1         200611                 0
 #> # ℹ more rows
 #> # ℹ 1 more variable: Numerator_kri0001 <dbl>
 ```
@@ -165,15 +172,15 @@ dfRep <- tibble(
 dfMonths <- tibble(
   YYYY = seq(2003, 2020)
 ) %>%
-cross_join(
-  tibble(
-    MM = seq(1, 12)
-  )
-) %>%
-mutate(
-  MonthYYYYMM = YYYY * 100 + MM
-) %>%
-select(MonthYYYYMM)
+  cross_join(
+    tibble(
+      MM = seq(1, 12)
+    )
+  ) %>%
+  mutate(
+    MonthYYYYMM = YYYY * 100 + MM
+  ) %>%
+  select(MonthYYYYMM)
 
 DBI::dbWriteTable(con, "StudyRef", dfStudyRef, overwrite = TRUE)
 DBI::dbWriteTable(con, "Rep", dfRep, overwrite = TRUE)
@@ -191,8 +198,8 @@ Bounds_Wide <- purrr::map(
     dfStudyRef = tblStudyRef,
     tblBootstrapReps = tblRep,
     tblMonthSequence = tblMonths
-    )
   )
+)
 
 BoundsRef_Wide <- purrr::map(
   lJoined, ~ Analyze_StudyKRI_PredictBoundsRef(
@@ -200,8 +207,8 @@ BoundsRef_Wide <- purrr::map(
     dfStudyRef = tblStudyRef,
     tblBootstrapReps = tblRep,
     tblMonthSequence = tblMonths
-    )
   )
+)
 #> Resampling with minimum group count: 78
 
 tblBounds <- Transform_Long(Bounds_Wide)
@@ -222,18 +229,18 @@ tblBounds
 #> # Source:     SQL [?? x 8]
 #> # Database:   DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]
 #> # Ordered by: StudyID, StudyMonth
-#>    MetricID DenominatorType StudyID StudyMonth BootstrapCount  Median    Lower
-#>    <chr>    <chr>           <chr>        <dbl>          <dbl>   <dbl>    <dbl>
-#>  1 kri0002  Visit           AA-1             2           1000 0       0       
-#>  2 kri0002  Visit           AA-1            10           1000 0       0       
-#>  3 kri0002  Visit           AA-1            18           1000 0.00166 0       
-#>  4 kri0002  Visit           AA-1            28           1000 0.00295 0       
-#>  5 kri0002  Visit           AA-1            29           1000 0.00312 0.000671
-#>  6 kri0002  Visit           AA-1            34           1000 0.00321 0.000582
-#>  7 kri0002  Visit           AA-1            39           1000 0.00274 0.000490
-#>  8 kri0002  Visit           AA-1            42           1000 0.00247 0.000450
-#>  9 kri0002  Visit           AA-1            47           1000 0.00266 0.000526
-#> 10 kri0002  Visit           AA-1            49           1000 0.00291 0.000945
+#>    MetricID DenominatorType StudyID StudyMonth BootstrapCount  Median Lower
+#>    <chr>    <chr>           <chr>        <dbl>          <dbl>   <dbl> <dbl>
+#>  1 kri0002  Visit           AA-1             2           1000 0           0
+#>  2 kri0002  Visit           AA-1            10           1000 0           0
+#>  3 kri0002  Visit           AA-1            18           1000 0.00243     0
+#>  4 kri0002  Visit           AA-1            28           1000 0.00212     0
+#>  5 kri0002  Visit           AA-1            29           1000 0.00201     0
+#>  6 kri0002  Visit           AA-1            34           1000 0.00319     0
+#>  7 kri0002  Visit           AA-1            39           1000 0.00329     0
+#>  8 kri0002  Visit           AA-1            42           1000 0.00298     0
+#>  9 kri0002  Visit           AA-1            47           1000 0.00250     0
+#> 10 kri0002  Visit           AA-1            49           1000 0.00236     0
 #> # ℹ more rows
 #> # ℹ 1 more variable: Upper <dbl>
 
@@ -243,16 +250,16 @@ tblBoundsRef
 #> # Ordered by: StudyMonth
 #>    MetricID DenominatorType StudyMonth BootstrapCount GroupCount StudyCount
 #>    <chr>    <chr>                <dbl>          <dbl>      <dbl>      <int>
-#>  1 kri0002  Visit                    5           1000         78          3
-#>  2 kri0002  Visit                    9           1000         78          3
-#>  3 kri0002  Visit                   11           1000         78          3
-#>  4 kri0002  Visit                   14           1000         78          3
-#>  5 kri0002  Visit                   15           1000         78          3
-#>  6 kri0002  Visit                   16           1000         78          3
-#>  7 kri0002  Visit                   17           1000         78          3
-#>  8 kri0002  Visit                   22           1000         78          3
-#>  9 kri0002  Visit                   26           1000         78          3
-#> 10 kri0002  Visit                   30           1000         78          3
+#>  1 kri0002  Visit                  132           1000         78          3
+#>  2 kri0002  Visit                  134           1000         78          3
+#>  3 kri0002  Visit                  135           1000         78          3
+#>  4 kri0002  Visit                  143           1000         78          3
+#>  5 kri0002  Visit                  154           1000         78          3
+#>  6 kri0002  Visit                  155           1000         78          3
+#>  7 kri0002  Visit                  160           1000         78          3
+#>  8 kri0002  Visit                  162           1000         78          3
+#>  9 kri0002  Visit                  163           1000         78          3
+#> 10 kri0002  Visit                  165           1000         78          3
 #> # ℹ more rows
 #> # ℹ 5 more variables: StudyID <chr>, StudyRefID <chr>, Median <dbl>,
 #> #   Lower <dbl>, Upper <dbl>
@@ -263,16 +270,16 @@ tblTransformed
 #> # Ordered by: StudyID, StudyMonth
 #>    StudyID MonthYYYYMM StudyMonth Numerator Denominator Metric GroupCount
 #>    <chr>         <dbl>      <dbl>     <dbl>       <dbl>  <dbl>      <dbl>
-#>  1 AA-2         200402          1         4          31  0.129          7
-#>  2 AA-2         200403          2         8          44  0.182          9
-#>  3 AA-2         200404          3        11          57  0.193         11
-#>  4 AA-2         200405          4        14          75  0.187         14
-#>  5 AA-2         200406          5        18          94  0.191         16
-#>  6 AA-2         200407          6        23         121  0.190         20
-#>  7 AA-2         200408          7        26         155  0.168         25
-#>  8 AA-2         200409          8        30         187  0.160         25
-#>  9 AA-2         200410          9        41         227  0.181         30
-#> 10 AA-2         200411         10        44         266  0.165         30
+#>  1 AA-3         200402          1         0           1 0               1
+#>  2 AA-3         200403          2         0           2 0               1
+#>  3 AA-3         200404          3         0           6 0               4
+#>  4 AA-3         200405          4         0          11 0               4
+#>  5 AA-3         200406          5         2          15 0.133           4
+#>  6 AA-3         200407          6         2          21 0.0952          5
+#>  7 AA-3         200408          7         2          29 0.0690          5
+#>  8 AA-3         200409          8         5          36 0.139           5
+#>  9 AA-3         200410          9         6          43 0.140           5
+#> 10 AA-3         200411         10         7          50 0.14            5
 #> # ℹ more rows
 #> # ℹ 1 more variable: MetricID <chr>
 ```
@@ -280,7 +287,6 @@ tblTransformed
 Finally before plotting we need to collect the results into memory.
 
 ``` r
-
 metrics_wf <- gsm.core::MakeWorkflowList(
   strNames = NULL,
   strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
@@ -291,11 +297,11 @@ dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
 
 
 lCharts <- gsm.studykri::MakeCharts_StudyKRI(
-    dfResults = collect(tblTransformed), 
-    dfBounds = collect(tblBounds),
-    dfBoundsRef = collect(tblBoundsRef),
-    dfMetrics = dfMetrics
-  )
+  dfResults = collect(tblTransformed),
+  dfBounds = collect(tblBounds),
+  dfBoundsRef = collect(tblBoundsRef),
+  dfMetrics = dfMetrics
+)
 
 lCharts
 #> $`AA-1_kri0001`
@@ -318,13 +324,12 @@ We might also scrub some of the specifications from the yaml files to
 begin with.
 
 ``` r
-
 lMapped <- list(
   Mapped_AE = dbPortfolio$Raw_AE,
   Mapped_Visit = dbPortfolio$Raw_VISIT,
   Mapped_SUBJ = dbPortfolio$Raw_SUBJ %>%
     filter(enrollyn == "Y"),
-  Mapped_StudyRef =  tbl(con, "StudyRef")
+  Mapped_StudyRef = tbl(con, "StudyRef")
 )
 
 metrics_wf <- gsm.core::MakeWorkflowList(
@@ -340,7 +345,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> ── Initializing `Analysis_kri0001` Workflow ────────────────────────────────────
 #> 
 #> ── Checking data against spec
-#> → All 3 data.frame(s) in the spec are present in the data: Mapped_AE, Mapped_SUBJ, Mapped_Visit
+#> → All 2 data.frame(s) in the spec are present in the data: Mapped_AE, Mapped_SUBJ
 #> Warning: Not all columns of Mapped_AE in the spec are in the expected format, improperly
 #> formatted columns are: subjid
 #> Not all columns of Mapped_AE in the spec are in the expected format, improperly
@@ -351,10 +356,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> improperly formatted columns are: invid
 #> Not all columns of Mapped_SUBJ in the spec are in the expected format,
 #> improperly formatted columns are: studyid
-#> Warning: Not all columns of Mapped_Visit in the spec are in the expected format,
-#> improperly formatted columns are: subjid
-#> Not all columns of Mapped_Visit in the spec are in the expected format,
-#> improperly formatted columns are: visit_dt
+#> Not all columns of Mapped_SUBJ in the spec are in the expected format,
+#> improperly formatted columns are: firstparticipantdate
+#> Not all columns of Mapped_SUBJ in the spec are in the expected format,
+#> improperly formatted columns are: lastparticipantdate
 #> Warning: Not all specified columns in the spec are present in the data, missing columns
 #> are: Mapped_AE$subjid
 #> Not all specified columns in the spec are present in the data, missing columns
@@ -366,23 +371,25 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> Not all specified columns in the spec are present in the data, missing columns
 #> are: Mapped_SUBJ$studyid
 #> Not all specified columns in the spec are present in the data, missing columns
-#> are: Mapped_Visit$subjid
+#> are: Mapped_SUBJ$firstparticipantdate
 #> Not all specified columns in the spec are present in the data, missing columns
-#> are: Mapped_Visit$visit_dt
+#> are: Mapped_SUBJ$lastparticipantdate
 #> 
 #> ── Workflow Step 1 of 3: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
-#> ── Evaluating 10 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
+#> ── Evaluating 12 parameter(s) for `gsm.studykri::Input_CountSiteByMonth`
 #> ✔ dfSubjects = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
 #> ✔ dfNumerator = Mapped_AE: Passing lData$Mapped_AE.
-#> ✔ dfDenominator = Mapped_Visit: Passing lData$Mapped_Visit.
+#> ✔ dfDenominator = Mapped_SUBJ: Passing lData$Mapped_SUBJ.
 #> ℹ strStudyCol = studyid: No matching data found. Passing 'studyid' as a string.
 #> ℹ strGroupCol = invid: No matching data found. Passing 'invid' as a string.
 #> ✔ strGroupLevel = GroupLevel: Passing lMeta$GroupLevel.
 #> ℹ strSubjectCol = subjid: No matching data found. Passing 'subjid' as a string.
 #> ℹ strNumeratorDateCol = aest_dt: No matching data found. Passing 'aest_dt' as a string.
-#> ℹ strDenominatorDateCol = visit_dt: No matching data found. Passing 'visit_dt' as a string.
+#> ℹ strDenominatorDateCol = firstparticipantdate: No matching data found. Passing 'firstparticipantdate' as a string.
+#> ℹ strDenominatorEndDateCol = lastparticipantdate: No matching data found. Passing 'lastparticipantdate' as a string.
 #> ✔ strDenominatorType = Denominator: Passing lMeta$Denominator.
+#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
@@ -390,10 +397,9 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Workflow Step 2 of 3: `gsm.studykri::Transform_CumCount` ──
 #> 
-#> ── Evaluating 3 parameter(s) for `gsm.studykri::Transform_CumCount`
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::Transform_CumCount`
 #> ✔ dfInput = Analysis_Input: Passing lData$Analysis_Input.
 #> ℹ vBy = StudyID: No matching data found. Passing 'StudyID' as a string.
-#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
@@ -479,7 +485,7 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `gsm.reporting::MakeMetric`
 #> 
-#> ── 1x16 data.frame saved as `lData$dfMetrics`.
+#> ── 1x16 data.frame saved as `lData$Reporting_Metrics`.
 #> 
 #> ── Returning results from final step: 1x16 data.frame`. ──
 #> 
@@ -488,7 +494,7 @@ lReporting <- gsm.core::RunWorkflows(
 #> ── Initializing `Reporting_Join` Workflow ──────────────────────────────────────
 #> 
 #> ── Checking data against spec
-#> → All 1 data.frame(s) in the spec are present in the data: Reporting_Input
+#> → All 2 data.frame(s) in the spec are present in the data: Reporting_Input, Reporting_Metrics
 #> Warning: Not all columns of Reporting_Input in the spec are in the expected format,
 #> improperly formatted columns are: MetricID
 #> Not all columns of Reporting_Input in the spec are in the expected format,
@@ -520,8 +526,9 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Workflow Step 1 of 1: `gsm.studykri::JoinKRIByDenominator` ──
 #> 
-#> ── Evaluating 1 parameter(s) for `gsm.studykri::JoinKRIByDenominator`
+#> ── Evaluating 2 parameter(s) for `gsm.studykri::JoinKRIByDenominator`
 #> ✔ dfInput = Reporting_Input: Passing lData$Reporting_Input.
+#> ✔ dfMetrics = Reporting_Metrics: Passing lData$Reporting_Metrics.
 #> 
 #> ── Calling `gsm.studykri::JoinKRIByDenominator`
 #> 
@@ -552,13 +559,12 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Workflow Step 2 of 3: `purrr::map` ──
 #> 
-#> ── Evaluating 7 parameter(s) for `purrr::map`
+#> ── Evaluating 6 parameter(s) for `purrr::map`
 #> ✔ .x = Reporting_Join: Passing lData$Reporting_Join.
 #> ✔ .f = PredictBounds_Func: Passing lData$PredictBounds_Func.
 #> ✔ dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.
 #> ✔ nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.
 #> ✔ nConfLevel = Threshold: Passing lMeta$Threshold.
-#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
 #> ℹ seed = 42: No matching data found. Passing '42' as a string.
 #> 
 #> ── Calling `purrr::map`
@@ -599,13 +605,12 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Workflow Step 2 of 3: `purrr::map` ──
 #> 
-#> ── Evaluating 7 parameter(s) for `purrr::map`
+#> ── Evaluating 6 parameter(s) for `purrr::map`
 #> ✔ .x = Reporting_Join: Passing lData$Reporting_Join.
 #> ✔ .f = PredictBoundsRef_Func: Passing lData$PredictBoundsRef_Func.
 #> ✔ dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.
 #> ✔ nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.
 #> ✔ nConfLevel = Threshold: Passing lMeta$Threshold.
-#> ✔ nMinDenominator = AccrualThreshold: Passing lMeta$AccrualThreshold.
 #> ℹ seed = 42: No matching data found. Passing '42' as a string.
 #> 
 #> ── Calling `purrr::map`
@@ -631,18 +636,18 @@ lReporting
 #> # Source:     SQL [?? x 9]
 #> # Database:   DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]
 #> # Ordered by: StudyID, StudyMonth
-#>    StudyID MonthYYYYMM StudyMonth Numerator Denominator Metric GroupCount
-#>    <chr>         <dbl>      <dbl>     <dbl>       <dbl>  <dbl>      <dbl>
-#>  1 AA-1         200404          1         6          39  0.154         13
-#>  2 AA-1         200405          2        12          60  0.2           16
-#>  3 AA-1         200406          3        12          80  0.15          16
-#>  4 AA-1         200407          4        16         106  0.151         18
-#>  5 AA-1         200408          5        19         137  0.139         22
-#>  6 AA-1         200409          6        26         168  0.155         23
-#>  7 AA-1         200410          7        31         200  0.155         24
-#>  8 AA-1         200411          8        34         233  0.146         24
-#>  9 AA-1         200412          9        36         268  0.134         22
-#> 10 AA-1         200501         10        40         300  0.133         23
+#>    StudyID MonthYYYYMM StudyMonth Numerator Denominator  Metric GroupCount
+#>    <chr>         <dbl>      <dbl>     <dbl>       <dbl>   <dbl>      <dbl>
+#>  1 AA-3         200407          1         2          90 0.0222           5
+#>  2 AA-3         200408          2         2         275 0.00727          5
+#>  3 AA-3         200409          3         5         485 0.0103           5
+#>  4 AA-3         200410          4         6         702 0.00855          5
+#>  5 AA-3         200411          5         7         912 0.00768          5
+#>  6 AA-3         200412          6         7        1129 0.00620          5
+#>  7 AA-3         200501          7         7        1346 0.00520          5
+#>  8 AA-3         200502          8         7        1563 0.00448          7
+#>  9 AA-3         200503          9         8        1869 0.00428          8
+#> 10 AA-3         200504         10         8        2169 0.00369          8
 #> # ℹ more rows
 #> # ℹ 2 more variables: MetricID <chr>, SnapshotDate <date>
 #> 
@@ -651,16 +656,16 @@ lReporting
 #> # Database: DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]
 #>    GroupID    GroupLevel Numerator Denominator Metric StudyID MonthYYYYMM
 #>    <chr>      <chr>          <dbl>       <dbl>  <dbl> <chr>         <dbl>
-#>  1 AA-1_0X140 Site               2           2  1     AA-1         200903
-#>  2 AA-1_0X163 Site               2           1  2     AA-1         200405
-#>  3 AA-1_0X163 Site               1           1  1     AA-1         200506
-#>  4 AA-1_0X163 Site               1           2  0.5   AA-1         200603
-#>  5 AA-1_0X124 Site               1           3  0.333 AA-1         200512
-#>  6 AA-1_0X124 Site               1           3  0.333 AA-1         200608
-#>  7 AA-1_0X102 Site               1           1  1     AA-1         200605
-#>  8 AA-1_0X052 Site               1           4  0.25  AA-1         201110
-#>  9 AA-1_0X052 Site               1           1  1     AA-1         201112
-#> 10 AA-1_0X156 Site               1           1  1     AA-1         200906
+#>  1 AA-1_0X140 Site               1          62 0.0161 AA-1         200907
+#>  2 AA-1_0X076 Site               2          31 0.0645 AA-1         200607
+#>  3 AA-1_0X163 Site               1          10 0.1    AA-1         200402
+#>  4 AA-1_0X163 Site               1          31 0.0323 AA-1         200410
+#>  5 AA-1_0X163 Site               1          56 0.0179 AA-1         200602
+#>  6 AA-1_0X163 Site               1          31 0.0323 AA-1         200403
+#>  7 AA-1_0X124 Site               1          93 0.0108 AA-1         200610
+#>  8 AA-1_0X156 Site               1          31 0.0323 AA-1         200905
+#>  9 AA-1_0X156 Site               1          30 0.0333 AA-1         201009
+#> 10 AA-1_0X156 Site               1          31 0.0323 AA-1         201003
 #> # ℹ more rows
 #> # ℹ 3 more variables: DenominatorType <chr>, MetricID <chr>,
 #> #   SnapshotDate <date>
@@ -669,27 +674,27 @@ lReporting
 #> # A tibble: 1 × 16
 #>   Type    ID    GroupLevel Abbreviation Metric Numerator Denominator Model Score
 #>   <chr>   <chr> <chr>      <chr>        <chr>  <chr>     <chr>       <chr> <chr>
-#> 1 Analys… kri0… Site       AE           Adver… Adverse … Visits      Boot… Boot…
+#> 1 Analys… kri0… Site       AE           Adver… Adverse … Days on St… Boot… Boot…
 #> # ℹ 7 more variables: AnalysisType <chr>, Threshold <dbl>,
 #> #   AccrualThreshold <int>, AccrualMetric <chr>, BootstrapReps <int>,
 #> #   Priority <dbl>, MetricID <chr>
 #> 
 #> $Reporting_Join
-#> $Reporting_Join$Visits
+#> $Reporting_Join$`Days on Study`
 #> # Source:   SQL [?? x 6]
 #> # Database: DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]
 #>    GroupID    GroupLevel Denominator StudyID MonthYYYYMM Numerator_Analysis_kr…¹
 #>    <chr>      <chr>            <dbl> <chr>         <dbl>                   <dbl>
-#>  1 AA-1_0X013 Site                 1 AA-1         201411                       1
-#>  2 AA-1_0X076 Site                 2 AA-1         200409                       2
-#>  3 AA-1_0X124 Site                 4 AA-1         200601                       3
-#>  4 AA-1_0X035 Site                 2 AA-1         201511                       1
-#>  5 AA-1_0X170 Site                 1 AA-1         201212                       2
-#>  6 AA-1_0X093 Site                 7 AA-1         201709                       1
-#>  7 AA-1_0X162 Site                 1 AA-1         201112                       3
-#>  8 AA-1_0X162 Site                 1 AA-1         201307                       1
-#>  9 AA-1_0X016 Site                 2 AA-1         200905                       1
-#> 10 AA-1_0X016 Site                 2 AA-1         201007                       1
+#>  1 AA-1_0X140 Site                62 AA-1         200907                       1
+#>  2 AA-1_0X163 Site                10 AA-1         200402                       1
+#>  3 AA-1_0X163 Site                56 AA-1         200602                       1
+#>  4 AA-1_0X163 Site                31 AA-1         200403                       1
+#>  5 AA-1_0X156 Site                31 AA-1         200905                       1
+#>  6 AA-1_0X156 Site                31 AA-1         201003                       1
+#>  7 AA-1_0X035 Site                31 AA-1         201503                       1
+#>  8 AA-1_0X151 Site                60 AA-1         201004                       1
+#>  9 AA-1_0X188 Site                31 AA-1         200508                       1
+#> 10 AA-1_0X167 Site               120 AA-1         201711                       2
 #> # ℹ more rows
 #> # ℹ abbreviated name: ¹​Numerator_Analysis_kri0001
 #> 
@@ -698,18 +703,18 @@ lReporting
 #> # Source:     SQL [?? x 8]
 #> # Database:   DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]
 #> # Ordered by: StudyID, StudyMonth
-#>    MetricID      DenominatorType StudyID StudyMonth BootstrapCount Median  Lower
-#>    <chr>         <chr>           <chr>        <dbl>          <dbl>  <dbl>  <dbl>
-#>  1 Analysis_kri… Visits          AA-1             2           1000  0.159 0.0392
-#>  2 Analysis_kri… Visits          AA-1            10           1000  0.132 0.0600
-#>  3 Analysis_kri… Visits          AA-1            18           1000  0.174 0.115 
-#>  4 Analysis_kri… Visits          AA-1            28           1000  0.160 0.121 
-#>  5 Analysis_kri… Visits          AA-1            29           1000  0.158 0.119 
-#>  6 Analysis_kri… Visits          AA-1            34           1000  0.148 0.112 
-#>  7 Analysis_kri… Visits          AA-1            39           1000  0.147 0.115 
-#>  8 Analysis_kri… Visits          AA-1            42           1000  0.147 0.117 
-#>  9 Analysis_kri… Visits          AA-1            47           1000  0.151 0.123 
-#> 10 Analysis_kri… Visits          AA-1            49           1000  0.152 0.125 
+#>    MetricID    DenominatorType StudyID StudyMonth BootstrapCount  Median   Lower
+#>    <chr>       <chr>           <chr>        <dbl>          <dbl>   <dbl>   <dbl>
+#>  1 Analysis_k… Days on Study   AA-1           117           1000 0.00461 0.00409
+#>  2 Analysis_k… Days on Study   AA-1           124           1000 0.00461 0.00407
+#>  3 Analysis_k… Days on Study   AA-1           125           1000 0.00462 0.00410
+#>  4 Analysis_k… Days on Study   AA-1           128           1000 0.00460 0.00408
+#>  5 Analysis_k… Days on Study   AA-1           129           1000 0.00460 0.00408
+#>  6 Analysis_k… Days on Study   AA-1           130           1000 0.00460 0.00408
+#>  7 Analysis_k… Days on Study   AA-1           131           1000 0.00459 0.00406
+#>  8 Analysis_k… Days on Study   AA-1           137           1000 0.00463 0.00412
+#>  9 Analysis_k… Days on Study   AA-1           139           1000 0.00466 0.00415
+#> 10 Analysis_k… Days on Study   AA-1           145           1000 0.00468 0.00415
 #> # ℹ more rows
 #> # ℹ 1 more variable: Upper <dbl>
 #> 
@@ -719,16 +724,16 @@ lReporting
 #> # Ordered by: StudyMonth
 #>    MetricID      DenominatorType StudyMonth BootstrapCount GroupCount StudyCount
 #>    <chr>         <chr>                <dbl>          <dbl>      <dbl>      <int>
-#>  1 Analysis_kri… Visits                 145           1000         78          3
-#>  2 Analysis_kri… Visits                 150           1000         78          3
-#>  3 Analysis_kri… Visits                 156           1000         78          3
-#>  4 Analysis_kri… Visits                 158           1000         78          3
-#>  5 Analysis_kri… Visits                 159           1000         78          3
-#>  6 Analysis_kri… Visits                 167           1000         78          3
-#>  7 Analysis_kri… Visits                 170           1000         78          3
-#>  8 Analysis_kri… Visits                 173           1000         78          3
-#>  9 Analysis_kri… Visits                 174           1000         78          3
-#> 10 Analysis_kri… Visits                 181           1000         78          3
+#>  1 Analysis_kri… Days on Study          153           1000         78          3
+#>  2 Analysis_kri… Days on Study          157           1000         78          3
+#>  3 Analysis_kri… Days on Study          169           1000         78          3
+#>  4 Analysis_kri… Days on Study          175           1000         78          3
+#>  5 Analysis_kri… Days on Study          187            996         78          3
+#>  6 Analysis_kri… Days on Study            1           1000         78          3
+#>  7 Analysis_kri… Days on Study            7           1000         78          3
+#>  8 Analysis_kri… Days on Study            8           1000         78          3
+#>  9 Analysis_kri… Days on Study           13           1000         78          3
+#> 10 Analysis_kri… Days on Study           19           1000         78          3
 #> # ℹ more rows
 #> # ℹ 5 more variables: StudyID <chr>, StudyRefID <chr>, Median <dbl>,
 #> #   Lower <dbl>, Upper <dbl>
@@ -737,13 +742,12 @@ lReporting
 Next we collect the data and create the charts.
 
 ``` r
-
 lCharts <- gsm.studykri::MakeCharts_StudyKRI(
-    dfResults = collect(lReporting$Reporting_Results), 
-    dfBounds = collect(lReporting$Reporting_Bounds),
-    dfBoundsRef = collect(lReporting$Reporting_BoundsRef),
-    dfMetrics = lReporting$Reporting_Metrics
-  )
+  dfResults = collect(lReporting$Reporting_Results),
+  dfBounds = collect(lReporting$Reporting_Bounds),
+  dfBoundsRef = collect(lReporting$Reporting_BoundsRef),
+  dfMetrics = lReporting$Reporting_Metrics
+)
 
 lCharts
 #> $`AA-1_Analysis_kri0001`

@@ -9,7 +9,7 @@ Each study is generated using ResampleStudy with configurable parameters."></hea
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,6 +29,7 @@ Each study is generated using ResampleStudy with configurable parameters."></hea
     <li><a class="dropdown-item" href="../report_studykri_AA-2.html">Study AA-2 Report</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
       </ul></div>
@@ -56,7 +57,8 @@ Each study is generated using ResampleStudy with configurable parameters.</p>
 <span>  dfConfig <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nStudies <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  vSubjectIDs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"subjid"</span>, <span class="st">"subjectenrollmentnumber"</span>, <span class="st">"subject_nsv"</span><span class="op">)</span>,</span>
+<span>  vSubjectIDs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"subjid"</span>, <span class="st">"subjectenrollmentnumber"</span>, <span class="st">"subject_nsv"</span>, <span class="st">"subjectname"</span>,</span>
+<span>    <span class="st">"subjectid"</span><span class="op">)</span>,</span>
 <span>  vSiteIDs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"invid"</span>, <span class="st">"siteid"</span>, <span class="st">"site_num"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -119,6 +121,10 @@ from all simulated studies row-bound together.</p>
 <span class="r-in"><span>  Raw_AE <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/rawplus_ae.html" class="external-link">rawplus_ae</a></span>,</span></span>
 <span class="r-in"><span>  Raw_SITE <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/ctms_site.html" class="external-link">ctms_site</a></span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Add required columns to Raw_SUBJ</span></span></span>
+<span class="r-in"><span><span class="va">lRaw</span><span class="op">$</span><span class="va">Raw_SUBJ</span><span class="op">$</span><span class="va">subjectname</span> <span class="op">&lt;-</span> <span class="va">lRaw</span><span class="op">$</span><span class="va">Raw_SUBJ</span><span class="op">$</span><span class="va">subject_nsv</span></span></span>
+<span class="r-in"><span><span class="va">lRaw</span><span class="op">$</span><span class="va">Raw_SUBJ</span><span class="op">$</span><span class="va">subjectenrollmentnumber</span> <span class="op">&lt;-</span> <span class="va">lRaw</span><span class="op">$</span><span class="va">Raw_SUBJ</span><span class="op">$</span><span class="va">subjid</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">lPortfolio</span> <span class="op">&lt;-</span> <span class="fu">SimulatePortfolio</span><span class="op">(</span><span class="va">lRaw</span>, nStudies <span class="op">=</span> <span class="fl">3</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>

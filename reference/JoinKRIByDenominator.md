@@ -3,6 +3,12 @@
 Groups bound Analysis_Input data by denominator type and pivots
 numerators into separate columns for shared bootstrap processing.
 
+This function validates that all KRIs sharing the same DenominatorType
+have identical AccrualThreshold values. This is critical because
+different AccrualThreshold values cause different Denominator
+calculations due to date adjustment logic in Input_CountSiteByMonth,
+which would lead to incorrect results when pivoting the data.
+
 ## Usage
 
 ``` r
@@ -13,11 +19,14 @@ JoinKRIByDenominator(dfInput, dfMetrics)
 
 - dfInput:
 
-  data.frame. Bound Analysis_Input from BindResults.
+  data.frame. Bound Analysis_Input from BindResults. Must contain
+  columns: MetricID, GroupID, GroupLevel, Numerator, Denominator,
+  StudyID, MonthYYYYMM, and DenominatorType.
 
 - dfMetrics:
 
-  data.frame. Metrics metadata from MakeMetric.
+  data.frame. Metrics metadata from MakeMetric. Must contain columns:
+  MetricID and AccrualThreshold.
 
 ## Value
 
@@ -38,8 +47,24 @@ dfInput <- data.frame(
   DenominatorType = "Visit"
 )
 
-lJoined <- JoinKRIByDenominator(dfInput)
+dfMetrics <- data.frame(
+  MetricID = c("kri0001", "kri0003"),
+  AccrualThreshold = c(180, 180)
+)
+
+lJoined <- JoinKRIByDenominator(dfInput, dfMetrics)
 
 names(lJoined)
 #> [1] "Visit"
+
+# Example of error condition (different AccrualThreshold for same DenominatorType)
+if (FALSE) { # \dontrun{
+dfMetrics_mismatched <- data.frame(
+  MetricID = c("kri0001", "kri0003"),
+  AccrualThreshold = c(180, 25)  # Different values!
+)
+
+# This will throw an error:
+lJoined <- JoinKRIByDenominator(dfInput, dfMetrics_mismatched)
+} # }
 ```

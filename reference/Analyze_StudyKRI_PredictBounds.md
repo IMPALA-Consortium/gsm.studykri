@@ -14,6 +14,9 @@ complete workflow:
 
 4.  Calculates confidence intervals via `CalculateStudyBounds()`
 
+Note: Date normalization and filtering should be done at the input level
+via Input_CountSiteByMonth with nMinDenominator parameter.
+
 ## Usage
 
 ``` r
@@ -22,7 +25,6 @@ Analyze_StudyKRI_PredictBounds(
   dfStudyRef = NULL,
   nBootstrapReps = 1000,
   nConfLevel = 0.95,
-  nMinDenominator = 25,
   seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL,
@@ -37,8 +39,8 @@ Analyze_StudyKRI_PredictBounds(
 - dfInput:
 
   data.frame or tbl_lazy. Group-level data from
-  `Input_CumCountSiteByMonth`. Expected columns: GroupID, one or more
-  Numerator columns, Denominator, StudyID, MonthYYYYMM.
+  `Input_CountSiteByMonth`. Expected columns: GroupID, one or more
+  Numerator columns, Denominator, StudyID, MonthYYYYMM, StudyMonth.
 
 - dfStudyRef:
 
@@ -55,11 +57,6 @@ Analyze_StudyKRI_PredictBounds(
 
   numeric. Confidence level between 0 and 1. Default: 0.95 (95%
   confidence interval).
-
-- nMinDenominator:
-
-  numeric. Minimum cumulative denominator threshold for
-  Transform_CumCount filtering. Default: 25.
 
 - seed:
 

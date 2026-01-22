@@ -26,7 +26,6 @@ Analyze_StudyKRI_PredictBoundsRefSet(
   strStudyCol = "StudyID",
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
-  nMinDenominator = 25,
   seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL
@@ -69,10 +68,6 @@ Analyze_StudyKRI_PredictBoundsRefSet(
 
   character. Column name for sequential study month (default:
   "StudyMonth").
-
-- nMinDenominator:
-
-  numeric. Minimum denominator for Transform_CumCount (default: 25).
 
 - seed:
 

@@ -12,7 +12,8 @@ MakeCharts_StudyKRI(
   dfBounds,
   dfBoundsRef,
   dfMetrics,
-  nMaxMonth = NULL
+  nMaxMonth = NULL,
+  ...
 )
 ```
 
@@ -38,6 +39,11 @@ MakeCharts_StudyKRI(
 - nMaxMonth:
 
   integer. Maximum study month to display (NULL = all).
+
+- ...:
+
+  additional arguments passed to
+  [`Visualize_StudyKRI()`](https://impala-consortium.github.io/gsm.studykri/reference/Visualize_StudyKRI.md)
 
 ## Value
 

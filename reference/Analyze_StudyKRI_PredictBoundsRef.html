@@ -11,7 +11,7 @@ mapped reference studies."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,7 @@ mapped reference studies."></head><body>
     <li><a class="dropdown-item" href="../report_studykri_AA-2.html">Study AA-2 Report</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
       </ul></div>
@@ -61,7 +62,6 @@ mapped reference studies.</p>
 <span>  nConfLevel <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  strGroupCol <span class="op">=</span> <span class="st">"GroupID"</span>,</span>
 <span>  strStudyMonthCol <span class="op">=</span> <span class="st">"StudyMonth"</span>,</span>
-<span>  nMinDenominator <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tblBootstrapReps <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tblMonthSequence <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -97,10 +97,6 @@ Can have multiple rows per target study (one row per target-reference pair).</p>
 
 <dt id="arg-strstudymonthcol">strStudyMonthCol<a class="anchor" aria-label="anchor" href="#arg-strstudymonthcol"></a></dt>
 <dd><p>character. Column name for study month (default: "StudyMonth").</p></dd>
-
-
-<dt id="arg-nmindenominator">nMinDenominator<a class="anchor" aria-label="anchor" href="#arg-nmindenominator"></a></dt>
-<dd><p>numeric. Minimum denominator (default: 25).</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -160,14 +156,14 @@ Optional pre-generated month sequence with only a <code>MonthYYYYMM</code> colum
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dfBounds</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 9</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   StudyMonth Median  Lower Upper BootstrapCount GroupCount StudyCount StudyID</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>          1  0.146 0.082<span style="text-decoration: underline;">0</span> 0.176            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>          2  0.146 0.123  0.184            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>          3  0.150 0.128  0.170            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>          4  0.149 0.131  0.166            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>          5  0.150 0.126  0.169            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>          6  0.153 0.138  0.170             98         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   StudyMonth Median Lower Upper BootstrapCount GroupCount StudyCount StudyID</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>          1  0.144 0.110 0.160            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>          2  0.156 0.133 0.172            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>          3  0.148 0.126 0.166            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>          4  0.140 0.124 0.158            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>          5  0.147 0.131 0.160            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>          6  0.147 0.134 0.159             98         10          2 STUDY1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: StudyRefID &lt;chr&gt;</span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
