@@ -68,7 +68,7 @@ lRaw <- list(
   Raw_VISIT = clindata::rawplus_visdt
 )
 
-# to ensure proper resampling we need to make sure that lRaw$Raw_SUBJ 
+# to ensure proper resampling we need to make sure that lRaw$Raw_SUBJ
 # can be used as a proper lookup table for all subject identifier aliases
 
 lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
@@ -110,7 +110,7 @@ dfInput <- gsm.studykri::Input_CountSiteByMonth(
   strSubjectCol = "subjid",
   strNumeratorDateCol = "aest_dt",
   strDenominatorDateCol = "visit_dt",
-  nMinDenominator = 25  # Normalize dates at the threshold
+  nMinDenominator = 25 # Normalize dates at the threshold
 )
 
 dfInput
@@ -130,7 +130,7 @@ dfInputDays <- gsm.studykri::Input_CountSiteByMonth(
   strNumeratorDateCol = "aest_dt",
   strDenominatorDateCol = "firstparticipantdate",
   strDenominatorEndDateCol = "lastparticipantdate",
-  nMinDenominator = 25  # Normalize dates at the threshold
+  nMinDenominator = 25 # Normalize dates at the threshold
 )
 
 dfInputDays
@@ -161,7 +161,7 @@ We can plot the preliminary results.
 
 ```{r}
 gsm.studykri::Visualize_StudyKRI(
-  dfStudyKRI = dfTransformed ,
+  dfStudyKRI = dfTransformed,
   dfBounds = dfBounds,
   strStudyID = "AA-1"
 )
@@ -171,7 +171,6 @@ gsm.studykri::Visualize_StudyKRI(
 We then calculate a reference confidence interval based on a set of reference studies.
 
 ```{r}
-
 dfStudyRef <- tibble(
   study = "AA-1",
   studyref = c("AA-2", "AA-3", "AA-4")
@@ -186,7 +185,7 @@ And add the reference confidence interval to our plot
 
 ```{r}
 gsm.studykri::Visualize_StudyKRI(
-  dfStudyKRI = dfTransformed ,
+  dfStudyKRI = dfTransformed,
   dfBounds = dfBounds,
   dfBoundsRef = dfBoundsRef,
   strStudyID = "AA-1"
@@ -197,7 +196,6 @@ gsm.studykri::Visualize_StudyKRI(
 Bringing it together for Days on Study
 
 ```{r}
-
 dfTransformed <- gsm.studykri::Transform_CumCount(
   dfInputDays,
   vBy = c("StudyID")
@@ -211,13 +209,12 @@ dfBoundsRef <- gsm.studykri::Analyze_StudyKRI_PredictBoundsRef(dfInputDays, dfSt
 library(ggplot2)
 
 p <- gsm.studykri::Visualize_StudyKRI(
-  dfStudyKRI = dfTransformed ,
+  dfStudyKRI = dfTransformed,
   dfBounds = dfBounds,
   dfBoundsRef = dfBoundsRef,
   strStudyID = "AA-1",
   bLogY = TRUE
-) 
-
+)
 ```
 
 
@@ -271,7 +268,7 @@ lRaw$Raw_StudyRef <- tibble(
 )
 
 lRaw$Raw_ENROLL <- AddScreeningFailures(
-  lRaw$Raw_ENROLL, 
+  lRaw$Raw_ENROLL,
   lRaw_original$Raw_ENROLL,
   strSiteCol = "siteid",
   strStudyCol = "studyid"
@@ -299,7 +296,6 @@ metrics_wf <- gsm.core::MakeWorkflowList(
 
 # Combine lMapped with metrics workflows for comprehensive result
 lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
-
 ```
 
 ## Generate KRI report using scripts
@@ -309,7 +305,6 @@ and subsequently generate a KRI report using {gsm.reporting}.
 We assemble some data needed for reporting.
 
 ```{r cook5}
-
 dfInput <- gsm.studykri::BindResults(lAnalyzed, "Analysis_Input")
 
 dfTransformed <- gsm.studykri::BindResults(lAnalyzed, "Analysis_Transformed")
@@ -330,11 +325,9 @@ dfStudyRef
 In order to make the bootstrapping more efficient we can combine all KRI that use the same denominator.
 
 ```{r}
-
 lJoined <- gsm.studykri::JoinKRIByDenominator(dfInput, dfMetrics)
 
 str(lJoined)
-
 ```
 
 Using the study references we can calculate the bootstrapped confidence intervals for all KRI at once.
@@ -348,13 +341,12 @@ dfBoundsRef <- Transform_Long(BoundsRef_Wide)
 ```
 
 ```{r}
-
 lCharts <- gsm.studykri::MakeCharts_StudyKRI(
-    dfResults = dfTransformed, 
-    dfBounds = dfBounds,
-    dfBoundsRef = dfBoundsRef,
-    dfMetrics = dfMetrics
-  )
+  dfResults = dfTransformed,
+  dfBounds = dfBounds,
+  dfBoundsRef = dfBoundsRef,
+  dfMetrics = dfMetrics
+)
 
 gsm.studykri::Report_StudyKRI(
   lCharts = lCharts,

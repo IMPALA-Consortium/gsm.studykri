@@ -316,7 +316,7 @@ ResampleStudy <- function(
         generated_sites
       )
     } else {
-      # Other domain - update studyid only      
+      # Other domain - update studyid only
       domain_df$studyid <- strNewStudyID
       lResult[[domain_name]] <- domain_df
     }

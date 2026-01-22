@@ -90,7 +90,7 @@ Transform_Long <- function(lWide, strDenominatorCol = "DenominatorType") {
       # Use dplyr::mutate for lazy table compatibility instead of $
       dfSubset <- dfSubset %>%
         dplyr::mutate(MetricID = strMetricID)
-      
+
       dfSubset
     })
 
@@ -100,11 +100,11 @@ Transform_Long <- function(lWide, strDenominatorCol = "DenominatorType") {
     } else {
       dfLong <- Reduce(dplyr::union_all, lPivoted)
     }
-    
+
     # Use dplyr::mutate for lazy table compatibility instead of [[ assignment
     dfLong <- dfLong %>%
       dplyr::mutate("{strDenominatorCol}" := strDenomType)
-    
+
     dfLong
   })
 
@@ -130,6 +130,6 @@ Transform_Long <- function(lWide, strDenominatorCol = "DenominatorType") {
   if (inherits(dfResult, "tbl_lazy")) {
     return(dfResult)
   }
-  
+
   tibble::as_tibble(dfResult)
 }

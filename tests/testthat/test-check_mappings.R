@@ -1,11 +1,11 @@
-  expected_outputs <- c(
-    "Mapped_AE", "Mapped_COUNTRY", "Mapped_DATAENT",
-    "Mapped_ENROLL", "Mapped_LB", "Mapped_PD",
-    "Mapped_QUERY", "Mapped_Randomization", "Mapped_SDRGCOMP",
-    "Mapped_SITE", "Mapped_STUDCOMP", "Mapped_STUDY",
-    "Mapped_SUBJ", "Mapped_Visit", "Mapped_IE", "Mapped_StudyRef",
-    "Mapped_DATACHG", "Mapped_EXCLUSION"
-  )
+expected_outputs <- c(
+  "Mapped_AE", "Mapped_COUNTRY", "Mapped_DATAENT",
+  "Mapped_ENROLL", "Mapped_LB", "Mapped_PD",
+  "Mapped_QUERY", "Mapped_Randomization", "Mapped_SDRGCOMP",
+  "Mapped_SITE", "Mapped_STUDCOMP", "Mapped_STUDY",
+  "Mapped_SUBJ", "Mapped_Visit", "Mapped_IE", "Mapped_StudyRef",
+  "Mapped_DATACHG", "Mapped_EXCLUSION"
+)
 
 
 test_that("mapping workflows execute successfully on clindata", {
@@ -26,10 +26,10 @@ test_that("mapping workflows execute successfully on clindata", {
     Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
     Raw_STUDCOMP = clindata::rawplus_studcomp,
     Raw_IE = clindata::rawplus_ie,
-      Raw_StudyRef = tibble::tibble(
-        studyid = character(),
-        studyrefid = character()
-      )
+    Raw_StudyRef = tibble::tibble(
+      studyid = character(),
+      studyrefid = character()
+    )
   )
 
   # makes some necessary modifications
@@ -92,10 +92,10 @@ test_that("mapping workflows execute successfully on portfolio data", {
     Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
     Raw_STUDCOMP = clindata::rawplus_studcomp,
     Raw_IE = clindata::rawplus_ie,
-      Raw_StudyRef = tibble::tibble(
-        studyid = character(),
-        studyrefid = character()
-      )
+    Raw_StudyRef = tibble::tibble(
+      studyid = character(),
+      studyrefid = character()
+    )
   )
 
   # makes some necessary modifications

@@ -573,10 +573,12 @@ test_that("ResampleStudy preserves all input domains and column names", {
     } else if (!"studyid" %in% input_cols) {
       # studyid should be added if not present
       expect_true("studyid" %in% output_cols,
-        info = paste(domain_name, "- studyid should be added"))
+        info = paste(domain_name, "- studyid should be added")
+      )
       # All input columns should be preserved
       expect_true(all(input_cols %in% output_cols),
-        info = paste(domain_name, "- input columns not preserved"))
+        info = paste(domain_name, "- input columns not preserved")
+      )
     } else {
       # If studyid was present, exact match expected
       expect_equal(sort(input_cols), sort(output_cols),
@@ -1138,4 +1140,3 @@ test_that("ResampleStudy with oversampling works with mapping workflows", {
   # Verify all subjects in mapped data have correct study ID
   expect_true(all(lMapped$Mapped_SUBJ$studyid == "HIGHAE001"))
 })
-

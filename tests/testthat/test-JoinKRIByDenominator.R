@@ -104,7 +104,7 @@ test_that("JoinKRIByDenominator errors when KRIs have different AccrualThreshold
   dfMetrics <- data.frame(
     MetricID = c("kri0006", "kri0007"),
     Denominator = c("Enrolled Subjects", "Enrolled Subjects"),
-    AccrualThreshold = c(25, 180)  # Different thresholds!
+    AccrualThreshold = c(25, 180) # Different thresholds!
   )
 
   expect_error(
@@ -130,7 +130,7 @@ test_that("JoinKRIByDenominator succeeds when KRIs have matching AccrualThreshol
   dfMetrics <- data.frame(
     MetricID = c("kri0006", "kri0007"),
     Denominator = c("Enrolled Subjects", "Enrolled Subjects"),
-    AccrualThreshold = c(25, 25)  # Same threshold!
+    AccrualThreshold = c(25, 25) # Same threshold!
   )
 
   # Should not throw error
@@ -146,7 +146,7 @@ test_that("JoinKRIByDenominator errors when KRIs have different GroupLevel for s
   dfInput <- data.frame(
     MetricID = c("kri0006", "kri0006", "kri0014", "kri0014"),
     GroupID = c("Site1", "Site2", "Site1", "Site2"),
-    GroupLevel = c("Site", "Site", "Country", "Country"),  # Different GroupLevels!
+    GroupLevel = c("Site", "Site", "Country", "Country"), # Different GroupLevels!
     Numerator = c(5, 3, 2, 1),
     Denominator = c(100, 80, 100, 80),
     StudyID = "AA-1",
@@ -170,7 +170,7 @@ test_that("JoinKRIByDenominator errors when KRIs have missing GroupLevel", {
   dfInput <- data.frame(
     MetricID = c("kri0006", "kri0006", "kri0014", "kri0014"),
     GroupID = c("Site1", "Site2", "Site1", "Site2"),
-    GroupLevel = c("Site", "Site", NA, NA),  # Missing GroupLevel!
+    GroupLevel = c("Site", "Site", NA, NA), # Missing GroupLevel!
     Numerator = c(5, 3, 2, 1),
     Denominator = c(100, 80, 100, 80),
     StudyID = "AA-1",
@@ -197,7 +197,7 @@ test_that("JoinKRIByDenominator errors when KRIs have different Denominator valu
     GroupID = c("Site1", "Site2", "Site1", "Site2"),
     GroupLevel = "Site",
     Numerator = c(5, 3, 8, 4),
-    Denominator = c(100, 80, 150, 120),  # Different denominators!
+    Denominator = c(100, 80, 150, 120), # Different denominators!
     StudyID = "AA-1",
     MonthYYYYMM = 202301,
     DenominatorType = "Days on Study"

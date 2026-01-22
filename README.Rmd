@@ -78,7 +78,7 @@ dfInput <- Input_CountSiteByMonth(
   strSubjectCol = "subjid",
   strNumeratorDateCol = "aest_dt",
   strDenominatorDateCol = "visit_dt",
-  nMinDenominator = 25  # Normalize dates at the threshold
+  nMinDenominator = 25 # Normalize dates at the threshold
 )
 
 # Aggregate to study-level cumulative counts

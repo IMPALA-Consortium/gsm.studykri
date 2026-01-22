@@ -529,7 +529,7 @@ test_that("Visualize_StudyKRI appends log scale information to y-axis label", {
 
   expect_s3_class(p2, "ggplot")
   expect_equal(p2$labels$y, "AE Rate (log scale)")
-  
+
   # Verify log scale is actually applied
   expect_true("ScaleContinuousPosition" %in% class(p2$scales$get_scales("y")))
 })

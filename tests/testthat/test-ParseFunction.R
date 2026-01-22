@@ -142,4 +142,3 @@ test_that("ParseFunction works with gsm.studykri functions in workflow", {
   expect_type(result, "list")
   expect_true("Visits" %in% names(result))
 })
-

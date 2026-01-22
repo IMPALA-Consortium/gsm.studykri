@@ -269,11 +269,11 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
   dfStudyRefCollected <- dfStudyRef %>%
     dplyr::distinct() %>%
     dplyr::collect()
-  
+
   # Use first column for target studies, second column for reference studies
   strStudyCol <- colnames(dfStudyRefCollected)[1]
   strStudyRefCol <- colnames(dfStudyRefCollected)[2]
-  
+
   # Get unique target studies
   vTargetStudies <- unique(dfStudyRefCollected[[strStudyCol]])
 
@@ -304,7 +304,7 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     # Compute constant values outside mutate to avoid SQL translation issues
     # paste() with collapse is not supported in SQL translation
     strStudyRefID <- paste(vRefStudies, collapse = ", ")
-    
+
     # Add StudyID and StudyRefID columns
     # Use dplyr::mutate for lazy table compatibility
     dfBounds <- dfBounds %>%

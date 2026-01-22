@@ -5,7 +5,7 @@
 #' across groups (sites/countries) by calendar month and calculating cumulative sums.
 #' Supports both in-memory data frames and dbplyr lazy tables.
 #' Handles multiple Numerator columns (e.g., Numerator_kri0001, Numerator_kri0003).
-#' 
+#'
 #' Note: StudyMonth is calculated by this function based on MonthYYYYMM order.
 #' Date normalization should be done at the input level (Input_CountSiteByMonth).
 #'

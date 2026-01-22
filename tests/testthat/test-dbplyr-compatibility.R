@@ -204,10 +204,10 @@ test_that("Transform_CumCount comprehensive lazy table behavior", {
   expect_true(all(numerator_diffs >= 0))
 
   # 5. Verify specific cumulative values (sites aggregate correctly)
-  expect_equal(result_df$Numerator[1], 30)  # Jan: SITE1(10) + SITE2(20)
-  expect_equal(result_df$Numerator[2], 45)  # Feb: prev + SITE1(5) + SITE2(10)
-  expect_equal(result_df$Numerator[3], 45)  # Mar: gap filled, count persists
-  expect_equal(result_df$Numerator[4], 68)  # Apr: prev + SITE1(8) + SITE2(15)
+  expect_equal(result_df$Numerator[1], 30) # Jan: SITE1(10) + SITE2(20)
+  expect_equal(result_df$Numerator[2], 45) # Feb: prev + SITE1(5) + SITE2(10)
+  expect_equal(result_df$Numerator[3], 45) # Mar: gap filled, count persists
+  expect_equal(result_df$Numerator[4], 68) # Apr: prev + SITE1(8) + SITE2(15)
 
   DBI::dbDisconnect(con)
 })
@@ -233,9 +233,9 @@ test_that("Input_CountSiteByMonth with nMinDenominator returns lazy table and ad
       stringsAsFactors = FALSE
     )
   )
-  
+
   lazy_tables <- create_lazy_tables(test_data)
-  
+
   # Execute with nMinDenominator = 3 to trigger date adjustment
   result <- Input_CountSiteByMonth(
     dfSubjects = lazy_tables$dfSubjects,
@@ -246,17 +246,17 @@ test_that("Input_CountSiteByMonth with nMinDenominator returns lazy table and ad
     strSubjectCol = "subjid",
     strNumeratorDateCol = "aest_dt",
     strDenominatorDateCol = "visit_dt",
-    nMinDenominator = 3  # This triggers ApplyMinDenominatorDateAdjustment
+    nMinDenominator = 3 # This triggers ApplyMinDenominatorDateAdjustment
   )
-  
+
   # Verify result is lazy table
   expect_s3_class(result, "tbl_lazy")
-  
+
   # Collect and verify the function executed without SQL errors
   result_df <- dplyr::collect(result)
   expect_true(nrow(result_df) > 0)
   expect_true(all(c("StudyID", "GroupID", "MonthYYYYMM", "Numerator", "Denominator") %in% names(result_df)))
-  
+
   # Cleanup
   DBI::dbDisconnect(lazy_tables$con)
 })
@@ -300,7 +300,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet works with lazy tables", {
 
   # Verify result is lazy table
   expect_s3_class(result, "tbl_lazy")
-  
+
   # Collect to verify data properties
   result_collected <- dplyr::collect(result)
   expect_true(nrow(result_collected) > 0)
@@ -350,7 +350,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet with lazy table and NULL vStudyF
 
   # Verify result is lazy table
   expect_s3_class(result, "tbl_lazy")
-  
+
   # Collect to verify data properties
   result_collected <- dplyr::collect(result)
   expect_equal(unique(result_collected$StudyCount), 3)
@@ -519,7 +519,7 @@ test_that("Analyze_StudyKRI_PredictBounds returns lazy table with lazy input", {
 
   # Verify result is lazy table
   expect_s3_class(result, "tbl_lazy")
-  
+
   # Collect to verify data properties
   result_collected <- dplyr::collect(result)
   expect_true(nrow(result_collected) > 0)
@@ -561,7 +561,7 @@ test_that("Analyze_StudyKRI_PredictBounds works with lazy dfStudyRef", {
     study = c("STUDY1", "STUDY2"),
     stringsAsFactors = FALSE
   )
-  
+
   # Write study reference to database to make it a lazy table
   DBI::dbWriteTable(con, "study_ref", dfStudyRef)
   dfStudyRefLazy <- dplyr::tbl(con, "study_ref")
@@ -579,12 +579,12 @@ test_that("Analyze_StudyKRI_PredictBounds works with lazy dfStudyRef", {
 
   # Verify result is lazy table
   expect_s3_class(result, "tbl_lazy")
-  
+
   # Collect to verify data properties
   result_collected <- dplyr::collect(result)
   expect_true(nrow(result_collected) > 0)
   expect_true(all(c("StudyID", "StudyMonth", "Median", "Lower", "Upper") %in% names(result_collected)))
-  
+
   # Should only have STUDY1 and STUDY2 (not STUDY3)
   expect_equal(sort(unique(result_collected$StudyID)), c("STUDY1", "STUDY2"))
 
@@ -624,7 +624,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef returns lazy table with lazy input"
     studyref = c("STUDY2", "STUDY3", "STUDY1", "STUDY3"),
     stringsAsFactors = FALSE
   )
-  
+
   # Write study reference to database to make it a lazy table
   DBI::dbWriteTable(con, "study_ref", dfStudyRef)
   dfStudyRefLazy <- dplyr::tbl(con, "study_ref")
@@ -642,7 +642,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef returns lazy table with lazy input"
 
   # Should return lazy table when input is lazy
   expect_s3_class(result, "tbl_lazy")
-  
+
   # Collect to verify correctness
   result_collected <- dplyr::collect(result)
   expect_true(nrow(result_collected) > 0)
@@ -972,4 +972,3 @@ test_that("Analyze_StudyKRI_PredictBounds works with user-supplied tblBootstrapR
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
 })
-

@@ -79,6 +79,3 @@ ParseFunction <- function(strFunction) {
 
   return(func)
 }
-
-
-

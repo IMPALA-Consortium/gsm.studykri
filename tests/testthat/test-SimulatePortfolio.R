@@ -4,7 +4,7 @@ test_that("SimulatePortfolio creates multiple studies", {
     Raw_AE = clindata::rawplus_ae,
     Raw_SITE = clindata::ctms_site
   )
-  
+
   # Add required vSubjectID columns
   lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
   lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
@@ -26,7 +26,7 @@ test_that("SimulatePortfolio respects custom configuration", {
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_SITE = clindata::ctms_site
   )
-  
+
   # Add required vSubjectID columns
   lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
   lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
@@ -55,7 +55,7 @@ test_that("SimulatePortfolio output works with mapping workflows", {
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study
   )
-  
+
   # Add required vSubjectID columns
   lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
   lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
@@ -72,7 +72,7 @@ test_that("SimulatePortfolio output works with mapping workflows", {
 
 test_that("SimulatePortfolio validates inputs", {
   lRaw <- list(Raw_SUBJ = clindata::rawplus_dm)
-  
+
   # Add required vSubjectID columns
   lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
   lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
@@ -110,7 +110,7 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
     Raw_AE = clindata::rawplus_ae,
     Raw_SITE = clindata::ctms_site
   )
-  
+
   # Add required vSubjectID columns
   lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
   lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
@@ -178,7 +178,7 @@ test_that("ResampleStudy validates vSubjectIDs columns exist", {
       invid = c("SITE1", "SITE1", "SITE2")
     )
   )
-  
+
   # Missing required vSubjectIDs columns
   expect_error(
     ResampleStudy(lRaw, "TEST001", vSubjectIDs = c("subjid", "subjectenrollmentnumber")),
@@ -202,12 +202,12 @@ test_that("ResampleStudy validates strOversampleDomain has subject ID", {
       siteid = c("1", "2")
     )
   )
-  
+
   # strOversampleDomain without subject ID column should fail
   expect_error(
     ResampleStudy(
-      lRaw, 
-      "TEST001", 
+      lRaw,
+      "TEST001",
       strOversampleDomain = "Raw_SITE",
       vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
     ),
@@ -232,7 +232,7 @@ test_that("ResampleStudy handles invalid mapping in find_subject_id_column", {
       aedesc = c("AE1", "AE2", "AE3", "AE4")
     )
   )
-  
+
   # Should handle invalid mapping and filter them out
   result <- suppressMessages(
     ResampleStudy(
@@ -244,7 +244,7 @@ test_that("ResampleStudy handles invalid mapping in find_subject_id_column", {
       vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
     )
   )
-  
+
   expect_true(nrow(result$Raw_SUBJ) <= 2)
   # AE records should have study prefix in subjectid
   if (nrow(result$Raw_AE) > 0) {
@@ -271,7 +271,7 @@ test_that("ResampleStudy handles siteid updates correctly", {
       aedesc = c("AE1", "AE2", "AE3")
     )
   )
-  
+
   result <- ResampleStudy(
     lRaw,
     "TEST001",
@@ -279,7 +279,7 @@ test_that("ResampleStudy handles siteid updates correctly", {
     seed = 999,
     vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
-  
+
   # siteid should be updated to match randomized invid
   expect_true(all(!is.na(result$Raw_SUBJ$siteid)))
   expect_true(all(!is.na(result$Raw_AE$siteid)))
@@ -304,7 +304,7 @@ test_that("ResampleStudy with TargetSiteCount generates sites correctly", {
       studyid = rep("ORIGINAL", 10)
     )
   )
-  
+
   result <- ResampleStudy(
     lRaw,
     "TEST001",
@@ -313,14 +313,14 @@ test_that("ResampleStudy with TargetSiteCount generates sites correctly", {
     seed = 777,
     vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
-  
+
   # Should have generated sites with study prefix
   expect_true(all(grepl("^TEST001_", result$Raw_SITE$invid)))
   expect_equal(result$Raw_SITE$studyid[1], "TEST001")
-  
+
   # All subjects should be assigned to generated sites
   expect_true(all(result$Raw_SUBJ$invid %in% result$Raw_SITE$invid))
-  
+
   # Site count should be <= target (some sites may have 0 subjects)
   expect_true(nrow(result$Raw_SITE) <= 5)
 })
@@ -331,7 +331,7 @@ test_that("ResampleStudy processes domain without subject or site columns", {
       subjid = c("S1", "S2", "S3"),
       enrollyn = c("Y", "Y", "Y"),
       invid = c("SITE1", "SITE1", "SITE2"),
-      siteid = c("1", "1", "2"),  # Added siteid
+      siteid = c("1", "1", "2"), # Added siteid
       subjectenrollmentnumber = c("S1", "S2", "S3"),
       subject_nsv = c("S1", "S2", "S3"),
       subjectname = c("S1", "S2", "S3"),
@@ -342,7 +342,7 @@ test_that("ResampleStudy processes domain without subject or site columns", {
       study_name = "Original Study"
     )
   )
-  
+
   result <- ResampleStudy(
     lRaw,
     "TEST001",
@@ -350,7 +350,7 @@ test_that("ResampleStudy processes domain without subject or site columns", {
     seed = 555,
     vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
-  
+
   # studyid should be updated in study domain
   expect_equal(result$Raw_STUDY$studyid, "TEST001")
   expect_equal(result$Raw_STUDY$study_name, "Original Study")
@@ -373,7 +373,7 @@ test_that("ResampleStudy process_site_domain with invid column", {
       studyid = rep("ORIGINAL", 4)
     )
   )
-  
+
   result <- ResampleStudy(
     lRaw,
     "TEST001",
@@ -381,11 +381,9 @@ test_that("ResampleStudy process_site_domain with invid column", {
     seed = 333,
     vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
-  
+
   # Site domain invid should have study prefix
   expect_true(all(grepl("^TEST001_", result$Raw_SITE$invid)))
   # Should only include sites from sampled subjects
   expect_true(nrow(result$Raw_SITE) <= 2)
 })
-
-

@@ -97,7 +97,6 @@ names(dbPortfolio) <- names(lPortfolio)
 Here we create our data set.
 
 ```{r}
-
 tblInput1 <- gsm.studykri::Input_CountSiteByMonth(
   dfSubjects = dbPortfolio$Raw_SUBJ,
   dfNumerator = dbPortfolio$Raw_AE,
@@ -164,15 +163,15 @@ dfRep <- tibble(
 dfMonths <- tibble(
   YYYY = seq(2003, 2020)
 ) %>%
-cross_join(
-  tibble(
-    MM = seq(1, 12)
-  )
-) %>%
-mutate(
-  MonthYYYYMM = YYYY * 100 + MM
-) %>%
-select(MonthYYYYMM)
+  cross_join(
+    tibble(
+      MM = seq(1, 12)
+    )
+  ) %>%
+  mutate(
+    MonthYYYYMM = YYYY * 100 + MM
+  ) %>%
+  select(MonthYYYYMM)
 
 DBI::dbWriteTable(con, "StudyRef", dfStudyRef, overwrite = TRUE)
 DBI::dbWriteTable(con, "Rep", dfRep, overwrite = TRUE)
@@ -190,8 +189,8 @@ Bounds_Wide <- purrr::map(
     dfStudyRef = tblStudyRef,
     tblBootstrapReps = tblRep,
     tblMonthSequence = tblMonths
-    )
   )
+)
 
 BoundsRef_Wide <- purrr::map(
   lJoined, ~ Analyze_StudyKRI_PredictBoundsRef(
@@ -199,8 +198,8 @@ BoundsRef_Wide <- purrr::map(
     dfStudyRef = tblStudyRef,
     tblBootstrapReps = tblRep,
     tblMonthSequence = tblMonths
-    )
   )
+)
 
 tblBounds <- Transform_Long(Bounds_Wide)
 
@@ -226,7 +225,6 @@ tblTransformed
 Finally before plotting we need to collect the results into memory.
 
 ```{r}
-
 metrics_wf <- gsm.core::MakeWorkflowList(
   strNames = NULL,
   strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
@@ -237,11 +235,11 @@ dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
 
 
 lCharts <- gsm.studykri::MakeCharts_StudyKRI(
-    dfResults = collect(tblTransformed), 
-    dfBounds = collect(tblBounds),
-    dfBoundsRef = collect(tblBoundsRef),
-    dfMetrics = dfMetrics
-  )
+  dfResults = collect(tblTransformed),
+  dfBounds = collect(tblBounds),
+  dfBoundsRef = collect(tblBoundsRef),
+  dfMetrics = dfMetrics
+)
 
 lCharts
 ```
@@ -254,13 +252,12 @@ mapping workflow and ignore the warnings for the missing specifications.
 We might also scrub some of the specifications from the yaml files to begin with.
 
 ```{r}
-
 lMapped <- list(
   Mapped_AE = dbPortfolio$Raw_AE,
   Mapped_Visit = dbPortfolio$Raw_VISIT,
   Mapped_SUBJ = dbPortfolio$Raw_SUBJ %>%
     filter(enrollyn == "Y"),
-  Mapped_StudyRef =  tbl(con, "StudyRef")
+  Mapped_StudyRef = tbl(con, "StudyRef")
 )
 
 metrics_wf <- gsm.core::MakeWorkflowList(
@@ -293,13 +290,12 @@ lReporting
 Next we collect the data and create the charts.
 
 ```{r}
-
 lCharts <- gsm.studykri::MakeCharts_StudyKRI(
-    dfResults = collect(lReporting$Reporting_Results), 
-    dfBounds = collect(lReporting$Reporting_Bounds),
-    dfBoundsRef = collect(lReporting$Reporting_BoundsRef),
-    dfMetrics = lReporting$Reporting_Metrics
-  )
+  dfResults = collect(lReporting$Reporting_Results),
+  dfBounds = collect(lReporting$Reporting_Bounds),
+  dfBoundsRef = collect(lReporting$Reporting_BoundsRef),
+  dfMetrics = lReporting$Reporting_Metrics
+)
 
 lCharts
 ```

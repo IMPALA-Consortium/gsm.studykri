@@ -32,7 +32,6 @@ ApplyMinDenominatorDateAdjustment <- function(
     strDenominatorDateCol,
     strDenominatorEndDateCol,
     nMinDenominator) {
-  
   # Step 1: Join denominator with subjects to get study information
   dfDenom_with_study <- dfDenominator %>%
     dplyr::select(-dplyr::any_of(c(.env$strStudyCol, .env$strGroupCol))) %>%
@@ -41,7 +40,7 @@ ApplyMinDenominatorDateAdjustment <- function(
       by = stats::setNames(strSubjectCol, strSubjectCol)
     ) %>%
     dplyr::filter(!is.na(.data[[strDenominatorDateCol]]))
-  
+
   # Step 2: Rank denominator events by start date within each study
   dfDenom_ranked <- dfDenom_with_study %>%
     SortDf(.data[[strStudyCol]], .data[[strDenominatorDateCol]]) %>%
@@ -49,7 +48,7 @@ ApplyMinDenominatorDateAdjustment <- function(
       denom_rank = dplyr::row_number(),
       .by = dplyr::all_of(.env$strStudyCol)
     )
-  
+
   # Step 3: Find threshold date (MAX date of first N events) per study
   dfThresholdDates <- dfDenom_ranked %>%
     dplyr::filter(.data$denom_rank <= .env$nMinDenominator) %>%
@@ -57,7 +56,7 @@ ApplyMinDenominatorDateAdjustment <- function(
       threshold_date = max(.data[[strDenominatorDateCol]], na.rm = TRUE),
       .by = dplyr::all_of(.env$strStudyCol)
     )
-  
+
   # Step 4: Calculate offset and adjust start dates
   dfDenom_adjusted <- dfDenom_ranked %>%
     dplyr::left_join(dfThresholdDates, by = strStudyCol) %>%
@@ -71,7 +70,7 @@ ApplyMinDenominatorDateAdjustment <- function(
       # Apply offset to start date
       adjusted_start_date = .data[[strDenominatorDateCol]] + as.integer(.data$date_offset_days)
     )
-  
+
   # Step 5: If end date exists, apply same offset to preserve duration
   if (!is.null(strDenominatorEndDateCol)) {
     dfDenom_adjusted <- dfDenom_adjusted %>%
@@ -80,26 +79,28 @@ ApplyMinDenominatorDateAdjustment <- function(
         adjusted_end_date = .data[[strDenominatorEndDateCol]] + as.integer(.data$date_offset_days)
       )
   }
-  
+
   # Step 6: Apply adjusted dates back to original denominator data
   # Replace original denominator with adjusted version for date calculations
   dfDenominator <- dfDenom_adjusted %>%
     dplyr::mutate(
       !!strDenominatorDateCol := .data$adjusted_start_date
     )
-  
+
   if (!is.null(strDenominatorEndDateCol)) {
     dfDenominator <- dfDenominator %>%
       dplyr::mutate(
         !!strDenominatorEndDateCol := .data$adjusted_end_date
       )
   }
-  
+
   # Clean up temporary columns
   dfDenominator <- dfDenominator %>%
-    dplyr::select(-dplyr::any_of(c("denom_rank", "threshold_date", "date_offset_days", 
-                                    "adjusted_start_date", "adjusted_end_date")))
-  
+    dplyr::select(-dplyr::any_of(c(
+      "denom_rank", "threshold_date", "date_offset_days",
+      "adjusted_start_date", "adjusted_end_date"
+    )))
+
   # Step 7: Adjust numerator dates to align with denominator
   # Use study-level threshold date instead of joining all denominator events
   dfNum_processed <- dfNumerator_processed %>%
@@ -110,7 +111,7 @@ ApplyMinDenominatorDateAdjustment <- function(
     dplyr::mutate(
       # Calculate offset for numerator events that fall on or before threshold
       offset_to_apply = dplyr::if_else(
-        !is.na(.data$threshold_date) & 
+        !is.na(.data$threshold_date) &
           .data[[strNumeratorDateCol]] <= .data$threshold_date,
         as.numeric(.data$threshold_date - .data[[strNumeratorDateCol]]),
         0
@@ -122,9 +123,11 @@ ApplyMinDenominatorDateAdjustment <- function(
       month = lubridate::month(.data$adjusted_num_date),
       MonthYYYYMM = .data$year * 100 + .data$month
     ) %>%
-    dplyr::select(-dplyr::any_of(c("threshold_date", "offset_to_apply", 
-                                    "adjusted_num_date", "year", "month")))
-  
+    dplyr::select(-dplyr::any_of(c(
+      "threshold_date", "offset_to_apply",
+      "adjusted_num_date", "year", "month"
+    )))
+
   return(list(
     dfNumerator = dfNum_processed,
     dfDenominator = dfDenominator

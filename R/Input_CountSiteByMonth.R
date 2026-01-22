@@ -107,7 +107,7 @@ CalculateDaysByMonth <- function(dfData, strStartDateCol, strEndDateCol, vGroupC
 #' @param strSubjectCol character. Column name for subject identifier (default: "subjid").
 #' @param strNumeratorDateCol character. Date column name in numerator data.
 #' @param strDenominatorDateCol character. Date column name in denominator data (start date).
-#' @param strDenominatorEndDateCol character. End date column in denominator data (default: NULL). 
+#' @param strDenominatorEndDateCol character. End date column in denominator data (default: NULL).
 #' When provided, calculates sum of days between start/end dates per month instead of record counts.
 #' @param strDenominatorType character. Optional denominator type label (e.g., "Visits", "Days on Study").
 #' When provided, adds a DenominatorType column to the output.
@@ -201,7 +201,7 @@ Input_CountSiteByMonth <- function(
       paste(missing_denom_cols, collapse = ", ")
     ))
   }
-  
+
   # Validate nMinDenominator
   if (!is.numeric(nMinDenominator) || length(nMinDenominator) != 1 || nMinDenominator < 0) {
     stop("nMinDenominator must be a single non-negative numeric value")
@@ -222,7 +222,7 @@ Input_CountSiteByMonth <- function(
       MonthYYYYMM = .data$year * 100 + .data$month
     ) %>%
     dplyr::select(-".date_parsed", -"year", -"month")
-  
+
   # DATE NORMALIZATION: Apply when nMinDenominator > 0
   # This adjusts dates of the first N denominator events to create a consistent study start
   if (nMinDenominator > 0) {
@@ -238,7 +238,7 @@ Input_CountSiteByMonth <- function(
       strDenominatorEndDateCol = strDenominatorEndDateCol,
       nMinDenominator = nMinDenominator
     )
-    
+
     dfNum_processed <- adjusted_data$dfNumerator
     dfDenominator <- adjusted_data$dfDenominator
   }

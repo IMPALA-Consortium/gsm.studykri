@@ -75,8 +75,8 @@
 #' )
 #'
 #' # Check results
-#' table(dfAugmented$enrollyn)  # Should show both Y and N
-#' nrow(dfAugmented) > nrow(dfEnrolled)  # Should be TRUE
+#' table(dfAugmented$enrollyn) # Should show both Y and N
+#' nrow(dfAugmented) > nrow(dfEnrolled) # Should be TRUE
 #'
 #' # Multi-study example
 #' dfEnrolled_multi <- data.frame(
@@ -103,12 +103,11 @@ AddScreeningFailures <- function(
     strSiteCol = "siteid",
     strStudyCol = "studyid",
     seed = NULL) {
-  
   # Set seed if provided
   if (!is.null(seed)) {
     set.seed(seed)
   }
-  
+
   # Step 1: Calculate enrollment ratios per site in dfSource
   # Only include sites with at least one enrolled patient to avoid division by zero
   site_ratios <- dfSource %>%
@@ -123,57 +122,57 @@ AddScreeningFailures <- function(
       ratio = .data$n_enrolled / (.data$n_enrolled + .data$n_screening_failures)
     ) %>%
     dplyr::filter(!is.na(.data$ratio) & is.finite(.data$ratio))
-  
+
   # Extract vector of ratios for random sampling
   ratios_pool <- site_ratios$ratio
-  
+
   # Step 2 & 3: Process each study-site combination in dfEnrolled and sample screening failures
   # Get unique study-site combinations
   dfCombinations <- dfEnrolled %>%
     dplyr::distinct(.data[[strStudyCol]], .data[[strSiteCol]])
-  
+
   # Filter dfSource to only screening failures
   screening_failures_pool <- dfSource %>%
     dplyr::filter(.data$enrollyn == "N")
-  
+
   # Sample screening failures for each study-site combination
   sampled_screening_failures_list <- lapply(seq_len(nrow(dfCombinations)), function(i) {
     study <- dfCombinations[[strStudyCol]][i]
     site <- dfCombinations[[strSiteCol]][i]
-    
+
     # Count enrolled patients at this specific study-site combination
     n_enrolled_site <- sum(dfEnrolled[[strStudyCol]] == study & dfEnrolled[[strSiteCol]] == site)
-    
+
     # Randomly select a ratio from the pool
     selected_ratio <- sample(ratios_pool, 1)
-    
+
     # Calculate number of screening failures to add
     n_screening_failures_to_add <- round(n_enrolled_site * (1 - selected_ratio) / selected_ratio)
-    
+
     # Handle edge case where calculation results in 0, negative, or infinite
     if (n_screening_failures_to_add <= 0 || !is.finite(n_screening_failures_to_add)) {
       return(NULL)
     }
-    
+
     # Sample screening failures with replacement
     sampled_indices <- sample(
       seq_len(nrow(screening_failures_pool)),
       size = n_screening_failures_to_add,
       replace = TRUE
     )
-    
+
     sampled_records <- screening_failures_pool[sampled_indices, ]
-    
+
     # Update both study and site identifiers to match target study-site
     sampled_records[[strStudyCol]] <- study
     sampled_records[[strSiteCol]] <- site
-    
+
     return(sampled_records)
   })
-  
+
   # Remove NULL entries and combine
   sampled_screening_failures_list <- sampled_screening_failures_list[!sapply(sampled_screening_failures_list, is.null)]
-  
+
   # Step 4: Combine and return
   if (length(sampled_screening_failures_list) > 0) {
     sampled_screening_failures <- dplyr::bind_rows(sampled_screening_failures_list)
@@ -181,6 +180,6 @@ AddScreeningFailures <- function(
   } else {
     result <- dfEnrolled
   }
-  
+
   return(result)
 }

@@ -287,7 +287,7 @@ Visualize_StudyKRI <- function(
   } else {
     strYlab
   }
-  
+
   # Add labels
   p <- p +
     ggplot2::labs(
@@ -307,12 +307,12 @@ Visualize_StudyKRI <- function(
       values = c("Portfolio Median" = "blue", "Actual Study Data" = "black"),
       breaks = c("Portfolio Median", "Actual Study Data")
     )
-  
+
   # Apply logarithmic scale if requested
   if (bLogY) {
     p <- p + ggplot2::scale_y_log10()
   }
-  
+
   # Use clean theme
   p <- p +
     ggplot2::theme_minimal() +
