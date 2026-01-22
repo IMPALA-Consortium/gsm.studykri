@@ -55,6 +55,7 @@ lRaw <- list(
   Raw_STUDY = clindata::ctms_study,
   Raw_PD = clindata::ctms_protdev,
   Raw_DATAENT = clindata::edc_data_pages,
+  Raw_DATACHG = clindata::edc_data_points,
   Raw_QUERY = clindata::edc_queries,
   Raw_AE = clindata::rawplus_ae,
   Raw_SUBJ = clindata::rawplus_dm,
@@ -63,13 +64,19 @@ lRaw <- list(
   Raw_LB = clindata::rawplus_lb,
   Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
   Raw_STUDCOMP = clindata::rawplus_studcomp,
+  Raw_IE = clindata::rawplus_ie,
   Raw_VISIT = clindata::rawplus_visdt %>%
     mutate(visit_dt = lubridate::ymd(visit_dt))
 )
 
+# Add required subject identifier columns for resampling
+lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
+
 lPortfolio <- SimulatePortfolio(
   lRaw = lRaw,
   nStudies = 4,
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4"),
     nSubjects = c(500, 750, 150, 200),
@@ -90,7 +97,6 @@ names(dbPortfolio) <- names(lPortfolio)
 Here we create our data set.
 
 ```{r}
-
 tblInput1 <- gsm.studykri::Input_CountSiteByMonth(
   dfSubjects = dbPortfolio$Raw_SUBJ,
   dfNumerator = dbPortfolio$Raw_AE,
@@ -125,15 +131,16 @@ tblInput <- dplyr::union_all(
     mutate(MetricID = "kri0002"),
 )
 
-dfMetrics <- tibble(
-  MetricID = c("kri0001", "kri0002"),
-  Denominator = "Visits"
+# Load metric metadata from workflow files
+metrics_wf <- gsm.core::MakeWorkflowList(
+  strNames = c("kri0001.yaml", "kri0002.yaml"),
+  strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
+  strPackage = NULL
 )
 
-DBI::dbWriteTable(con, "Metrics", dfMetrics)
+dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
 
-
-lJoined <- JoinKRIByDenominator(tblInput)
+lJoined <- JoinKRIByDenominator(tblInput, dfMetrics)
 
 lJoined
 ```
@@ -156,15 +163,15 @@ dfRep <- tibble(
 dfMonths <- tibble(
   YYYY = seq(2003, 2020)
 ) %>%
-cross_join(
-  tibble(
-    MM = seq(1, 12)
-  )
-) %>%
-mutate(
-  MonthYYYYMM = YYYY * 100 + MM
-) %>%
-select(MonthYYYYMM)
+  cross_join(
+    tibble(
+      MM = seq(1, 12)
+    )
+  ) %>%
+  mutate(
+    MonthYYYYMM = YYYY * 100 + MM
+  ) %>%
+  select(MonthYYYYMM)
 
 DBI::dbWriteTable(con, "StudyRef", dfStudyRef, overwrite = TRUE)
 DBI::dbWriteTable(con, "Rep", dfRep, overwrite = TRUE)
@@ -182,8 +189,8 @@ Bounds_Wide <- purrr::map(
     dfStudyRef = tblStudyRef,
     tblBootstrapReps = tblRep,
     tblMonthSequence = tblMonths
-    )
   )
+)
 
 BoundsRef_Wide <- purrr::map(
   lJoined, ~ Analyze_StudyKRI_PredictBoundsRef(
@@ -191,8 +198,8 @@ BoundsRef_Wide <- purrr::map(
     dfStudyRef = tblStudyRef,
     tblBootstrapReps = tblRep,
     tblMonthSequence = tblMonths
-    )
   )
+)
 
 tblBounds <- Transform_Long(Bounds_Wide)
 
@@ -218,7 +225,6 @@ tblTransformed
 Finally before plotting we need to collect the results into memory.
 
 ```{r}
-
 metrics_wf <- gsm.core::MakeWorkflowList(
   strNames = NULL,
   strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
@@ -229,11 +235,11 @@ dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
 
 
 lCharts <- gsm.studykri::MakeCharts_StudyKRI(
-    dfResults = collect(tblTransformed), 
-    dfBounds = collect(tblBounds),
-    dfBoundsRef = collect(tblBoundsRef),
-    dfMetrics = dfMetrics
-  )
+  dfResults = collect(tblTransformed),
+  dfBounds = collect(tblBounds),
+  dfBoundsRef = collect(tblBoundsRef),
+  dfMetrics = dfMetrics
+)
 
 lCharts
 ```
@@ -246,13 +252,12 @@ mapping workflow and ignore the warnings for the missing specifications.
 We might also scrub some of the specifications from the yaml files to begin with.
 
 ```{r}
-
 lMapped <- list(
   Mapped_AE = dbPortfolio$Raw_AE,
   Mapped_Visit = dbPortfolio$Raw_VISIT,
   Mapped_SUBJ = dbPortfolio$Raw_SUBJ %>%
     filter(enrollyn == "Y"),
-  Mapped_StudyRef =  tbl(con, "StudyRef")
+  Mapped_StudyRef = tbl(con, "StudyRef")
 )
 
 metrics_wf <- gsm.core::MakeWorkflowList(
@@ -285,13 +290,12 @@ lReporting
 Next we collect the data and create the charts.
 
 ```{r}
-
 lCharts <- gsm.studykri::MakeCharts_StudyKRI(
-    dfResults = collect(lReporting$Reporting_Results), 
-    dfBounds = collect(lReporting$Reporting_Bounds),
-    dfBoundsRef = collect(lReporting$Reporting_BoundsRef),
-    dfMetrics = lReporting$Reporting_Metrics
-  )
+  dfResults = collect(lReporting$Reporting_Results),
+  dfBounds = collect(lReporting$Reporting_Bounds),
+  dfBoundsRef = collect(lReporting$Reporting_BoundsRef),
+  dfMetrics = lReporting$Reporting_Metrics
+)
 
 lCharts
 ```

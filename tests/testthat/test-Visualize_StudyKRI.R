@@ -490,3 +490,46 @@ test_that("Visualize_StudyKRI handles empty dfBoundsRef after filtering", {
     "No data available for dfBoundsRef after filtering"
   )
 })
+
+test_that("Visualize_StudyKRI appends log scale information to y-axis label", {
+  dfStudyKRI <- data.frame(
+    StudyMonth = 1:5,
+    Metric = c(0.10, 0.12, 0.15, 0.14, 0.13),
+    stringsAsFactors = FALSE
+  )
+
+  dfBoundsRef <- data.frame(
+    StudyMonth = 1:5,
+    Median = c(0.11, 0.13, 0.14, 0.15, 0.14),
+    Lower = c(0.08, 0.10, 0.11, 0.12, 0.11),
+    Upper = c(0.14, 0.16, 0.17, 0.18, 0.17),
+    stringsAsFactors = FALSE
+  )
+
+  # Test with bLogY = FALSE (default)
+  p1 <- Visualize_StudyKRI(
+    dfStudyKRI = dfStudyKRI,
+    dfBoundsRef = dfBoundsRef,
+    strStudyID = "STUDY1",
+    strYlab = "AE Rate",
+    bLogY = FALSE
+  )
+
+  expect_s3_class(p1, "ggplot")
+  expect_equal(p1$labels$y, "AE Rate")
+
+  # Test with bLogY = TRUE (should append log scale info)
+  p2 <- Visualize_StudyKRI(
+    dfStudyKRI = dfStudyKRI,
+    dfBoundsRef = dfBoundsRef,
+    strStudyID = "STUDY1",
+    strYlab = "AE Rate",
+    bLogY = TRUE
+  )
+
+  expect_s3_class(p2, "ggplot")
+  expect_equal(p2$labels$y, "AE Rate (log scale)")
+
+  # Verify log scale is actually applied
+  expect_true("ScaleContinuousPosition" %in% class(p2$scales$get_scales("y")))
+})

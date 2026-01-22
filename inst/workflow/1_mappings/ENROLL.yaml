@@ -17,6 +17,8 @@ spec:
       type: character
     enrollyn:
       type: character
+    enroll_dt:
+      type: Date
 steps:
   - output: Mapped_ENROLL
     name: =

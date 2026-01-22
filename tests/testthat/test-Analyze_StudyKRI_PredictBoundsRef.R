@@ -260,7 +260,6 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet integration with full workflow",
       vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
       nBootstrapReps = 30, # Small for speed
       nConfLevel = 0.95,
-      nMinDenominator = 5, # Lower threshold for small test data
       seed = 789
     )
   })
@@ -524,20 +523,6 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet validates all numeric parameters
     MonthYYYYMM = rep(202301:202306, times = 5),
     Metric = runif(30, 0.05, 0.5),
     stringsAsFactors = FALSE
-  )
-
-  # nMinDenominator validations
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nMinDenominator = -5),
-    "nMinDenominator must be a single non-negative numeric value"
-  )
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nMinDenominator = "invalid"),
-    "nMinDenominator must be a single non-negative numeric value"
-  )
-  expect_error(
-    Analyze_StudyKRI_PredictBoundsRefSet(dfInput = dfTest, vStudyFilter = "STUDY1", nMinDenominator = c(5, 10)),
-    "nMinDenominator must be a single non-negative numeric value"
   )
 
   # nBootstrapReps validations

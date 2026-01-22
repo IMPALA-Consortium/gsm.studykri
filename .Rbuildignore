@@ -7,3 +7,4 @@
 ^\.Renviron$
 ^README\.Rmd$
 ^docs$
+^\.Rproj\.user$

@@ -1,9 +1,9 @@
 #' Calculate Confidence Intervals from Bootstrap Distribution (Internal)
 #'
 #' @description
-#' Internal helper function that calculates percentile-based confidence intervals 
-#' from bootstrap distributions of study-level KRI metrics. Returns median estimates 
-#' with upper and lower confidence bounds for each time point. Supports both 
+#' Internal helper function that calculates percentile-based confidence intervals
+#' from bootstrap distributions of study-level KRI metrics. Returns median estimates
+#' with upper and lower confidence bounds for each time point. Supports both
 #' single-study and multi-study comparison scenarios with full dbplyr compatibility.
 #' Auto-detects multiple Metric columns (e.g., `Metric_Analysis_kri0001`) and
 #' calculates bounds for each.
@@ -122,9 +122,12 @@ CalculateStudyBounds <- function(
 #'   \item Calculates confidence intervals via `CalculateStudyBounds()`
 #' }
 #'
-#' @param dfInput data.frame or tbl_lazy. Group-level data from `Input_CumCountSiteByMonth`.
-#'   Expected columns: GroupID, one or more Numerator columns, Denominator, 
-#'   StudyID, MonthYYYYMM.
+#' Note: Date normalization and filtering should be done at the input level via
+#' Input_CountSiteByMonth with nMinDenominator parameter.
+#'
+#' @param dfInput data.frame or tbl_lazy. Group-level data from `Input_CountSiteByMonth`.
+#'   Expected columns: GroupID, one or more Numerator columns, Denominator,
+#'   StudyID, MonthYYYYMM, StudyMonth.
 #' @param dfStudyRef data.frame or NULL. Optional study reference mapping. If provided,
 #'   the unique values in the first column identify the target studies for which
 #'   bounds will be calculated. If NULL (default), bounds are calculated for all
@@ -133,14 +136,12 @@ CalculateStudyBounds <- function(
 #'   Default: 1000.
 #' @param nConfLevel numeric. Confidence level between 0 and 1. Default: 0.95
 #'   (95% confidence interval).
-#' @param nMinDenominator numeric. Minimum cumulative denominator threshold for
-#'   Transform_CumCount filtering. Default: 25.
 #' @param seed integer or NULL. Random seed for reproducibility. Default: NULL.
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices. Default: NULL.
 #' @param tblMonthSequence tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated complete month sequences. Default: NULL.
-#' @param strStudyCol character. Column name for study identifier in dfInput. 
+#' @param strStudyCol character. Column name for study identifier in dfInput.
 #'   Default: "StudyID".
 #' @param strGroupCol character. Column name for group identifier. Default: "GroupID".
 #' @param strStudyMonthCol character. Name of study month column. Default: "StudyMonth".
@@ -155,10 +156,10 @@ CalculateStudyBounds <- function(
 #' \dontrun{
 #' # Example 1: Calculate bounds for all studies in dfInput
 #' Bounds_Wide <- purrr::map(
-#'   lJoined, 
+#'   lJoined,
 #'   ~ Analyze_StudyKRI_PredictBounds(.)
 #' )
-#' 
+#'
 #' # Example 2: Calculate bounds for specific studies using reference mapping
 #' dfStudyRef <- data.frame(
 #'   study = c("AA-1", "AA-1", "AA-2", "AA-2"),
@@ -167,7 +168,7 @@ CalculateStudyBounds <- function(
 #'
 #' # Calculate bounds for target studies (AA-1 and AA-2) specified in first column
 #' Bounds_Wide <- purrr::map(
-#'   lJoined, 
+#'   lJoined,
 #'   ~ Analyze_StudyKRI_PredictBounds(., dfStudyRef = dfStudyRef)
 #' )
 #' }
@@ -178,22 +179,20 @@ Analyze_StudyKRI_PredictBounds <- function(
     dfStudyRef = NULL,
     nBootstrapReps = 1000,
     nConfLevel = 0.95,
-    nMinDenominator = 25,
     seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL,
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth") {
-  
   # Handle dfStudyRef - extract target studies
   if (is.null(dfStudyRef)) {
     # Extract all unique study IDs from input
     vTargetStudies <- dfInput %>%
       dplyr::select(dplyr::all_of(.env$strStudyCol)) %>%
       dplyr::distinct() %>%
-      dplyr::pull(.env$strStudyCol)    
-    
+      dplyr::pull(.env$strStudyCol)
+
     message(sprintf(
       "Using all %d studies found in dfInput",
       length(vTargetStudies)
@@ -203,27 +202,27 @@ Analyze_StudyKRI_PredictBounds <- function(
     if (!inherits(dfStudyRef, c("data.frame", "tbl"))) {
       stop("dfStudyRef must be a data.frame, tbl object, or NULL")
     }
-    
+
     if (ncol(dfStudyRef) == 0) {
       stop("dfStudyRef must have at least one column")
     }
-    
+
     # Extract target studies from first column of dfStudyRef using pull() for lazy table compatibility
     strStudyRefCol <- colnames(dfStudyRef)[1]
     vTargetStudies <- dfStudyRef %>%
       dplyr::select(dplyr::all_of(.env$strStudyRefCol)) %>%
       dplyr::distinct() %>%
       dplyr::pull(.env$strStudyRefCol)
-    
+
     if (length(vTargetStudies) == 0) {
       stop("No target studies found in dfStudyRef")
     }
   }
-  
+
   # Filter input data to target studies only
   dfFiltered <- dfInput %>%
     dplyr::filter(.data[[strStudyCol]] %in% .env$vTargetStudies)
-  
+
   # Step 1: Generate bootstrap resamples
   dfBootstrapped <- BootstrapStudyKRI(
     dfInput = dfFiltered,
@@ -234,15 +233,14 @@ Analyze_StudyKRI_PredictBounds <- function(
     seed = seed,
     tblBootstrapReps = tblBootstrapReps
   )
-  
+
   # Step 2: Aggregate to study level by bootstrap replicate and study
   dfStudyLevel <- Transform_CumCount(
     dfInput = dfBootstrapped,
     vBy = c("BootstrapRep", strStudyCol),
-    nMinDenominator = nMinDenominator,
     tblMonthSequence = tblMonthSequence
   )
-  
+
   # Step 3: Calculate confidence intervals
   dfBounds <- CalculateStudyBounds(
     dfInput = dfStudyLevel,
@@ -250,7 +248,7 @@ Analyze_StudyKRI_PredictBounds <- function(
     nConfLevel = nConfLevel,
     strStudyMonthCol = strStudyMonthCol
   )
-  
+
   return(dfBounds)
 }
 
@@ -258,9 +256,9 @@ Analyze_StudyKRI_PredictBounds <- function(
 #' Generate Bootstrap Resamples for Study-Level KRI Analysis (Internal)
 #'
 #' @description
-#' Internal helper function that generates bootstrap resamples by resampling 
-#' groups (sites/countries) with replacement within each study. Uses dbplyr-compatible 
-#' approach with runif() for random selection. Each bootstrap replicate randomly 
+#' Internal helper function that generates bootstrap resamples by resampling
+#' groups (sites/countries) with replacement within each study. Uses dbplyr-compatible
+#' approach with runif() for random selection. Each bootstrap replicate randomly
 #' selects groups and includes all their associated data.
 #'
 #' This function is intended for internal use. For the main workflow, use
@@ -402,7 +400,7 @@ BootstrapStudyKRI <- function(
     # Since EffectiveGroupCount was just set to nGroups for all rows (line 123),
     # the max is simply nGroups itself - no need to query the table
     max_effective <- nGroups
-    
+
     dfPositions_mem <- tibble::tibble(Position = seq_len(as.integer(max_effective)))
 
     # HandleLazyTable handles both lazy and in-memory cases

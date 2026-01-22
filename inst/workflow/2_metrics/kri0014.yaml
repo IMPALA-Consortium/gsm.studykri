@@ -1,0 +1,83 @@
+meta:
+  Type: Analysis
+  ID: kri0014
+  GroupLevel: Site
+  Abbreviation: IE
+  Metric: Inclusion/Exclusion Violation Rate
+  Numerator: Number of subjects ineligible
+  Denominator: Enrolled Subjects
+  Model: Bootstrap CI
+  Score: Bootstrap CI
+  AnalysisType: rate
+  Threshold: 0.95
+  AccrualThreshold: 5
+  AccrualMetric: Denominator
+  BootstrapReps: 1000
+spec:
+  Mapped_EXCLUSION:
+    subjid:
+      type: character
+    subjectid:
+      type: character
+    Source:
+      type: character
+    studyid:
+      type: character
+    invid:
+      type: character
+    country:
+      type: character
+    companycategory:
+      type: character
+    ie_violation:
+      type: character
+    enroll_dt:
+      type: Date
+  Mapped_SUBJ:
+    subjid:
+      type: character
+    invid:
+      type: character
+    studyid:
+      type: character
+    firstparticipantdate:
+      type: Date
+    lastparticipantdate:
+      type: Date
+steps:
+  - output: TEMP_VIOLATIONS
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_EXCLUSION
+      strQuery: "SELECT * FROM df WHERE Source != 'Neither'"
+  - output: Analysis_Input
+    name: gsm.studykri::Input_CountSiteByMonth
+    params:
+      dfSubjects: Mapped_SUBJ
+      dfNumerator: TEMP_VIOLATIONS
+      dfDenominator: Mapped_SUBJ
+      strStudyCol: studyid
+      strGroupCol: invid
+      strGroupLevel: GroupLevel
+      strSubjectCol: subjid
+      strNumeratorDateCol: enroll_dt
+      strDenominatorDateCol: firstparticipantdate
+      strDenominatorType: Denominator
+      nMinDenominator: AccrualThreshold
+  - output: Analysis_Transformed
+    name: gsm.studykri::Transform_CumCount
+    params:
+      dfInput: Analysis_Input
+      vBy: 
+        - StudyID
+  - output: lAnalysis
+    name: list
+    params:
+      ID: ID
+      Analysis_Input: Analysis_Input
+      Analysis_Transformed: Analysis_Transformed
+
+
+
+
+

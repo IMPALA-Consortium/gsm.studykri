@@ -420,8 +420,7 @@ test_that("BootstrapStudyKRI output works with Transform_CumCount", {
   # Should work with vBy including BootstrapRep
   dfTransformed <- Transform_CumCount(
     dfInput = dfBootstrap,
-    vBy = c("StudyID", "BootstrapRep"),
-    nMinDenominator = 25
+    vBy = c("StudyID", "BootstrapRep")
   )
 
   expect_s3_class(dfTransformed, "data.frame")

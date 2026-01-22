@@ -18,7 +18,8 @@ Visualize_StudyKRI(
   strTitle = NULL,
   strSubtitle = NULL,
   strYlab = "Metric",
-  strXlab = "Study Month"
+  strXlab = "Study Month",
+  bLogY = FALSE
 )
 }
 \arguments{
@@ -59,6 +60,8 @@ showing comparison study count.}
 \item{strYlab}{character. Y-axis label (default: "Metric").}
 
 \item{strXlab}{character. X-axis label (default: "Study Month").}
+
+\item{bLogY}{logical. If TRUE, apply logarithmic scale to y-axis (default: FALSE).}
 }
 \value{
 A ggplot2 object that can be displayed, saved, or further customized.

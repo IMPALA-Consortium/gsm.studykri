@@ -36,6 +36,7 @@
 #'   showing comparison study count.
 #' @param strYlab character. Y-axis label (default: "Metric").
 #' @param strXlab character. X-axis label (default: "Study Month").
+#' @param bLogY logical. If TRUE, apply logarithmic scale to y-axis (default: FALSE).
 #'
 #' @return A ggplot2 object that can be displayed, saved, or further customized.
 #'
@@ -112,7 +113,8 @@ Visualize_StudyKRI <- function(
     strTitle = NULL,
     strSubtitle = NULL,
     strYlab = "Metric",
-    strXlab = "Study Month") {
+    strXlab = "Study Month",
+    bLogY = FALSE) {
   # Input validation
   if (!is.data.frame(dfStudyKRI)) {
     stop("dfStudyKRI must be a data.frame")
@@ -178,6 +180,11 @@ Visualize_StudyKRI <- function(
   # Filter dfBounds by strStudyID if StudyID column exists
   if (!is.null(dfBounds) && "StudyID" %in% names(dfBounds)) {
     dfBounds <- dfBounds[dfBounds$StudyID == strStudyID, ]
+  }
+
+  # Filter dfBoundsRef by strStudyID if StudyID column exists
+  if (!is.null(dfBoundsRef) && "StudyID" %in% names(dfBoundsRef)) {
+    dfBoundsRef <- dfBoundsRef[dfBoundsRef$StudyID == strStudyID, ]
   }
 
   # Filter to maximum month if specified
@@ -274,13 +281,20 @@ Visualize_StudyKRI <- function(
       size = 2
     )
 
+  # Append log scale information to y-axis label if needed
+  final_ylab <- if (bLogY) {
+    paste0(strYlab, " (log scale)")
+  } else {
+    strYlab
+  }
+
   # Add labels
   p <- p +
     ggplot2::labs(
       title = strTitle,
       subtitle = strSubtitle,
       x = strXlab,
-      y = strYlab
+      y = final_ylab
     ) +
     # Add manual scales for legend
     ggplot2::scale_fill_manual(
@@ -292,8 +306,15 @@ Visualize_StudyKRI <- function(
       name = "Metrics",
       values = c("Portfolio Median" = "blue", "Actual Study Data" = "black"),
       breaks = c("Portfolio Median", "Actual Study Data")
-    ) +
-    # Use clean theme
+    )
+
+  # Apply logarithmic scale if requested
+  if (bLogY) {
+    p <- p + ggplot2::scale_y_log10()
+  }
+
+  # Use clean theme
+  p <- p +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       plot.title = ggplot2::element_text(size = 14, face = "bold"),

@@ -5,6 +5,10 @@ test_that("SimulatePortfolio creates multiple studies", {
     Raw_SITE = clindata::ctms_site
   )
 
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
+
   result <- SimulatePortfolio(lRaw, nStudies = 3, seed = 999)
 
   # Check structure
@@ -22,6 +26,10 @@ test_that("SimulatePortfolio respects custom configuration", {
     Raw_SUBJ = clindata::rawplus_dm,
     Raw_SITE = clindata::ctms_site
   )
+
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
 
   dfConfig <- data.frame(
     studyid = c("CUSTOM001", "CUSTOM002"),
@@ -48,6 +56,10 @@ test_that("SimulatePortfolio output works with mapping workflows", {
     Raw_STUDY = clindata::ctms_study
   )
 
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
+
   lPortfolio <- SimulatePortfolio(lRaw, nStudies = 2, seed = 777)
 
   # Should work with Ingest (basic smoke test)
@@ -60,6 +72,10 @@ test_that("SimulatePortfolio output works with mapping workflows", {
 
 test_that("SimulatePortfolio validates inputs", {
   lRaw <- list(Raw_SUBJ = clindata::rawplus_dm)
+
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
 
   # Missing Raw_SUBJ
   expect_error(
@@ -94,6 +110,10 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
     Raw_AE = clindata::rawplus_ae,
     Raw_SITE = clindata::ctms_site
   )
+
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
 
   # Test with replacement parameter
   dfConfig <- data.frame(
@@ -146,4 +166,224 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
     SimulatePortfolio(lRaw, dfConfig = dfConfig4, seed = 101)
   )
   expect_true(nrow(result4$Raw_SUBJ) > 0)
+})
+
+# Tests for ResampleStudy function ----
+
+test_that("ResampleStudy validates vSubjectIDs columns exist", {
+  lRaw <- list(
+    Raw_SUBJ = data.frame(
+      subjid = c("S1", "S2", "S3"),
+      enrollyn = c("Y", "Y", "Y"),
+      invid = c("SITE1", "SITE1", "SITE2")
+    )
+  )
+
+  # Missing required vSubjectIDs columns
+  expect_error(
+    ResampleStudy(lRaw, "TEST001", vSubjectIDs = c("subjid", "subjectenrollmentnumber")),
+    regexp = "vSubjectIDs validation failed.*subjectenrollmentnumber"
+  )
+})
+
+test_that("ResampleStudy validates strOversampleDomain has subject ID", {
+  lRaw <- list(
+    Raw_SUBJ = data.frame(
+      subjid = c("S1", "S2", "S3"),
+      enrollyn = c("Y", "Y", "Y"),
+      invid = c("SITE1", "SITE1", "SITE2"),
+      subjectenrollmentnumber = c("S1", "S2", "S3"),
+      subject_nsv = c("S1", "S2", "S3"),
+      subjectname = c("S1", "S2", "S3"),
+      subjectid = c("S1", "S2", "S3")
+    ),
+    Raw_SITE = data.frame(
+      invid = c("SITE1", "SITE2"),
+      siteid = c("1", "2")
+    )
+  )
+
+  # strOversampleDomain without subject ID column should fail
+  expect_error(
+    ResampleStudy(
+      lRaw,
+      "TEST001",
+      strOversampleDomain = "Raw_SITE",
+      vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+    ),
+    regexp = "strOversampleDomain must have a subject identifier column"
+  )
+})
+
+test_that("ResampleStudy handles invalid mapping in find_subject_id_column", {
+  lRaw <- list(
+    Raw_SUBJ = data.frame(
+      subjid = c("S1", "S2", "S3"),
+      enrollyn = c("Y", "Y", "Y"),
+      invid = c("SITE1", "SITE1", "SITE2"),
+      siteid = c("1", "1", "2"),
+      subjectenrollmentnumber = c("E1", "E2", "E3"),
+      subject_nsv = c("N1", "N2", "N3"),
+      subjectname = c("Name1", "Name2", "Name3"),
+      subjectid = c("ID1", "ID2", "ID3")
+    ),
+    Raw_AE = data.frame(
+      subjectid = c("ID1", "ID2", "ID3", "INVALID_ID"),
+      aedesc = c("AE1", "AE2", "AE3", "AE4")
+    )
+  )
+
+  # Should handle invalid mapping and filter them out
+  result <- suppressMessages(
+    ResampleStudy(
+      lRaw,
+      "TEST001",
+      nSubjects = 2,
+      strOversampleDomain = "Raw_AE",
+      seed = 123,
+      vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+    )
+  )
+
+  expect_true(nrow(result$Raw_SUBJ) <= 2)
+  # AE records should have study prefix in subjectid
+  if (nrow(result$Raw_AE) > 0) {
+    expect_true(all(grepl("^TEST001_", result$Raw_AE$subjectid)))
+  }
+})
+
+test_that("ResampleStudy handles siteid updates correctly", {
+  lRaw <- list(
+    Raw_SUBJ = data.frame(
+      subjid = c("S1", "S2", "S3"),
+      enrollyn = c("Y", "Y", "Y"),
+      invid = c("SITE1", "SITE2", "SITE3"),
+      siteid = c("1", "2", "3"),
+      subjectenrollmentnumber = c("S1", "S2", "S3"),
+      subject_nsv = c("S1", "S2", "S3"),
+      subjectname = c("S1", "S2", "S3"),
+      subjectid = c("S1", "S2", "S3")
+    ),
+    Raw_AE = data.frame(
+      subjid = c("S1", "S2", "S3"),
+      invid = c("SITE1", "SITE2", "SITE3"),
+      siteid = c("1", "2", "3"),
+      aedesc = c("AE1", "AE2", "AE3")
+    )
+  )
+
+  result <- ResampleStudy(
+    lRaw,
+    "TEST001",
+    nSubjects = 2,
+    seed = 999,
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+  )
+
+  # siteid should be updated to match randomized invid
+  expect_true(all(!is.na(result$Raw_SUBJ$siteid)))
+  expect_true(all(!is.na(result$Raw_AE$siteid)))
+})
+
+test_that("ResampleStudy with TargetSiteCount generates sites correctly", {
+  lRaw <- list(
+    Raw_SUBJ = data.frame(
+      subjid = paste0("S", 1:50),
+      enrollyn = rep("Y", 50),
+      invid = sample(paste0("SITE", 1:10), 50, replace = TRUE),
+      siteid = sample(as.character(1:10), 50, replace = TRUE),
+      subjectenrollmentnumber = paste0("S", 1:50),
+      subject_nsv = paste0("S", 1:50),
+      subjectname = paste0("S", 1:50),
+      subjectid = paste0("S", 1:50)
+    ),
+    Raw_SITE = data.frame(
+      invid = paste0("SITE", 1:10),
+      siteid = as.character(1:10),
+      site_num = as.character(1:10),
+      studyid = rep("ORIGINAL", 10)
+    )
+  )
+
+  result <- ResampleStudy(
+    lRaw,
+    "TEST001",
+    nSubjects = 30,
+    TargetSiteCount = 5,
+    seed = 777,
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+  )
+
+  # Should have generated sites with study prefix
+  expect_true(all(grepl("^TEST001_", result$Raw_SITE$invid)))
+  expect_equal(result$Raw_SITE$studyid[1], "TEST001")
+
+  # All subjects should be assigned to generated sites
+  expect_true(all(result$Raw_SUBJ$invid %in% result$Raw_SITE$invid))
+
+  # Site count should be <= target (some sites may have 0 subjects)
+  expect_true(nrow(result$Raw_SITE) <= 5)
+})
+
+test_that("ResampleStudy processes domain without subject or site columns", {
+  lRaw <- list(
+    Raw_SUBJ = data.frame(
+      subjid = c("S1", "S2", "S3"),
+      enrollyn = c("Y", "Y", "Y"),
+      invid = c("SITE1", "SITE1", "SITE2"),
+      siteid = c("1", "1", "2"), # Added siteid
+      subjectenrollmentnumber = c("S1", "S2", "S3"),
+      subject_nsv = c("S1", "S2", "S3"),
+      subjectname = c("S1", "S2", "S3"),
+      subjectid = c("S1", "S2", "S3")
+    ),
+    Raw_STUDY = data.frame(
+      studyid = "ORIGINAL",
+      study_name = "Original Study"
+    )
+  )
+
+  result <- ResampleStudy(
+    lRaw,
+    "TEST001",
+    nSubjects = 2,
+    seed = 555,
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+  )
+
+  # studyid should be updated in study domain
+  expect_equal(result$Raw_STUDY$studyid, "TEST001")
+  expect_equal(result$Raw_STUDY$study_name, "Original Study")
+})
+
+test_that("ResampleStudy process_site_domain with invid column", {
+  lRaw <- list(
+    Raw_SUBJ = data.frame(
+      subjid = c("S1", "S2", "S3"),
+      enrollyn = c("Y", "Y", "Y"),
+      invid = c("SITE1", "SITE2", "SITE3"),
+      siteid = c("1", "2", "3"),
+      subjectenrollmentnumber = c("S1", "S2", "S3"),
+      subject_nsv = c("S1", "S2", "S3"),
+      subjectname = c("S1", "S2", "S3"),
+      subjectid = c("S1", "S2", "S3")
+    ),
+    Raw_SITE = data.frame(
+      invid = c("SITE1", "SITE2", "SITE3", "SITE4"),
+      studyid = rep("ORIGINAL", 4)
+    )
+  )
+
+  result <- ResampleStudy(
+    lRaw,
+    "TEST001",
+    nSubjects = 2,
+    seed = 333,
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+  )
+
+  # Site domain invid should have study prefix
+  expect_true(all(grepl("^TEST001_", result$Raw_SITE$invid)))
+  # Should only include sites from sampled subjects
+  expect_true(nrow(result$Raw_SITE) <= 2)
 })

@@ -5,7 +5,7 @@ meta:
   Priority: 1
 
 steps:
-  - output: dfMetrics
+  - output: Reporting_Metrics
     name: gsm.reporting::MakeMetric
     params:
       lWorkflows: lWorkflows

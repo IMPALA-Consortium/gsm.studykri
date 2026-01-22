@@ -23,6 +23,9 @@
 
 ## Statistics
 #' @importFrom stats aggregate quantile setNames median runif
+
+## Utils
+#' @importFrom utils capture.output head
 ## usethis namespace: end
 NULL
 

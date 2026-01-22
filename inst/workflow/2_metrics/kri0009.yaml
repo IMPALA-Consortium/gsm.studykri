@@ -1,0 +1,78 @@
+meta:
+  Type: Analysis
+  ID: kri0009
+  GroupLevel: Site
+  Abbreviation: OQRY
+  Metric: Delayed Query Resolution Rate
+  Numerator: Queries That Were Open > 30 Days
+  Denominator: Total Queries
+  Model: Bootstrap CI
+  Score: Bootstrap CI
+  AnalysisType: rate
+  Threshold: 0.95
+  AccrualThreshold: 100
+  AccrualMetric: Denominator
+  BootstrapReps: 1000
+spec:
+  Mapped_QUERY:
+    subjid:
+      type: character
+    querystatus:
+      type: character
+    created:
+      type: Date
+    queryage:
+      type: integer
+  Mapped_SUBJ:
+    subjid:
+      type: character
+    invid:
+      type: character
+    studyid:
+      type: character
+    firstparticipantdate:
+      type: Date
+    lastparticipantdate:
+      type: Date
+steps:
+  - output: Temp_OLDQUERY
+    name: RunQuery
+    params:
+      df: Mapped_QUERY
+      strQuery: "SELECT * FROM df WHERE querystatus IN ('Open','Answered','Closed') AND queryage > 30"
+  - output: Temp_QUERY
+    name: RunQuery
+    params:
+      df: Mapped_QUERY
+      strQuery: "SELECT * FROM df WHERE querystatus IN ('Open','Answered','Closed')"
+  - output: Analysis_Input
+    name: gsm.studykri::Input_CountSiteByMonth
+    params:
+      dfSubjects: Mapped_SUBJ
+      dfNumerator: Temp_OLDQUERY
+      dfDenominator: Temp_QUERY
+      strStudyCol: studyid
+      strGroupCol: invid
+      strGroupLevel: GroupLevel
+      strSubjectCol: subjid
+      strNumeratorDateCol: created
+      strDenominatorDateCol: created
+      strDenominatorType: Denominator
+      nMinDenominator: AccrualThreshold
+  - output: Analysis_Transformed
+    name: gsm.studykri::Transform_CumCount
+    params:
+      dfInput: Analysis_Input
+      vBy: 
+        - StudyID
+  - output: lAnalysis
+    name: list
+    params:
+      ID: ID
+      Analysis_Input: Analysis_Input
+      Analysis_Transformed: Analysis_Transformed
+
+
+
+
+

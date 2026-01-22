@@ -1,7 +1,15 @@
+# Helper to prepare Raw_SUBJ with required vSubjectID columns
+get_test_raw_subj <- function() {
+  raw_subj <- clindata::rawplus_dm
+  raw_subj$subjectname <- raw_subj$subject_nsv
+  raw_subj$subjectenrollmentnumber <- raw_subj$subjectid
+  return(raw_subj)
+}
+
 test_that("ResampleStudy basic functionality works", {
   # Load test data
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae,
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study
@@ -25,7 +33,7 @@ test_that("ResampleStudy basic functionality works", {
 
 test_that("ResampleStudy respects nSubjects parameter", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae,
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study
@@ -40,7 +48,7 @@ test_that("ResampleStudy respects nSubjects parameter", {
 
 test_that("ResampleStudy handles replacement parameter", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae,
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study
@@ -83,7 +91,7 @@ test_that("ResampleStudy handles replacement parameter", {
 
 test_that("ResampleStudy randomizes site assignments", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae,
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study
@@ -112,7 +120,7 @@ test_that("ResampleStudy randomizes site assignments", {
 
 test_that("ResampleStudy maintains referential integrity", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae,
     Raw_LB = clindata::rawplus_lb,
     Raw_SITE = clindata::ctms_site,
@@ -150,7 +158,7 @@ test_that("ResampleStudy maintains referential integrity", {
 
 test_that("ResampleStudy handles strOversampleDomain parameter", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae,
     Raw_LB = clindata::rawplus_lb,
     Raw_SITE = clindata::ctms_site,
@@ -208,7 +216,7 @@ test_that("ResampleStudy handles strOversampleDomain parameter", {
 
 test_that("ResampleStudy input checking works", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae
   )
 
@@ -266,7 +274,7 @@ test_that("ResampleStudy input checking works", {
 
 test_that("ResampleStudy handles composite ID formats", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_ENROLL = clindata::rawplus_enroll,
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study
@@ -286,7 +294,7 @@ test_that("ResampleStudy handles composite ID formats", {
 
 test_that("ResampleStudy handles derived domains with subject_nsv", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_DATAENT = clindata::edc_data_pages,
     Raw_QUERY = clindata::edc_queries,
     Raw_SITE = clindata::ctms_site,
@@ -311,7 +319,7 @@ test_that("ResampleStudy handles derived domains with subject_nsv", {
 
 test_that("ResampleStudy updates site IDs correctly", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study
   )
@@ -355,7 +363,7 @@ test_that("ResampleStudy updates site IDs correctly", {
 
 test_that("ResampleStudy is reproducible with seed", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae,
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study
@@ -373,7 +381,7 @@ test_that("ResampleStudy is reproducible with seed", {
 # Site variability tests ----------------------------------------------------
 test_that("ResampleStudy with TargetSiteCount generates multiple sites", {
   lRaw_small <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_SITE = clindata::ctms_site,
     Raw_AE = clindata::rawplus_ae
   )
@@ -399,7 +407,7 @@ test_that("ResampleStudy with TargetSiteCount generates multiple sites", {
 
 test_that("TargetSiteCount generates sites with valid metadata", {
   lRaw_small <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_SITE = clindata::ctms_site,
     Raw_AE = clindata::rawplus_ae
   )
@@ -430,7 +438,7 @@ test_that("TargetSiteCount generates sites with valid metadata", {
 
 test_that("TargetSiteCount creates realistic site distributions", {
   lRaw_small <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_SITE = clindata::ctms_site,
     Raw_AE = clindata::rawplus_ae
   )
@@ -455,7 +463,7 @@ test_that("TargetSiteCount creates realistic site distributions", {
 
 test_that("ResampleStudy with TargetSiteCount = NULL uses default behavior", {
   lRaw_small <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_SITE = clindata::ctms_site,
     Raw_AE = clindata::rawplus_ae
   )
@@ -481,7 +489,7 @@ test_that("ResampleStudy with TargetSiteCount = NULL uses default behavior", {
 
 test_that("ResampleStudy validates TargetSiteCount parameter", {
   lRaw_small <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_SITE = clindata::ctms_site
   )
 
@@ -506,7 +514,7 @@ test_that("ResampleStudy validates TargetSiteCount parameter", {
 test_that("ResampleStudy preserves all input domains and column names", {
   # Test with comprehensive domain list
   lRaw_full <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae,
     Raw_LB = clindata::rawplus_lb,
     Raw_SITE = clindata::ctms_site,
@@ -553,7 +561,7 @@ test_that("ResampleStudy preserves all input domains and column names", {
     output_cols <- names(result[[domain_name]])
 
     # For generated sites with TargetSiteCount, invid might be added
-    # Otherwise, column names should match exactly
+    # studyid should be added if not present in input
     if (domain_name == "Raw_SITE" && "invid" %in% output_cols && !"invid" %in% input_cols) {
       # invid was added for generated sites, check all other columns
       expect_true(all(input_cols %in% output_cols),
@@ -562,8 +570,17 @@ test_that("ResampleStudy preserves all input domains and column names", {
           paste(setdiff(input_cols, output_cols), collapse = ", ")
         )
       )
+    } else if (!"studyid" %in% input_cols) {
+      # studyid should be added if not present
+      expect_true("studyid" %in% output_cols,
+        info = paste(domain_name, "- studyid should be added")
+      )
+      # All input columns should be preserved
+      expect_true(all(input_cols %in% output_cols),
+        info = paste(domain_name, "- input columns not preserved")
+      )
     } else {
-      # Exact match expected
+      # If studyid was present, exact match expected
       expect_equal(sort(input_cols), sort(output_cols),
         info = paste(domain_name, "columns don't match")
       )
@@ -574,7 +591,7 @@ test_that("ResampleStudy preserves all input domains and column names", {
 test_that("ResampleStudy works with minimal required domains", {
   # Only Raw_SUBJ is required
   lRaw_minimal <- list(
-    Raw_SUBJ = clindata::rawplus_dm
+    Raw_SUBJ = get_test_raw_subj()
   )
 
   result <- ResampleStudy(
@@ -598,7 +615,7 @@ test_that("ResampleStudy handles unknown/custom domains", {
   )
 
   lRaw_custom <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_CUSTOM = custom_domain
   )
 
@@ -621,7 +638,7 @@ test_that("ResampleStudy handles unknown/custom domains", {
 
 test_that("ResampleStudy maintains reasonable column order", {
   lRaw_test <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae
   )
 
@@ -643,7 +660,7 @@ test_that("ResampleStudy maintains reasonable column order", {
 
 test_that("ResampleStudy handles strOversampleDomain without subject ID column", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_SITE = clindata::ctms_site
   )
 
@@ -661,7 +678,7 @@ test_that("ResampleStudy handles strOversampleDomain without subject ID column",
 
 test_that("ResampleStudy handles no enrolled subjects", {
   # Create data with no enrolled subjects
-  subj_no_enrolled <- clindata::rawplus_dm
+  subj_no_enrolled <- get_test_raw_subj()
   subj_no_enrolled$enrollyn <- "N"
 
   lRaw <- list(
@@ -677,7 +694,7 @@ test_that("ResampleStudy handles no enrolled subjects", {
 
 test_that("ResampleStudy handles extreme quantile ranges", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae
   )
 
@@ -707,7 +724,7 @@ test_that("ResampleStudy works with site domain without invid", {
   }
 
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_SITE = site_no_invid
   )
 
@@ -719,14 +736,14 @@ test_that("ResampleStudy works with site domain without invid", {
   expect_true(nrow(result$Raw_SITE) > 0)
 })
 
-test_that("ResampleStudy handles domains with subjectenrollmentnumber", {
-  # Test that subjectenrollmentnumber path is covered
+test_that("ResampleStudy handles domains with subjectid", {
+  # Test that subjectid path is covered (after removing subjid)
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_ENROLL = clindata::rawplus_enroll
   )
 
-  # Create a domain where subjectenrollmentnumber is the only subject ID
+  # Create a domain where subjectid is the primary subject ID
   enroll_test <- lRaw$Raw_ENROLL
   if ("subjid" %in% names(enroll_test)) {
     enroll_test$subjid <- NULL
@@ -736,17 +753,17 @@ test_that("ResampleStudy handles domains with subjectenrollmentnumber", {
 
   result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 30, seed = 123)
 
-  # Should work and map via subjectenrollmentnumber
+  # Should work and map via subjectid
   expect_true("Raw_ENROLL_TEST" %in% names(result))
   if (nrow(result$Raw_ENROLL_TEST) > 0) {
-    expect_true("subjectenrollmentnumber" %in% names(result$Raw_ENROLL_TEST))
+    expect_true("subjectid" %in% names(result$Raw_ENROLL_TEST))
   }
 })
 
 test_that("ResampleStudy handles invalid composite ID mappings", {
   # Test filtering of invalid composite IDs
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_AE = clindata::rawplus_ae
   )
 
@@ -779,7 +796,7 @@ test_that("ResampleStudy handles invalid composite ID mappings", {
 test_that("ResampleStudy handles domains with subject_nsv only", {
   # Test that subject_nsv path is covered
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_DATAENT = clindata::edc_data_pages
   )
 
@@ -808,7 +825,7 @@ test_that("ResampleStudy handles domains with subject_nsv only", {
 
 test_that("ResampleStudy with TargetSiteCount updates site studyid", {
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_SITE = clindata::ctms_site
   )
 
@@ -835,7 +852,7 @@ test_that("ResampleStudy handles site data with studyid column", {
   artificial_site$studyid <- "ORIGINAL_STUDY"
 
   # Create subject data that uses these sites
-  artificial_subj <- clindata::rawplus_dm[1:20, ]
+  artificial_subj <- get_test_raw_subj()[1:20, ]
   artificial_subj$enrollyn <- "Y"
   artificial_subj$siteid <- as.character(sample(artificial_site$site_num, 20, replace = TRUE))
 
@@ -864,7 +881,7 @@ test_that("ResampleStudy with TargetSiteCount updates studyid in generated sites
   artificial_site <- clindata::ctms_site[1:5, ]
   artificial_site$studyid <- "ORIGINAL_STUDY"
 
-  artificial_subj <- clindata::rawplus_dm[1:20, ]
+  artificial_subj <- get_test_raw_subj()[1:20, ]
   artificial_subj$enrollyn <- "Y"
   artificial_subj$siteid <- as.character(sample(artificial_site$site_num, 20, replace = TRUE))
 
@@ -906,7 +923,7 @@ test_that("ResampleStudy handles site data with invid as primary site ID", {
   artificial_site$site_num <- 1:5
 
   # Create subject data with siteid that matches site invid
-  artificial_subj <- clindata::rawplus_dm[1:20, ]
+  artificial_subj <- get_test_raw_subj()[1:20, ]
   artificial_subj$enrollyn <- "Y"
   artificial_subj$siteid <- as.character(sample(1:5, 20, replace = TRUE))
 
@@ -937,7 +954,7 @@ test_that("ResampleStudy handles site data with invid as primary site ID", {
 test_that("ResampleStudy handles site domain filtering", {
   # Create a scenario with site filtering
   lRaw <- list(
-    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SUBJ = get_test_raw_subj(),
     Raw_SITE = clindata::ctms_site
   )
 
@@ -956,4 +973,170 @@ test_that("ResampleStudy handles site domain filtering", {
     expect_true(length(site_ids) > 0)
     expect_true(length(subj_sites) > 0)
   }
+})
+
+# Integration Tests with Mapping Workflows ---------------------------------
+
+# Expected mapping outputs for integration tests
+expected_mapping_outputs <- c(
+  "Mapped_AE", "Mapped_COUNTRY", "Mapped_DATAENT",
+  "Mapped_ENROLL", "Mapped_LB", "Mapped_PD",
+  "Mapped_QUERY", "Mapped_Randomization", "Mapped_SDRGCOMP",
+  "Mapped_SITE", "Mapped_STUDCOMP", "Mapped_STUDY",
+  "Mapped_SUBJ", "Mapped_Visit", "Mapped_IE", "Mapped_StudyRef",
+  "Mapped_DATACHG", "Mapped_EXCLUSION"
+)
+
+test_that("ResampleStudy output works with mapping workflows", {
+  # Load test data with Raw_* naming to match YAML specs
+  lRaw <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_VISIT = clindata::rawplus_visdt,
+    Raw_SITE = clindata::ctms_site,
+    Raw_STUDY = clindata::ctms_study,
+    Raw_PD = clindata::ctms_protdev,
+    Raw_DATAENT = clindata::edc_data_pages,
+    Raw_DATACHG = clindata::edc_data_points,
+    Raw_QUERY = clindata::edc_queries,
+    Raw_ENROLL = clindata::rawplus_enroll,
+    Raw_Randomization = clindata::rawplus_ixrsrand,
+    Raw_LB = clindata::rawplus_lb,
+    Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
+    Raw_STUDCOMP = clindata::rawplus_studcomp,
+    Raw_IE = clindata::rawplus_ie,
+    Raw_StudyRef = tibble::tibble(
+      studyid = character(),
+      studyrefid = character()
+    )
+  )
+
+  # makes some necessary modifications
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
+
+  # Create resampled study
+  lResampled <- ResampleStudy(
+    lRaw,
+    strNewStudyID = "RESAMPLED001",
+    nSubjects = 100,
+    seed = 42
+  )
+
+  # Verify basic structure
+  expect_type(lResampled, "list")
+  expect_true("Raw_SUBJ" %in% names(lResampled))
+  # May be slightly less than 100 due to data filtering
+  expect_true(nrow(lResampled$Raw_SUBJ) >= 90)
+  expect_true(nrow(lResampled$Raw_SUBJ) <= 100)
+
+  # Load mapping workflows
+  mapping_wf <- gsm.core::MakeWorkflowList(
+    strNames = NULL,
+    strPath = system.file("workflow/1_mappings", package = "gsm.studykri"),
+    strPackage = NULL
+  )
+
+  # Execute mapping workflows on resampled data
+  # Use suppressWarnings since resampled data may have date quality issues
+  suppressWarnings({
+    lIngest <- gsm.mapping::Ingest(lResampled, gsm.mapping::CombineSpecs(mapping_wf))
+  })
+
+  lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
+
+  # Assertions
+  expect_type(lMapped, "list")
+  expect_true(length(lMapped) > 0)
+
+
+  # Check each expected output exists
+  for (output in expected_mapping_outputs) {
+    expect_true(
+      output %in% names(lMapped),
+      info = sprintf("Expected output '%s' not found in lMapped", output)
+    )
+  }
+
+  # Verify studyid updated across mapped datasets
+  expect_true(all(lMapped$Mapped_SUBJ$studyid == "RESAMPLED001"))
+  if (nrow(lMapped$Mapped_AE) > 0) {
+    expect_true(all(lMapped$Mapped_AE$studyid == "RESAMPLED001"))
+  }
+})
+
+test_that("ResampleStudy with oversampling works with mapping workflows", {
+  # Load test data with Raw_* naming to match YAML specs
+  lRaw <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_VISIT = clindata::rawplus_visdt,
+    Raw_SITE = clindata::ctms_site,
+    Raw_STUDY = clindata::ctms_study,
+    Raw_PD = clindata::ctms_protdev,
+    Raw_DATAENT = clindata::edc_data_pages,
+    Raw_DATACHG = clindata::edc_data_points,
+    Raw_QUERY = clindata::edc_queries,
+    Raw_ENROLL = clindata::rawplus_enroll,
+    Raw_Randomization = clindata::rawplus_ixrsrand,
+    Raw_LB = clindata::rawplus_lb,
+    Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
+    Raw_STUDCOMP = clindata::rawplus_studcomp,
+    Raw_IE = clindata::rawplus_ie,
+    Raw_StudyRef = tibble::tibble(
+      studyid = character(),
+      studyrefid = character()
+    )
+  )
+
+  # makes some necessary modifications
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
+
+  # Create resampled study with high-AE patients
+  lResampled <- suppressMessages(
+    ResampleStudy(
+      lRaw,
+      strNewStudyID = "HIGHAE001",
+      nSubjects = 50,
+      strOversampleDomain = "Raw_AE",
+      vOversamplQuantileRange = c(0.75, 1.0),
+      seed = 999
+    )
+  )
+
+  # Should have resampled subjects
+  expect_true(nrow(lResampled$Raw_SUBJ) > 0)
+  expect_true(nrow(lResampled$Raw_SUBJ) <= 50)
+
+  # Load mapping workflows
+  mapping_wf <- gsm.core::MakeWorkflowList(
+    strNames = NULL,
+    strPath = system.file("workflow/1_mappings", package = "gsm.studykri"),
+    strPackage = NULL
+  )
+
+  # Execute mapping workflows on resampled data
+  # Use suppressWarnings since resampled data may have date quality issues
+  suppressWarnings({
+    lIngest <- gsm.mapping::Ingest(lResampled, gsm.mapping::CombineSpecs(mapping_wf))
+  })
+
+  lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
+
+  # Assertions
+  expect_type(lMapped, "list")
+  expect_true(length(lMapped) > 0)
+
+
+  # Check each expected output exists
+  for (output in expected_mapping_outputs) {
+    expect_true(
+      output %in% names(lMapped),
+      info = sprintf("Expected output '%s' not found in lMapped from oversampled data", output)
+    )
+  }
+
+  # Verify all subjects in mapped data have correct study ID
+  expect_true(all(lMapped$Mapped_SUBJ$studyid == "HIGHAE001"))
 })

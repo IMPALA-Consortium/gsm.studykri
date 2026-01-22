@@ -9,6 +9,10 @@ spec:
       type: character
     toxgrg_nsv:
       type: character
+    lb_dt:
+      type: Date
+    studyid:
+      type: character
 steps:
   - output: Mapped_LB
     name: =

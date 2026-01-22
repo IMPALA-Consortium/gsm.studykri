@@ -11,6 +11,10 @@ spec:
       type: character
     phase:
       type: character
+    mincreated_dts:
+      type: Date
+    studyid:
+      type: character
 steps:
   - output: Mapped_SDRGCOMP
     name: =

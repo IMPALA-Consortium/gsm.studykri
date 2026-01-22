@@ -10,6 +10,12 @@ spec:
       source_col: subjectenrollmentnumber
     deemedimportant:
       type: character
+    deviationdate:
+      type: Date
+    companycategory:
+      type: character
+    studyid:
+      type: character
 steps:
   - output: Mapped_PD
     name: =

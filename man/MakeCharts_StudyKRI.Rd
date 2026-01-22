@@ -9,7 +9,8 @@ MakeCharts_StudyKRI(
   dfBounds,
   dfBoundsRef,
   dfMetrics,
-  nMaxMonth = NULL
+  nMaxMonth = NULL,
+  ...
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ MakeCharts_StudyKRI(
 \item{dfMetrics}{data.frame. Metric metadata (from MakeMetric).}
 
 \item{nMaxMonth}{integer. Maximum study month to display (NULL = all).}
+
+\item{...}{additional arguments passed to \code{\link[=Visualize_StudyKRI]{Visualize_StudyKRI()}}}
 }
 \value{
 list. Named list of ggplot objects, one per study-metric combination.

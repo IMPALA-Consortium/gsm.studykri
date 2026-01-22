@@ -1,0 +1,62 @@
+meta:
+  Type: Analysis
+  ID: kri0012
+  GroupLevel: Site
+  Abbreviation: SF
+  Metric: Screen Failure Rate
+  Numerator: Screen Failures
+  Denominator: Screened Subjects
+  Model: Bootstrap CI
+  Score: Bootstrap CI
+  AnalysisType: rate
+  Threshold: 0.95
+  AccrualThreshold: 5
+  AccrualMetric: Denominator
+  BootstrapReps: 1000
+spec:
+  Mapped_ENROLL:
+    subjectid:
+      type: character
+    invid:
+      type: character
+    enrollyn:
+      type: character
+    enroll_dt:
+      type: Date
+steps:
+  - output: Temp_SCREENED
+    name: RunQuery
+    params:
+      df: Mapped_ENROLL
+      strQuery: "SELECT * FROM df WHERE enrollyn = 'N'"
+  - output: Analysis_Input
+    name: gsm.studykri::Input_CountSiteByMonth
+    params:
+      dfSubjects: Mapped_ENROLL
+      dfNumerator: Temp_SCREENED
+      dfDenominator: Mapped_ENROLL
+      strStudyCol: studyid
+      strGroupCol: invid
+      strGroupLevel: GroupLevel
+      strSubjectCol: subjectid
+      strNumeratorDateCol: enroll_dt
+      strDenominatorDateCol: enroll_dt
+      strDenominatorType: Denominator
+      nMinDenominator: AccrualThreshold
+  - output: Analysis_Transformed
+    name: gsm.studykri::Transform_CumCount
+    params:
+      dfInput: Analysis_Input
+      vBy: 
+        - StudyID
+  - output: lAnalysis
+    name: list
+    params:
+      ID: ID
+      Analysis_Input: Analysis_Input
+      Analysis_Transformed: Analysis_Transformed
+
+
+
+
+

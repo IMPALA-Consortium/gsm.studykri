@@ -4,19 +4,16 @@
 \alias{Transform_CumCount}
 \title{Transform Cumulative Counts to Study Level}
 \usage{
-Transform_CumCount(dfInput, vBy, nMinDenominator = 25, tblMonthSequence = NULL)
+Transform_CumCount(dfInput, vBy, tblMonthSequence = NULL)
 }
 \arguments{
 \item{dfInput}{data.frame or tbl. Output from Input_CountSiteByMonth with columns:
-GroupID, GroupLevel, Numerator (or Numerator_*), Denominator, StudyID, MonthYYYYMM.
+GroupID, Numerator (or Numerator_*), Denominator, StudyID, MonthYYYYMM.
 Note: Input should contain monthly (not cumulative) counts. This function
-calculates cumulative sums at the study level.}
+calculates cumulative sums at the study level and adds StudyMonth.}
 
 \item{vBy}{character. Vector of column names for grouping (e.g., "StudyID" or
 c("StudyID", "BootstrapRep")).}
-
-\item{nMinDenominator}{numeric. Minimum cumulative denominator threshold for
-filtering early/sparse data (default: 25).}
 
 \item{tblMonthSequence}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
 Optional pre-generated month sequence with only a \code{MonthYYYYMM} column
@@ -30,11 +27,13 @@ Output columns: \code{vBy} columns, \code{MonthYYYYMM}, \code{StudyMonth}, Numer
 \code{Denominator}, Metric columns, \code{GroupCount}.
 }
 \description{
-Transforms site-level cumulative counts into study-level metrics by aggregating
-across groups (sites/countries) by calendar month. Creates sequential study months,
-applies minimum denominator filtering, and calculates cumulative metrics.
+Transforms site-level counts into study-level metrics by aggregating
+across groups (sites/countries) by calendar month and calculating cumulative sums.
 Supports both in-memory data frames and dbplyr lazy tables.
 Handles multiple Numerator columns (e.g., Numerator_kri0001, Numerator_kri0003).
+
+Note: StudyMonth is calculated by this function based on MonthYYYYMM order.
+Date normalization should be done at the input level (Input_CountSiteByMonth).
 }
 \examples{
 # Generate input data
@@ -50,11 +49,10 @@ dfInput <- Input_CountSiteByMonth(
   strDenominatorDateCol = "visit_dt"
 )
 
-# Transform to study level
+# Transform to study level and calculate StudyMonth
 dfTransformed <- Transform_CumCount(
   dfInput = dfInput,
-  vBy = "StudyID",
-  nMinDenominator = 25
+  vBy = "StudyID"
 )
 
 print(dfTransformed)

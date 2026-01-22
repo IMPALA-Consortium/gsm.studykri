@@ -20,7 +20,10 @@
 #'   oversampling. Default c(0, 1) includes all subjects
 #' @param seed Integer seed for reproducibility. NULL (default) uses current random state
 #' @param vSubjectIDs Character vector defining hierarchical order for subject ID column
-#'   lookup. Default: c("subjid", "subjectenrollmentnumber", "subject_nsv")
+#'   lookup. Default: c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid").
+#'   **Important:** All columns in vSubjectIDs must exist in Raw_SUBJ for proper mapping.
+#'   If a column is missing, add it to Raw_SUBJ before calling this function. For example:
+#'   `lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv`
 #' @param vSiteIDs Character vector defining hierarchical order for site ID column
 #'   lookup. Default: c("invid", "siteid", "site_num")
 #'
@@ -59,6 +62,10 @@
 #'   Raw_STUDY = clindata::ctms_study
 #' )
 #'
+#' # Add required columns to Raw_SUBJ (required for vSubjectIDs)
+#' lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+#' lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
+#'
 #' # Standard resampling
 #' lStudy1 <- ResampleStudy(lRaw, "STUDY001", seed = 123)
 #'
@@ -91,7 +98,7 @@ ResampleStudy <- function(
     strOversampleDomain = NULL,
     vOversamplQuantileRange = c(0, 1),
     seed = NULL,
-    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv"),
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
     vSiteIDs = c("invid", "siteid", "site_num")) {
   # Set seed if provided
   if (!is.null(seed)) {
@@ -117,6 +124,17 @@ ResampleStudy <- function(
 
   if (!is.logical(replacement) || length(replacement) != 1) {
     stop("replacement must be a single logical value")
+  }
+
+  # Validate that all vSubjectIDs exist in Raw_SUBJ
+  missing_cols <- setdiff(vSubjectIDs, names(lRaw$Raw_SUBJ))
+  if (length(missing_cols) > 0) {
+    stop(
+      "vSubjectIDs validation failed: The following columns are in vSubjectIDs but missing from Raw_SUBJ: ",
+      paste(missing_cols, collapse = ", "),
+      "\n\nTo fix this, add the missing columns to Raw_SUBJ. For example:\n",
+      "  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv"
+    )
   }
 
   if (!is.null(strOversampleDomain)) {
@@ -299,9 +317,7 @@ ResampleStudy <- function(
       )
     } else {
       # Other domain - update studyid only
-      if (has_column(domain_df, "studyid")) {
-        domain_df$studyid <- strNewStudyID
-      }
+      domain_df$studyid <- strNewStudyID
       lResult[[domain_name]] <- domain_df
     }
   }
@@ -403,15 +419,13 @@ find_subject_id_column <- function(df, raw_subj, vSubjectIDs) {
     if (!has_column(df, col)) next
 
     if (col == "subjid") {
+      # subjid is the canonical ID, return as-is
       return(list(column = col, ids = df$subjid))
-    } else if (col == "subjectenrollmentnumber") {
-      subj_mapping <- setNames(raw_subj$subjid, raw_subj$subjectid)
-      ids <- subj_mapping[df$subjectenrollmentnumber]
-      valid_idx <- !is.na(ids)
-      return(list(column = col, ids = ids, valid_idx = valid_idx))
-    } else if (col == "subject_nsv") {
-      subj_mapping <- setNames(raw_subj$subjid, raw_subj$subject_nsv)
-      ids <- subj_mapping[df$subject_nsv]
+    } else {
+      # Create mapping from this column to subjid
+      # Note: vSubjectIDs validation in ResampleStudy ensures col exists in raw_subj
+      subj_mapping <- setNames(raw_subj$subjid, raw_subj[[col]])
+      ids <- subj_mapping[df[[col]]]
       valid_idx <- !is.na(ids)
       return(list(column = col, ids = ids, valid_idx = valid_idx))
     }
@@ -438,6 +452,9 @@ process_subject_domain <- function(df, subject_mapping, new_study_id, sampled_su
   # Filter to selected subjects
   result <- valid_df[mapped_subjids %in% subject_mapping$old_subjid, ]
 
+  # Update studyid (even for empty results to preserve column structure)
+  result$studyid <- new_study_id
+
   if (nrow(result) == 0) {
     return(result)
   }
@@ -448,14 +465,17 @@ process_subject_domain <- function(df, subject_mapping, new_study_id, sampled_su
   # Create a mapping lookup for efficiency
   old_to_new_subj <- setNames(subject_mapping$new_subjid, subject_mapping$old_subjid)
 
-  # Update studyid
-  if (has_column(result, "studyid")) {
-    result$studyid <- new_study_id
-  }
-
-  # Update subjid if it exists
-  if (has_column(result, "subjid")) {
-    result$subjid <- old_to_new_subj[result$subjid]
+  # Update all vSubjectID columns generically with study prefix
+  for (col in vSubjectIDs) {
+    if (has_column(result, col)) {
+      if (col == "subjid") {
+        # For subjid, use the direct mapping
+        result[[col]] <- old_to_new_subj[result[[col]]]
+      } else {
+        # For other ID columns, add study prefix to original values
+        result[[col]] <- paste0(new_study_id, "_", result[[col]])
+      }
+    }
   }
 
   # Update invid if present (use randomized site from sampled_subj)
@@ -488,35 +508,6 @@ process_subject_domain <- function(df, subject_mapping, new_study_id, sampled_su
     }
   }
 
-  # Update composite IDs if present
-  if (has_column(result, "subjectid")) {
-    for (i in seq_along(subject_mapping$old_subjid)) {
-      idx <- old_subjid_col == subject_mapping$old_subjid[i]
-      if (any(idx)) {
-        result$subjectid[idx] <- gsub(
-          subject_mapping$old_subjid[i],
-          subject_mapping$new_subjid[i],
-          result$subjectid[idx],
-          fixed = TRUE
-        )
-      }
-    }
-  }
-
-  if (has_column(result, "subject_nsv")) {
-    for (i in seq_along(subject_mapping$old_subjid)) {
-      idx <- old_subjid_col == subject_mapping$old_subjid[i]
-      if (any(idx)) {
-        result$subject_nsv[idx] <- gsub(
-          subject_mapping$old_subjid[i],
-          subject_mapping$new_subjid[i],
-          result$subject_nsv[idx],
-          fixed = TRUE
-        )
-      }
-    }
-  }
-
   return(result)
 }
 
@@ -539,10 +530,8 @@ process_site_domain <- function(df, new_study_id, used_site_ids, vSiteIDs, gener
     return(result)
   }
 
-  # Update studyid if it exists, prefix invid if it's the site ID column
-  if (has_column(result, "studyid")) {
-    result$studyid <- new_study_id
-  }
+  result$studyid <- new_study_id
+
   if (site_info$column == "invid") {
     result$invid <- paste0(new_study_id, "_", result$invid)
   }
@@ -607,6 +596,10 @@ generate_default_config <- function(lRaw, nStudies, seed) {
 #'   Raw_SITE = clindata::ctms_site
 #' )
 #'
+#' # Add required columns to Raw_SUBJ
+#' lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+#' lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
+#'
 #' lPortfolio <- SimulatePortfolio(lRaw, nStudies = 3, seed = 123)
 #'
 #' # Custom configuration
@@ -623,7 +616,7 @@ SimulatePortfolio <- function(
     dfConfig = NULL,
     nStudies = 5,
     seed = NULL,
-    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv"),
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
     vSiteIDs = c("invid", "siteid", "site_num")) {
   # Input validation
   if (!is.list(lRaw) || !"Raw_SUBJ" %in% names(lRaw)) {

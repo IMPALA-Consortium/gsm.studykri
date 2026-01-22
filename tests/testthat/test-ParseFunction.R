@@ -132,7 +132,8 @@ test_that("ParseFunction works with gsm.studykri functions in workflow", {
 
   dfMetrics <- data.frame(
     MetricID = "kri0001",
-    Denominator = "Visits"
+    Denominator = "Visits",
+    AccrualThreshold = 180
   )
 
   # Use the parsed function
@@ -141,4 +142,3 @@ test_that("ParseFunction works with gsm.studykri functions in workflow", {
   expect_type(result, "list")
   expect_true("Visits" %in% names(result))
 })
-

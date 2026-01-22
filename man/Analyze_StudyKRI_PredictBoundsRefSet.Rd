@@ -12,7 +12,6 @@ Analyze_StudyKRI_PredictBoundsRefSet(
   strStudyCol = "StudyID",
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
-  nMinDenominator = 25,
   seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL
@@ -38,9 +37,6 @@ Example: \code{c("STUDY1", "STUDY2", "STUDY3")}.}
 
 \item{strStudyMonthCol}{character. Column name for sequential study month
 (default: "StudyMonth").}
-
-\item{nMinDenominator}{numeric. Minimum denominator for Transform_CumCount
-(default: 25).}
 
 \item{seed}{integer or NULL. Random seed for reproducibility (default: NULL).}
 

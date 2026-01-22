@@ -9,9 +9,12 @@
 #' @param dfBoundsRef data.frame. Stacked reference/comparison group bounds (from BindResults).
 #' @param dfMetrics data.frame. Metric metadata (from MakeMetric).
 #' @param nMaxMonth integer. Maximum study month to display (NULL = all).
+#' @param ... additional arguments passed to [Visualize_StudyKRI()]
 #'
 #' @return list. Named list of ggplot objects, one per study-metric combination.
 #'   Names are in format "StudyID_MetricID" (e.g., "STUDY001_kri0001").
+#'
+#' @importFrom rlang .data
 #'
 #' @export
 MakeCharts_StudyKRI <- function(
@@ -19,7 +22,8 @@ MakeCharts_StudyKRI <- function(
     dfBounds,
     dfBoundsRef,
     dfMetrics,
-    nMaxMonth = NULL) {
+    nMaxMonth = NULL,
+    ...) {
   # Validate inputs
   if (!is.data.frame(dfResults) || nrow(dfResults) == 0) {
     stop("dfResults must be a non-empty data frame")
@@ -77,7 +81,8 @@ MakeCharts_StudyKRI <- function(
           dfBounds = df_study_bounds,
           strStudyID = study_id,
           strYlab = metric_name,
-          nMaxMonth = nMaxMonth
+          nMaxMonth = nMaxMonth,
+          ...
         )
       },
       error = function(e) {

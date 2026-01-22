@@ -1,4 +1,3 @@
-
 #' Helper function to bind results from multiple workflows
 #'
 #' @description
@@ -21,13 +20,11 @@
 #' @export
 
 BindResults <- function(
-  lAnalysis,
-  strName,
-  dSnapshotDate = Sys.Date(),
-  strStudyID = NULL,
-  bUselData = FALSE
-) {
-
+    lAnalysis,
+    strName,
+    dSnapshotDate = Sys.Date(),
+    strStudyID = NULL,
+    bUselData = FALSE) {
   lResults <- lAnalysis %>%
     purrr::imap(
       function(result, metric) {

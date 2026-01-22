@@ -9,7 +9,8 @@ SimulatePortfolio(
   dfConfig = NULL,
   nStudies = 5,
   seed = NULL,
-  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv"),
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname",
+    "subjectid"),
   vSiteIDs = c("invid", "siteid", "site_num")
 )
 }
@@ -64,6 +65,10 @@ lRaw <- list(
   Raw_AE = clindata::rawplus_ae,
   Raw_SITE = clindata::ctms_site
 )
+
+# Add required columns to Raw_SUBJ
+lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
 
 lPortfolio <- SimulatePortfolio(lRaw, nStudies = 3, seed = 123)
 

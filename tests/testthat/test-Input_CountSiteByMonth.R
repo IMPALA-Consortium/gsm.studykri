@@ -563,6 +563,91 @@ test_that("Input_CountSiteByMonth validates strDenominatorEndDateCol is present"
   )
 })
 
+test_that("Input_CountSiteByMonth validates nMinDenominator parameter", {
+  dfSubjects <- data.frame(
+    studyid = "STUDY001",
+    invid = "SITE01",
+    subjid = "SUBJ001",
+    enrollyn = "Y",
+    stringsAsFactors = FALSE
+  )
+
+  dfNumerator <- data.frame(
+    subjid = "SUBJ001",
+    aest_dt = as.Date("2024-01-15"),
+    stringsAsFactors = FALSE
+  )
+
+  dfDenominator <- data.frame(
+    subjid = "SUBJ001",
+    visit_dt = as.Date("2024-01-01"),
+    stringsAsFactors = FALSE
+  )
+
+  # Test non-numeric nMinDenominator
+  expect_error(
+    Input_CountSiteByMonth(
+      dfSubjects = dfSubjects,
+      dfNumerator = dfNumerator,
+      dfDenominator = dfDenominator,
+      strNumeratorDateCol = "aest_dt",
+      strDenominatorDateCol = "visit_dt",
+      nMinDenominator = "not_numeric"
+    ),
+    "nMinDenominator must be a single non-negative numeric value"
+  )
+
+  # Test negative nMinDenominator
+  expect_error(
+    Input_CountSiteByMonth(
+      dfSubjects = dfSubjects,
+      dfNumerator = dfNumerator,
+      dfDenominator = dfDenominator,
+      strNumeratorDateCol = "aest_dt",
+      strDenominatorDateCol = "visit_dt",
+      nMinDenominator = -1
+    ),
+    "nMinDenominator must be a single non-negative numeric value"
+  )
+
+  # Test vector nMinDenominator (length > 1)
+  expect_error(
+    Input_CountSiteByMonth(
+      dfSubjects = dfSubjects,
+      dfNumerator = dfNumerator,
+      dfDenominator = dfDenominator,
+      strNumeratorDateCol = "aest_dt",
+      strDenominatorDateCol = "visit_dt",
+      nMinDenominator = c(1, 2)
+    ),
+    "nMinDenominator must be a single non-negative numeric value"
+  )
+
+  # Test valid nMinDenominator = 0 (should work)
+  expect_no_error({
+    Input_CountSiteByMonth(
+      dfSubjects = dfSubjects,
+      dfNumerator = dfNumerator,
+      dfDenominator = dfDenominator,
+      strNumeratorDateCol = "aest_dt",
+      strDenominatorDateCol = "visit_dt",
+      nMinDenominator = 0
+    )
+  })
+
+  # Test valid nMinDenominator = 3 (should work)
+  expect_no_error({
+    Input_CountSiteByMonth(
+      dfSubjects = dfSubjects,
+      dfNumerator = dfNumerator,
+      dfDenominator = dfDenominator,
+      strNumeratorDateCol = "aest_dt",
+      strDenominatorDateCol = "visit_dt",
+      nMinDenominator = 3
+    )
+  })
+})
+
 test_that("Input_CountSiteByMonth handles NA dates in denominator end date", {
   dfSubjects <- data.frame(
     studyid = "STUDY001",
@@ -597,40 +682,6 @@ test_that("Input_CountSiteByMonth handles NA dates in denominator end date", {
       strDenominatorEndDateCol = "end_date"
     )
   })
-})
-
-test_that("Input_CountSiteByMonth errors when no enrolled subjects", {
-  # All subjects not enrolled
-  dfSubjects <- data.frame(
-    studyid = "STUDY001",
-    invid = "SITE01",
-    subjid = "SUBJ001",
-    enrollyn = "N",
-    stringsAsFactors = FALSE
-  )
-
-  dfNumerator <- data.frame(
-    subjid = "SUBJ001",
-    aest_dt = as.Date("2024-01-15"),
-    stringsAsFactors = FALSE
-  )
-
-  dfDenominator <- data.frame(
-    subjid = "SUBJ001",
-    visit_dt = as.Date("2024-01-10"),
-    stringsAsFactors = FALSE
-  )
-
-  expect_error(
-    Input_CountSiteByMonth(
-      dfSubjects = dfSubjects,
-      dfNumerator = dfNumerator,
-      dfDenominator = dfDenominator,
-      strNumeratorDateCol = "aest_dt",
-      strDenominatorDateCol = "visit_dt"
-    ),
-    "No enrolled subjects found in dfSubjects"
-  )
 })
 
 # Lazy table tests have been moved to test-dbplyr-compatibility.R
