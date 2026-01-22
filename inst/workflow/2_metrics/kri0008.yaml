@@ -56,13 +56,13 @@ steps:
       strNumeratorDateCol: created
       strDenominatorDateCol: min_entereddate
       strDenominatorType: Denominator
+      nMinDenominator: AccrualThreshold
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount
     params:
       dfInput: Analysis_Input
       vBy: 
         - StudyID
-      nMinDenominator: AccrualThreshold
   - output: lAnalysis
     name: list
     params:

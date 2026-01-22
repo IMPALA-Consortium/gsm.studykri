@@ -4,16 +4,62 @@ meta:
   Description: Generate study KRI comparison charts and HTML report
 
 steps:
-  # Step 1: Generate charts using bound results
-  - output: lCharts
+
+  - output: ResultsLog
+    name: gsm.core::RunQuery
+    params:
+      df: Reporting_Results
+      strQuery: |
+              SELECT * FROM df 
+              WHERE MetricID IN (
+                'Analysis_kri0001', 
+                'Analysis_kri0002', 
+                'Analysis_kri0003', 
+                'Analysis_kri0004', 
+                'Analysis_kri0005', 
+                'Analysis_kri0007', 
+                'Analysis_kri0011'
+              )
+  - output: ResultsNorm
+    name: gsm.core::RunQuery
+    params:
+      df: Reporting_Results
+      strQuery: |
+              SELECT * FROM df 
+              WHERE MetricID NOT IN (
+                'Analysis_kri0001', 
+                'Analysis_kri0002', 
+                'Analysis_kri0003', 
+                'Analysis_kri0004', 
+                'Analysis_kri0005', 
+                'Analysis_kri0007', 
+                'Analysis_kri0011'
+              )
+              
+  - output: lChartsLog
     name: gsm.studykri::MakeCharts_StudyKRI
     params:
-      dfResults: Reporting_Results
+      dfResults: ResultsLog
       dfBounds: Reporting_Bounds
       dfBoundsRef: Reporting_BoundsRef
       dfMetrics: Reporting_Metrics
       nMaxMonth: null
-      
+      bLogY: True
+
+  - output: lChartsNorm
+    name: gsm.studykri::MakeCharts_StudyKRI
+    params:
+      dfResults: ResultsNorm
+      dfBounds: Reporting_Bounds
+      dfBoundsRef: Reporting_BoundsRef
+      dfMetrics: Reporting_Metrics
+      nMaxMonth: null
+
+  - output: lCharts
+    name: BindLists
+    params:
+      a: lChartsLog
+      b: lChartsNorm
   # Step 2: Generate HTML report using gsm.kri
   - output: strReportPath
     name: gsm.studykri::Report_StudyKRI

@@ -31,7 +31,6 @@ steps:
       dfStudyRef: Mapped_StudyRef
       nBootstrapReps: BootstrapReps
       nConfLevel: Threshold
-      nMinDenominator: AccrualThreshold
       seed: 42
 
   # Step 3: Transform reference bounds to long format

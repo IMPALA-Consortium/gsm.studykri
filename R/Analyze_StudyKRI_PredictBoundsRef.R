@@ -26,8 +26,6 @@
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
 #' @param strStudyMonthCol character. Column name for sequential study month
 #'   (default: "StudyMonth").
-#' @param nMinDenominator numeric. Minimum denominator for Transform_CumCount
-#'   (default: 25).
 #' @param seed integer or NULL. Random seed for reproducibility (default: NULL).
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
@@ -77,7 +75,6 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
-    nMinDenominator = 25,
     seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL) {
@@ -127,10 +124,6 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     stop("nConfLevel must be between 0 and 1")
   }
 
-  if (!is.numeric(nMinDenominator) || length(nMinDenominator) != 1 || nMinDenominator < 0) {
-    stop("nMinDenominator must be a single non-negative numeric value")
-  }
-
   # Filter to specified studies
   dfFiltered <- dfInput %>%
     dplyr::filter(.data[[strStudyCol]] %in% .env$vStudyFilter)
@@ -169,7 +162,6 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
   dfStudyLevel <- Transform_CumCount(
     dfInput = dfBootstrapped,
     vBy = "BootstrapRep", # Critical: only group by BootstrapRep, not StudyID
-    nMinDenominator = nMinDenominator,
     tblMonthSequence = tblMonthSequence
   )
 
@@ -210,7 +202,6 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' @param nConfLevel numeric. Confidence level for the bounds (default: 0.95).
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
 #' @param strStudyMonthCol character. Column name for study month (default: "StudyMonth").
-#' @param nMinDenominator numeric. Minimum denominator (default: 25).
 #' @param seed integer or NULL. Random seed (default: NULL).
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
@@ -262,7 +253,6 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     nConfLevel = 0.95,
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
-    nMinDenominator = 25,
     seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL) {
@@ -306,7 +296,6 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       strStudyCol = "StudyID",
       strGroupCol = strGroupCol,
       strStudyMonthCol = strStudyMonthCol,
-      nMinDenominator = nMinDenominator,
       seed = seed,
       tblBootstrapReps = tblBootstrapReps,
       tblMonthSequence = tblMonthSequence

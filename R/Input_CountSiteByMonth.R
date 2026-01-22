@@ -111,8 +111,11 @@ CalculateDaysByMonth <- function(dfData, strStartDateCol, strEndDateCol, vGroupC
 #' When provided, calculates sum of days between start/end dates per month instead of record counts.
 #' @param strDenominatorType character. Optional denominator type label (e.g., "Visits", "Days on Study").
 #' When provided, adds a DenominatorType column to the output.
+#' @param nMinDenominator numeric. Minimum denominator threshold for date normalization (default: 0).
+#' When > 0, adjusts dates of the first N denominator events to the MAX date in that group,
+#' creating a consistent "study start" at the threshold. Preserves event durations for date ranges.
 #'
-#' @return data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.
+#' @return data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM, StudyMonth.
 #' If strDenominatorType is provided, also includes DenominatorType column.
 #'
 #' @examples
@@ -151,7 +154,8 @@ Input_CountSiteByMonth <- function(
     strNumeratorDateCol,
     strDenominatorDateCol,
     strDenominatorEndDateCol = NULL,
-    strDenominatorType = NULL) {
+    strDenominatorType = NULL,
+    nMinDenominator = 0) {
   # Input validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfSubjects, c("data.frame", "tbl"))) {
     stop("dfSubjects must be a data.frame or tbl object")
@@ -203,6 +207,11 @@ Input_CountSiteByMonth <- function(
   if (is.data.frame(dfSubjects) && nrow(dfSubjects) == 0) {
     stop("No enrolled subjects found in dfSubjects")
   }
+  
+  # Validate nMinDenominator
+  if (!is.numeric(nMinDenominator) || length(nMinDenominator) != 1 || nMinDenominator < 0) {
+    stop("nMinDenominator must be a single non-negative numeric value")
+  }
 
   # Process numerator data
   dfNum_processed <- dfNumerator %>%
@@ -219,6 +228,26 @@ Input_CountSiteByMonth <- function(
       MonthYYYYMM = .data$year * 100 + .data$month
     ) %>%
     dplyr::select(-".date_parsed", -"year", -"month")
+  
+  # DATE NORMALIZATION: Apply when nMinDenominator > 0
+  # This adjusts dates of the first N denominator events to create a consistent study start
+  if (nMinDenominator > 0) {
+    adjusted_data <- ApplyMinDenominatorDateAdjustment(
+      dfNumerator_processed = dfNum_processed,
+      dfDenominator = dfDenominator,
+      dfSubjects = dfSubjects,
+      strSubjectCol = strSubjectCol,
+      strStudyCol = strStudyCol,
+      strGroupCol = strGroupCol,
+      strNumeratorDateCol = strNumeratorDateCol,
+      strDenominatorDateCol = strDenominatorDateCol,
+      strDenominatorEndDateCol = strDenominatorEndDateCol,
+      nMinDenominator = nMinDenominator
+    )
+    
+    dfNum_processed <- adjusted_data$dfNumerator
+    dfDenominator <- adjusted_data$dfDenominator
+  }
 
   # Count numerator events by site-month
   dfNum_counts <- dfNum_processed %>%

@@ -10,7 +10,7 @@ meta:
   Score: Bootstrap CI
   AnalysisType: rate
   Threshold: 0.95
-  AccrualThreshold: 180
+  AccrualThreshold: 25
   AccrualMetric: Denominator
   BootstrapReps: 1000
 spec:
@@ -51,13 +51,13 @@ steps:
       strNumeratorDateCol: mincreated_dts
       strDenominatorDateCol: firstparticipantdate
       strDenominatorType: Denominator
+      nMinDenominator: AccrualThreshold
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount
     params:
       dfInput: Analysis_Input
       vBy: 
         - StudyID
-      nMinDenominator: AccrualThreshold
   - output: lAnalysis
     name: list
     params:

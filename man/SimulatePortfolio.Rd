@@ -9,7 +9,8 @@ SimulatePortfolio(
   dfConfig = NULL,
   nStudies = 5,
   seed = NULL,
-  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv"),
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname",
+    "subjectid"),
   vSiteIDs = c("invid", "siteid", "site_num")
 )
 }

@@ -1,6 +1,7 @@
 meta:
   Type: Analysis
   ID: kri0013
+  GroupLevel: Site
   Abbreviation: PK
   Metric: PK Collection Compliance Rate
   Numerator: PK Samples Collected
@@ -37,7 +38,7 @@ steps:
     name: gsm.core::RunQuery
     params:
       df: Mapped_Visit
-      strQuery: "SELECT * FROM df WHERE peperf = 'Yes'"
+      strQuery: "SELECT * FROM df WHERE peperf = 'Y'"
   - output: Analysis_Input
     name: gsm.studykri::Input_CountSiteByMonth
     params:
@@ -51,13 +52,13 @@ steps:
       strNumeratorDateCol: visit_dt
       strDenominatorDateCol: visit_dt
       strDenominatorType: Denominator
+      nMinDenominator: AccrualThreshold
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount
     params:
       dfInput: Analysis_Input
       vBy: 
         - StudyID
-      nMinDenominator: AccrualThreshold
   - output: lAnalysis
     name: list
     params:

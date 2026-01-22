@@ -9,7 +9,6 @@ Analyze_StudyKRI_PredictBounds(
   dfStudyRef = NULL,
   nBootstrapReps = 1000,
   nConfLevel = 0.95,
-  nMinDenominator = 25,
   seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL,
@@ -19,9 +18,9 @@ Analyze_StudyKRI_PredictBounds(
 )
 }
 \arguments{
-\item{dfInput}{data.frame or tbl_lazy. Group-level data from \code{Input_CumCountSiteByMonth}.
+\item{dfInput}{data.frame or tbl_lazy. Group-level data from \code{Input_CountSiteByMonth}.
 Expected columns: GroupID, one or more Numerator columns, Denominator,
-StudyID, MonthYYYYMM.}
+StudyID, MonthYYYYMM, StudyMonth.}
 
 \item{dfStudyRef}{data.frame or NULL. Optional study reference mapping. If provided,
 the unique values in the first column identify the target studies for which
@@ -33,9 +32,6 @@ Default: 1000.}
 
 \item{nConfLevel}{numeric. Confidence level between 0 and 1. Default: 0.95
 (95\% confidence interval).}
-
-\item{nMinDenominator}{numeric. Minimum cumulative denominator threshold for
-Transform_CumCount filtering. Default: 25.}
 
 \item{seed}{integer or NULL. Random seed for reproducibility. Default: NULL.}
 
@@ -70,6 +66,9 @@ This is a convenience function that orchestrates the complete workflow:
 \item Aggregates to study level via \code{Transform_CumCount()}
 \item Calculates confidence intervals via \code{CalculateStudyBounds()}
 }
+
+Note: Date normalization and filtering should be done at the input level via
+Input_CountSiteByMonth with nMinDenominator parameter.
 }
 \examples{
 \dontrun{

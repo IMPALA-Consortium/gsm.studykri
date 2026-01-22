@@ -11,7 +11,6 @@ Analyze_StudyKRI_PredictBoundsRef(
   nConfLevel = 0.95,
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
-  nMinDenominator = 25,
   seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL
@@ -32,8 +31,6 @@ Can have multiple rows per target study (one row per target-reference pair).}
 \item{strGroupCol}{character. Column name for group identifier (default: "GroupID").}
 
 \item{strStudyMonthCol}{character. Column name for study month (default: "StudyMonth").}
-
-\item{nMinDenominator}{numeric. Minimum denominator (default: 25).}
 
 \item{seed}{integer or NULL. Random seed (default: NULL).}
 

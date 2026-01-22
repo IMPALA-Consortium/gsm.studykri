@@ -61,6 +61,7 @@ lPortfolio <- SimulatePortfolio(
 
 # Calculate site-level counts by month using days on study as denominator
 # Pass subjects as denominator with start and end dates to calculate person-days
+# nMinDenominator = 25 normalizes dates for consistent study start
 dfInputDays <- Input_CountSiteByMonth(
   dfSubjects = lPortfolio$Raw_SUBJ,
   dfNumerator = lPortfolio$Raw_AE,
@@ -71,13 +72,14 @@ dfInputDays <- Input_CountSiteByMonth(
   strSubjectCol = "subjid",
   strNumeratorDateCol = "aest_dt",
   strDenominatorDateCol = "firstparticipantdate",
-  strDenominatorEndDateCol = "lastparticipantdate"
+  strDenominatorEndDateCol = "lastparticipantdate",
+  nMinDenominator = 25
 ) %>% tibble()
 
 # Aggregate to study-level cumulative KRI by month
+# Date normalization done at input level, this is pure aggregation
 dfTransformed <- Transform_CumCount(
   dfInputDays,
-  nMinDenominator = 25,
   vBy = c("StudyID")
 ) %>% tibble()
 
@@ -89,7 +91,6 @@ df_Analyzed_Bootstrap_Site <- dfInputDays %>%
 # Aggregate each bootstrap iteration to study-level
 df_Analyzed_Bootstrap_Study <- df_Analyzed_Bootstrap_Site %>%
   Transform_CumCount(
-    nMinDenominator = 25,
     vBy = c("StudyID", "BootstrapRep")
   ) %>%
   tibble()
@@ -107,8 +108,7 @@ df_Bounds_Ref <- dfInputDays %>%
   Analyze_StudyKRI_PredictBoundsRefSet(
     vStudyFilter = c("AA-1", "AA-2", "AA-3"),
     nBootstrapReps = 1000,
-    nConfLevel = 0.95,
-    nMinDenominator = 25
+    nConfLevel = 0.95
   ) %>%
   tibble()
 

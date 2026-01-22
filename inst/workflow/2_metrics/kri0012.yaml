@@ -23,17 +23,6 @@ spec:
       type: character
     enroll_dt:
       type: Date
-  Mapped_SUBJ:
-    subjid:
-      type: character
-    invid:
-      type: character
-    studyid:
-      type: character
-    firstparticipantdate:
-      type: Date
-    lastparticipantdate:
-      type: Date
 steps:
   - output: Temp_SCREENED
     name: RunQuery
@@ -43,23 +32,23 @@ steps:
   - output: Analysis_Input
     name: gsm.studykri::Input_CountSiteByMonth
     params:
-      dfSubjects: Mapped_SUBJ
+      dfSubjects: Mapped_ENROLL
       dfNumerator: Temp_SCREENED
       dfDenominator: Mapped_ENROLL
       strStudyCol: studyid
       strGroupCol: invid
       strGroupLevel: GroupLevel
-      strSubjectCol: subjid
+      strSubjectCol: subjectid
       strNumeratorDateCol: enroll_dt
       strDenominatorDateCol: enroll_dt
       strDenominatorType: Denominator
+      nMinDenominator: AccrualThreshold
   - output: Analysis_Transformed
     name: gsm.studykri::Transform_CumCount
     params:
       dfInput: Analysis_Input
       vBy: 
         - StudyID
-      nMinDenominator: AccrualThreshold
   - output: lAnalysis
     name: list
     params:

@@ -15,7 +15,8 @@ Input_CountSiteByMonth(
   strNumeratorDateCol,
   strDenominatorDateCol,
   strDenominatorEndDateCol = NULL,
-  strDenominatorType = NULL
+  strDenominatorType = NULL,
+  nMinDenominator = 0
 )
 }
 \arguments{
@@ -42,9 +43,13 @@ When provided, calculates sum of days between start/end dates per month instead 
 
 \item{strDenominatorType}{character. Optional denominator type label (e.g., "Visits", "Days on Study").
 When provided, adds a DenominatorType column to the output.}
+
+\item{nMinDenominator}{numeric. Minimum denominator threshold for date normalization (default: 0).
+When > 0, adjusts dates of the first N denominator events to the MAX date in that group,
+creating a consistent "study start" at the threshold. Preserves event durations for date ranges.}
 }
 \value{
-data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM.
+data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM, StudyMonth.
 If strDenominatorType is provided, also includes DenominatorType column.
 }
 \description{
