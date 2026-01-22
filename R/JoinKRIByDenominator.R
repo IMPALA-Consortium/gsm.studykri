@@ -83,7 +83,7 @@ JoinKRIByDenominator <- function(dfInput, dfMetrics) {
       vMetricDetails <- dfMetrics %>%
         dplyr::filter(.data$MetricID %in% .env$vMetricIDs) %>%
         dplyr::select("MetricID", "AccrualThreshold") %>%
-        dplyr::arrange(.data$AccrualThreshold)
+        SortDf(.data$AccrualThreshold)
       
       stop(sprintf(
         "Cannot join KRIs with DenominatorType '%s' because they have different AccrualThreshold values:\n%s\n\nKRIs sharing the same DenominatorType must have identical AccrualThreshold (nMinDenominator) values because this parameter affects the Denominator calculation through date adjustment.",
@@ -160,7 +160,7 @@ JoinKRIByDenominator <- function(dfInput, dfMetrics) {
         ) %>%
         dplyr::select("MetricID", "StudyID", "GroupID", 
                       "MonthYYYYMM", "Denominator") %>%
-        dplyr::arrange(.data$StudyID, .data$GroupID, .data$MonthYYYYMM, .data$MetricID) %>%
+        SortDf(.data$StudyID, .data$GroupID, .data$MonthYYYYMM, .data$MetricID) %>%
         dplyr::collect()
       
       stop(sprintf(

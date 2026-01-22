@@ -44,7 +44,7 @@ ApplyMinDenominatorDateAdjustment <- function(
   
   # Step 2: Rank denominator events by start date within each study
   dfDenom_ranked <- dfDenom_with_study %>%
-    dplyr::arrange(.data[[strStudyCol]], .data[[strDenominatorDateCol]]) %>%
+    SortDf(.data[[strStudyCol]], .data[[strDenominatorDateCol]]) %>%
     dplyr::mutate(
       denom_rank = dplyr::row_number(),
       .by = dplyr::all_of(.env$strStudyCol)
