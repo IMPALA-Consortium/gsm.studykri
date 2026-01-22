@@ -422,10 +422,8 @@ find_subject_id_column <- function(df, raw_subj, vSubjectIDs) {
       # subjid is the canonical ID, return as-is
       return(list(column = col, ids = df$subjid))
     } else {
-      # Generic mapping: check if this column exists in raw_subj
-      if (!has_column(raw_subj, col)) next
-      
       # Create mapping from this column to subjid
+      # Note: vSubjectIDs validation in ResampleStudy ensures col exists in raw_subj
       subj_mapping <- setNames(raw_subj$subjid, raw_subj[[col]])
       ids <- subj_mapping[df[[col]]]
       valid_idx <- !is.na(ids)

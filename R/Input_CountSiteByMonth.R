@@ -201,12 +201,6 @@ Input_CountSiteByMonth <- function(
       paste(missing_denom_cols, collapse = ", ")
     ))
   }
-
-  # For in-memory data frames, check for empty results
-  # For lazy tables, skip this check as it would force evaluation
-  if (is.data.frame(dfSubjects) && nrow(dfSubjects) == 0) {
-    stop("No enrolled subjects found in dfSubjects")
-  }
   
   # Validate nMinDenominator
   if (!is.numeric(nMinDenominator) || length(nMinDenominator) != 1 || nMinDenominator < 0) {
