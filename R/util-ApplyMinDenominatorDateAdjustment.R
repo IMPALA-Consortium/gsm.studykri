@@ -65,11 +65,11 @@ ApplyMinDenominatorDateAdjustment <- function(
       # Calculate offset: days to shift forward
       date_offset_days = dplyr::if_else(
         .data[[strDenominatorDateCol]] <= .data$threshold_date,
-        as.numeric(difftime(.data$threshold_date, .data[[strDenominatorDateCol]], units = "days")),
+        as.numeric(.data$threshold_date - .data[[strDenominatorDateCol]]),
         0
       ),
       # Apply offset to start date
-      adjusted_start_date = .data[[strDenominatorDateCol]] + .data$date_offset_days
+      adjusted_start_date = .data[[strDenominatorDateCol]] + as.integer(.data$date_offset_days)
     )
   
   # Step 5: If end date exists, apply same offset to preserve duration
@@ -77,7 +77,7 @@ ApplyMinDenominatorDateAdjustment <- function(
     dfDenom_adjusted <- dfDenom_adjusted %>%
       dplyr::mutate(
         # Apply same offset to end date
-        adjusted_end_date = .data[[strDenominatorEndDateCol]] + .data$date_offset_days
+        adjusted_end_date = .data[[strDenominatorEndDateCol]] + as.integer(.data$date_offset_days)
       )
   }
   
@@ -112,11 +112,11 @@ ApplyMinDenominatorDateAdjustment <- function(
       offset_to_apply = dplyr::if_else(
         !is.na(.data$threshold_date) & 
           .data[[strNumeratorDateCol]] <= .data$threshold_date,
-        as.numeric(difftime(.data$threshold_date, .data[[strNumeratorDateCol]], units = "days")),
+        as.numeric(.data$threshold_date - .data[[strNumeratorDateCol]]),
         0
       ),
       # Apply offset
-      adjusted_num_date = .data[[strNumeratorDateCol]] + .data$offset_to_apply,
+      adjusted_num_date = .data[[strNumeratorDateCol]] + as.integer(.data$offset_to_apply),
       # Recalculate MonthYYYYMM from adjusted date
       year = lubridate::year(.data$adjusted_num_date),
       month = lubridate::month(.data$adjusted_num_date),

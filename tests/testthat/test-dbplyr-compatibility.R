@@ -212,7 +212,56 @@ test_that("Transform_CumCount comprehensive lazy table behavior", {
   DBI::dbDisconnect(con)
 })
 
-# Test 5: Analyze_StudyKRI_PredictBoundsRefSet with multiple studies
+# Test 5: Input_CountSiteByMonth with nMinDenominator Returns Lazy Table
+test_that("Input_CountSiteByMonth with nMinDenominator returns lazy table and adjusts dates", {
+  # Setup with more denominator events to test date adjustment
+  test_data <- list(
+    dfSubjects = data.frame(
+      subjid = c("S1", "S2", "S3", "S4", "S5"),
+      studyid = rep("STUDY1", 5),
+      invid = c("SITE1", "SITE1", "SITE2", "SITE2", "SITE2"),
+      stringsAsFactors = FALSE
+    ),
+    dfNumerator = data.frame(
+      subjid = c("S1", "S2", "S3", "S4", "S5"),
+      aest_dt = as.Date(c("2024-01-15", "2024-01-20", "2024-02-10", "2024-01-18", "2024-01-25")),
+      stringsAsFactors = FALSE
+    ),
+    dfDenominator = data.frame(
+      subjid = c("S1", "S2", "S3", "S4", "S5"),
+      visit_dt = as.Date(c("2024-01-10", "2024-01-12", "2024-02-05", "2024-01-11", "2024-01-15")),
+      stringsAsFactors = FALSE
+    )
+  )
+  
+  lazy_tables <- create_lazy_tables(test_data)
+  
+  # Execute with nMinDenominator = 3 to trigger date adjustment
+  result <- Input_CountSiteByMonth(
+    dfSubjects = lazy_tables$dfSubjects,
+    dfNumerator = lazy_tables$dfNumerator,
+    dfDenominator = lazy_tables$dfDenominator,
+    strStudyCol = "studyid",
+    strGroupCol = "invid",
+    strSubjectCol = "subjid",
+    strNumeratorDateCol = "aest_dt",
+    strDenominatorDateCol = "visit_dt",
+    nMinDenominator = 3  # This triggers ApplyMinDenominatorDateAdjustment
+  )
+  
+  # Verify result is lazy table
+  expect_s3_class(result, "tbl_lazy")
+  
+  # Collect and verify the function executed without SQL errors
+  result_df <- dplyr::collect(result)
+  expect_true(nrow(result_df) > 0)
+  expect_true(all(c("StudyID", "GroupID", "MonthYYYYMM", "Numerator", "Denominator") %in% names(result_df)))
+  
+  # Cleanup
+  DBI::dbDisconnect(lazy_tables$con)
+})
+
+# Test 6: Analyze_StudyKRI_PredictBoundsRefSet with multiple studies
 test_that("Analyze_StudyKRI_PredictBoundsRefSet works with lazy tables", {
   skip_if_not_installed("dbplyr")
   skip_if_not_installed("duckdb")
