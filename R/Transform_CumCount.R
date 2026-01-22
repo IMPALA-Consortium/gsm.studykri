@@ -36,8 +36,7 @@
 #'   dfNumerator = dfNumerator,
 #'   dfDenominator = dfDenominator,
 #'   strNumeratorDateCol = "aest_dt",
-#'   strDenominatorDateCol = "visit_dt",
-#'   nMinDenominator = 25
+#'   strDenominatorDateCol = "visit_dt"
 #' )
 #'
 #' # Transform to study level and calculate StudyMonth

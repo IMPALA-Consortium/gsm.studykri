@@ -55,6 +55,7 @@ lRaw <- list(
   Raw_STUDY = clindata::ctms_study,
   Raw_PD = clindata::ctms_protdev,
   Raw_DATAENT = clindata::edc_data_pages,
+  Raw_DATACHG = clindata::edc_data_points,
   Raw_QUERY = clindata::edc_queries,
   Raw_AE = clindata::rawplus_ae,
   Raw_SUBJ = clindata::rawplus_dm,
@@ -63,13 +64,19 @@ lRaw <- list(
   Raw_LB = clindata::rawplus_lb,
   Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
   Raw_STUDCOMP = clindata::rawplus_studcomp,
+  Raw_IE = clindata::rawplus_ie,
   Raw_VISIT = clindata::rawplus_visdt %>%
     mutate(visit_dt = lubridate::ymd(visit_dt))
 )
 
+# Add required subject identifier columns for resampling
+lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
+
 lPortfolio <- SimulatePortfolio(
   lRaw = lRaw,
   nStudies = 4,
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4"),
     nSubjects = c(500, 750, 150, 200),
@@ -125,15 +132,16 @@ tblInput <- dplyr::union_all(
     mutate(MetricID = "kri0002"),
 )
 
-dfMetrics <- tibble(
-  MetricID = c("kri0001", "kri0002"),
-  Denominator = "Visits"
+# Load metric metadata from workflow files
+metrics_wf <- gsm.core::MakeWorkflowList(
+  strNames = c("kri0001.yaml", "kri0002.yaml"),
+  strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
+  strPackage = NULL
 )
 
-DBI::dbWriteTable(con, "Metrics", dfMetrics)
+dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
 
-
-lJoined <- JoinKRIByDenominator(tblInput)
+lJoined <- JoinKRIByDenominator(tblInput, dfMetrics)
 
 lJoined
 ```

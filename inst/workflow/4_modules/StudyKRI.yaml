@@ -18,6 +18,7 @@ steps:
                 'Analysis_kri0004', 
                 'Analysis_kri0005', 
                 'Analysis_kri0007', 
+                'Analysis_kri0008', 
                 'Analysis_kri0011'
               )
   - output: ResultsNorm

@@ -100,8 +100,9 @@ lRaw <- list(
   Raw_STUDY = clindata::ctms_study
 )
 
-# Add subjectname column to Raw_SUBJ (required for vSubjectIDs)
+# Add required columns to Raw_SUBJ (required for vSubjectIDs)
 lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
 
 # Standard resampling
 lStudy1 <- ResampleStudy(lRaw, "STUDY001", seed = 123)

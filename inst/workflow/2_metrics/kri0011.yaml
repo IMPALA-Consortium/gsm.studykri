@@ -10,7 +10,7 @@ meta:
   Score: Bootstrap CI
   AnalysisType: rate
   Threshold: 0.95
-  AccrualThreshold: 180
+  AccrualThreshold: 500
   AccrualMetric: Denominator
   BootstrapReps: 1000
 spec:

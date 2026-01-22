@@ -16,30 +16,46 @@ lRaw_original <- list(
   Raw_STUDY = clindata::ctms_study,
   Raw_PD = clindata::ctms_protdev,
   Raw_DATAENT = clindata::edc_data_pages,
+  Raw_DATACHG = clindata::edc_data_points,
   Raw_QUERY = clindata::edc_queries,
   Raw_ENROLL = clindata::rawplus_enroll,
   Raw_Randomization = clindata::rawplus_ixrsrand,
   Raw_LB = clindata::rawplus_lb,
   Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
-  Raw_STUDCOMP = clindata::rawplus_studcomp
+  Raw_STUDCOMP = clindata::rawplus_studcomp,
+  Raw_IE = clindata::rawplus_ie
 )
+
+# Add required subject identifier columns for resampling
+lRaw_original$Raw_SUBJ$subjectname <- lRaw_original$Raw_SUBJ$subject_nsv
+lRaw_original$Raw_SUBJ$subjectenrollmentnumber <- lRaw_original$Raw_SUBJ$subjid
 
 lRaw <- SimulatePortfolio(
   lRaw = lRaw_original,
   nStudies = 3,
   seed = 123,
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4", "AA-5", "AA-6"),
     nSubjects = c(500, 750, 150, 200, 250, 300),
-    strOversampleDomain = rep("Raw_AE", 6),
+    strOversamplDomain = rep("Raw_AE", 6),
     vOversamplQuantileRange_min = c(0, 0, 0, 0, 0, 0),
-    vOversamplQuantileRange_max = c(1, 0.75, 1, 1, 0.95, 0.9)
+    vOversamplQuantileRange_max = c(1, 0.75, 1, 1, 0.95, 0.9),
+    nScreeningFailureRatio = c(0.2, 0.2, 0.2, 0.2, 0.2, 0.2)
   )
 )
 
 lRaw$Raw_StudyRef <- tibble(
   studyid = c(rep("AA-1", 3), rep("AA-2", 4)),
   studyrefid = c("AA-3", "AA-4", "AA-5", "AA-3", "AA-4", "AA-5", "AA-6")
+)
+
+# Add screening failures to enrollment data
+lRaw$Raw_ENROLL <- AddScreeningFailures(
+  lRaw$Raw_ENROLL,
+  lRaw_original$Raw_ENROLL,
+  strSiteCol = "siteid",
+  strStudyCol = "studyid"
 )
 
 # Run mapping workflows

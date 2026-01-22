@@ -84,9 +84,8 @@ both "Study A" and "Study B"), and each will receive its own sampled screening f
 from \code{dfSource} can appear multiple times in the output.
 }
 \examples{
-\dontrun{
 # Single study example
-dfEnrolled <- clindata::rawplus_enroll \%>\%
+dfEnrolled <- clindata::rawplus_enroll |>
   dplyr::filter(enrollyn == "Y")
 
 # Source data with both Y and N
@@ -122,6 +121,5 @@ dfAugmented_multi <- AddScreeningFailures(
 
 # Each study-site gets independent screening failures
 table(dfAugmented_multi$studyid, dfAugmented_multi$siteid)
-}
 
 }
