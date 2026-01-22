@@ -214,11 +214,10 @@ p <- gsm.studykri::Visualize_StudyKRI(
   dfStudyKRI = dfTransformed ,
   dfBounds = dfBounds,
   dfBoundsRef = dfBoundsRef,
-  strStudyID = "AA-1"
+  strStudyID = "AA-1",
+  bLogY = TRUE
 ) 
 
-p +
-ggplot2::scale_y_continuous(trans="log10")
 ```
 
 

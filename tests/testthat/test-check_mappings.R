@@ -1,24 +1,46 @@
+  expected_outputs <- c(
+    "Mapped_AE", "Mapped_COUNTRY", "Mapped_DATAENT",
+    "Mapped_ENROLL", "Mapped_LB", "Mapped_PD",
+    "Mapped_QUERY", "Mapped_Randomization", "Mapped_SDRGCOMP",
+    "Mapped_SITE", "Mapped_STUDCOMP", "Mapped_STUDY",
+    "Mapped_SUBJ", "Mapped_Visit", "Mapped_IE", "Mapped_StudyRef",
+    "Mapped_DATACHG", "Mapped_EXCLUSION"
+  )
+
+
 test_that("mapping workflows execute successfully on clindata", {
   # Load test data with Raw_* naming to match YAML specs
   lRaw <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_VISIT = clindata::rawplus_visdt,
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study,
     Raw_PD = clindata::ctms_protdev,
     Raw_DATAENT = clindata::edc_data_pages,
+    Raw_DATACHG = clindata::edc_data_points,
     Raw_QUERY = clindata::edc_queries,
-    Raw_AE = clindata::rawplus_ae,
-    Raw_SUBJ = clindata::rawplus_dm,
     Raw_ENROLL = clindata::rawplus_enroll,
     Raw_Randomization = clindata::rawplus_ixrsrand,
     Raw_LB = clindata::rawplus_lb,
     Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
     Raw_STUDCOMP = clindata::rawplus_studcomp,
-    Raw_VISIT = clindata::rawplus_visdt,
-    Raw_StudyRef = tibble::tibble(
-      studyid = character(),
-      studyrefid = character()
-    )
+    Raw_IE = clindata::rawplus_ie,
+      Raw_StudyRef = tibble::tibble(
+        studyid = character(),
+        studyrefid = character()
+      )
   )
+
+  # makes some necessary modifications
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjid
+  lRaw$Raw_IE$studyid <- "AA-AA-000-0000"
+  lRaw$Raw_LB$studyid <- "AA-AA-000-0000"
+  lRaw$Raw_PD$studyid <- "AA-AA-000-0000"
+  lRaw$Raw_DATACHG$studyid <- "AA-AA-000-0000"
+  lRaw$Raw_DATAENT$studyid <- "AA-AA-000-0000"
+  lRaw$Raw_QUERY$studyid <- "AA-AA-000-0000"
 
   # Load mapping workflows
   mapping_wf <- gsm.core::MakeWorkflowList(
@@ -42,14 +64,6 @@ test_that("mapping workflows execute successfully on clindata", {
   expect_type(lMapped, "list")
   expect_true(length(lMapped) > 0)
 
-  # Check that expected mapped datasets exist
-  expected_outputs <- c(
-    "Mapped_AE", "Mapped_COUNTRY", "Mapped_DATAENT",
-    "Mapped_ENROLL", "Mapped_LB", "Mapped_PD",
-    "Mapped_QUERY", "Mapped_Randomization", "Mapped_SDRGCOMP",
-    "Mapped_SITE", "Mapped_STUDCOMP", "Mapped_STUDY",
-    "Mapped_SUBJ", "Mapped_Visit"
-  )
 
   # Check each expected output exists
   for (output in expected_outputs) {
@@ -63,24 +77,30 @@ test_that("mapping workflows execute successfully on clindata", {
 test_that("mapping workflows execute successfully on portfolio data", {
   # Load original data for portfolio generation
   lRaw_original <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_VISIT = clindata::rawplus_visdt,
     Raw_SITE = clindata::ctms_site,
     Raw_STUDY = clindata::ctms_study,
     Raw_PD = clindata::ctms_protdev,
     Raw_DATAENT = clindata::edc_data_pages,
+    Raw_DATACHG = clindata::edc_data_points,
     Raw_QUERY = clindata::edc_queries,
-    Raw_AE = clindata::rawplus_ae,
-    Raw_SUBJ = clindata::rawplus_dm,
     Raw_ENROLL = clindata::rawplus_enroll,
     Raw_Randomization = clindata::rawplus_ixrsrand,
     Raw_LB = clindata::rawplus_lb,
     Raw_SDRGCOMP = clindata::rawplus_sdrgcomp,
     Raw_STUDCOMP = clindata::rawplus_studcomp,
-    Raw_VISIT = clindata::rawplus_visdt,
-    Raw_StudyRef = tibble::tibble(
-      studyid = character(),
-      studyrefid = character()
-    )
+    Raw_IE = clindata::rawplus_ie,
+      Raw_StudyRef = tibble::tibble(
+        studyid = character(),
+        studyrefid = character()
+      )
   )
+
+  # makes some necessary modifications
+  lRaw_original$Raw_SUBJ$subjectname <- lRaw_original$Raw_SUBJ$subject_nsv
+  lRaw_original$Raw_SUBJ$subjectenrollmentnumber <- lRaw_original$Raw_SUBJ$subjid
 
   # Generate portfolio with 3 studies
   lPortfolio <- SimulatePortfolio(
@@ -115,14 +135,6 @@ test_that("mapping workflows execute successfully on portfolio data", {
   expect_type(lMapped, "list")
   expect_true(length(lMapped) > 0)
 
-  # Check that expected mapped datasets exist
-  expected_outputs <- c(
-    "Mapped_AE", "Mapped_COUNTRY", "Mapped_DATAENT",
-    "Mapped_ENROLL", "Mapped_LB", "Mapped_PD",
-    "Mapped_QUERY", "Mapped_Randomization", "Mapped_SDRGCOMP",
-    "Mapped_SITE", "Mapped_STUDCOMP", "Mapped_STUDY",
-    "Mapped_SUBJ", "Mapped_Visit"
-  )
 
   # Check each expected output exists
   for (output in expected_outputs) {

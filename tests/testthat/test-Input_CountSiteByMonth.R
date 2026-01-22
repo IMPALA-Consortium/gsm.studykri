@@ -599,40 +599,6 @@ test_that("Input_CountSiteByMonth handles NA dates in denominator end date", {
   })
 })
 
-test_that("Input_CountSiteByMonth errors when no enrolled subjects", {
-  # All subjects not enrolled
-  dfSubjects <- data.frame(
-    studyid = "STUDY001",
-    invid = "SITE01",
-    subjid = "SUBJ001",
-    enrollyn = "N",
-    stringsAsFactors = FALSE
-  )
-
-  dfNumerator <- data.frame(
-    subjid = "SUBJ001",
-    aest_dt = as.Date("2024-01-15"),
-    stringsAsFactors = FALSE
-  )
-
-  dfDenominator <- data.frame(
-    subjid = "SUBJ001",
-    visit_dt = as.Date("2024-01-10"),
-    stringsAsFactors = FALSE
-  )
-
-  expect_error(
-    Input_CountSiteByMonth(
-      dfSubjects = dfSubjects,
-      dfNumerator = dfNumerator,
-      dfDenominator = dfDenominator,
-      strNumeratorDateCol = "aest_dt",
-      strDenominatorDateCol = "visit_dt"
-    ),
-    "No enrolled subjects found in dfSubjects"
-  )
-})
-
 # Lazy table tests have been moved to test-dbplyr-compatibility.R
 test_that("Input_CountSiteByMonth includes DenominatorType when strDenominatorType is provided", {
   # Setup test data

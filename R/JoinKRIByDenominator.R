@@ -82,7 +82,7 @@ JoinKRIByDenominator <- function(dfInput, dfMetrics) {
     if (length(unique(vThresholds)) > 1) {
       vMetricDetails <- dfMetrics %>%
         dplyr::filter(.data$MetricID %in% .env$vMetricIDs) %>%
-        dplyr::select(.data$MetricID, .data$AccrualThreshold) %>%
+        dplyr::select("MetricID", "AccrualThreshold") %>%
         dplyr::arrange(.data$AccrualThreshold)
       
       stop(sprintf(
@@ -158,8 +158,8 @@ JoinKRIByDenominator <- function(dfInput, dfMetrics) {
           dfDenomCheck,
           by = c("StudyID", "GroupID", "MonthYYYYMM")
         ) %>%
-        dplyr::select(.data$MetricID, .data$StudyID, .data$GroupID, 
-                      .data$MonthYYYYMM, .data$Denominator) %>%
+        dplyr::select("MetricID", "StudyID", "GroupID", 
+                      "MonthYYYYMM", "Denominator") %>%
         dplyr::arrange(.data$StudyID, .data$GroupID, .data$MonthYYYYMM, .data$MetricID) %>%
         dplyr::collect()
       

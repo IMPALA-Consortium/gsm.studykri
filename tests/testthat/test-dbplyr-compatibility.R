@@ -91,7 +91,6 @@ test_that("Transform_CumCount returns lazy table with lazy input", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 1
   )
 
   # Verify result is lazy table
@@ -150,7 +149,6 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet returns lazy table with lazy inp
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 5,
       nConfLevel = 0.95,
-      nMinDenominator = 1,
       seed = 123
     )
   })
@@ -181,7 +179,8 @@ test_that("Transform_CumCount comprehensive lazy table behavior", {
   DBI::dbWriteTable(con, "dfInput", test_data$dfInput)
   tblInput <- dplyr::tbl(con, "dfInput")
 
-  result <- Transform_CumCount(dfInput = tblInput, vBy = "StudyID", nMinDenominator = 0)
+  # Transform to study level
+  result <- Transform_CumCount(dfInput = tblInput, vBy = "StudyID")
 
   # 1. Verify returns lazy table
   expect_s3_class(result, "tbl_lazy")
@@ -465,7 +464,6 @@ test_that("Analyze_StudyKRI_PredictBounds returns lazy table with lazy input", {
       dfStudyRef = NULL,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      nMinDenominator = 1,
       seed = 999
     )
   })
@@ -526,7 +524,6 @@ test_that("Analyze_StudyKRI_PredictBounds works with lazy dfStudyRef", {
       dfStudyRef = dfStudyRefLazy,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      nMinDenominator = 1,
       seed = 888
     )
   })
@@ -590,7 +587,6 @@ test_that("Analyze_StudyKRI_PredictBoundsRef returns lazy table with lazy input"
       dfStudyRef = dfStudyRefLazy,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      nMinDenominator = 1,
       seed = 555
     )
   })
@@ -632,6 +628,7 @@ test_that("JoinKRIByDenominator works with lazy tables", {
   dfMetrics <- data.frame(
     MetricID = c("kri0001", "kri0003"),
     Denominator = c("Visits", "Visits"),
+    AccrualThreshold = c(180, 180),
     stringsAsFactors = FALSE
   )
 
@@ -743,7 +740,6 @@ test_that("User-supplied tblBootstrapReps controls bootstrap count", {
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 100, # This should be overridden by tblBootstrapReps
       nConfLevel = 0.95,
-      nMinDenominator = 1,
       seed = 42,
       tblBootstrapReps = tblBootstrapRepsLazy
     )
@@ -797,7 +793,6 @@ test_that("User-supplied tblMonthSequence controls output months", {
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 10,
       nConfLevel = 0.95,
-      nMinDenominator = 1,
       seed = 42,
       tblMonthSequence = tblMonthSeqLazy
     )
@@ -809,7 +804,7 @@ test_that("User-supplied tblMonthSequence controls output months", {
   # Collect and verify output months are limited to 1-3
   result_collected <- dplyr::collect(result)
   expect_true(max(result_collected$StudyMonth) <= 3)
-  # Should only have months 1, 2, 3 (after filtering by nMinDenominator=1, should start at 1)
+  # Should only have months 1, 2, 3 (should start at 1)
   expect_true(all(result_collected$StudyMonth <= 3))
 
   # Clean up
@@ -858,7 +853,6 @@ test_that("Analyze_StudyKRI_PredictBoundsRef works with user-supplied tblBootstr
       dfStudyRef = dfStudyRef,
       nBootstrapReps = 50, # Should be overridden by tblBootstrapReps
       nConfLevel = 0.95,
-      nMinDenominator = 1,
       seed = 42,
       tblBootstrapReps = tblBootstrapRepsLazy
     )
@@ -914,7 +908,6 @@ test_that("Analyze_StudyKRI_PredictBounds works with user-supplied tblBootstrapR
       dfStudyRef = NULL, # All studies
       nBootstrapReps = 200, # Should be overridden by tblBootstrapReps
       nConfLevel = 0.95,
-      nMinDenominator = 1,
       seed = 42,
       tblBootstrapReps = tblBootstrapRepsLazy
     )

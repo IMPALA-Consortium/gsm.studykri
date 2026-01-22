@@ -332,8 +332,7 @@ test_that("CalculateStudyBounds integration with full workflow", {
   # Aggregate to study level
   dfBootstrapStudy <- Transform_CumCount(
     dfInput = dfBootstrap,
-    vBy = c("StudyID", "BootstrapRep"),
-    nMinDenominator = 1 # Low threshold for small test data
+    vBy = c("StudyID", "BootstrapRep")
   )
 
   # Calculate confidence intervals
@@ -383,7 +382,6 @@ test_that("Analyze_StudyKRI_PredictBounds works with NULL dfStudyRef (all studie
       dfStudyRef = NULL,
       nBootstrapReps = 10,
       nConfLevel = 0.95,
-      nMinDenominator = 10,
       seed = 123
     ),
     "Using all 2 studies found in dfInput"
@@ -423,7 +421,6 @@ test_that("Analyze_StudyKRI_PredictBounds uses first column of dfStudyRef", {
     dfStudyRef = dfStudyRef,
     nBootstrapReps = 10,
     nConfLevel = 0.95,
-    nMinDenominator = 10,
     seed = 456
   )
 
@@ -519,7 +516,6 @@ test_that("Analyze_StudyKRI_PredictBounds with dfStudyRef filters correctly", {
     dfStudyRef = dfStudyRef,
     nBootstrapReps = 10,
     nConfLevel = 0.95,
-    nMinDenominator = 10,
     seed = 789
   )
 

@@ -13,7 +13,6 @@ test_that("Transform_CumCount returns correct structure", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
   )
 
   expect_s3_class(result, "data.frame")
@@ -38,20 +37,22 @@ test_that("Transform_CumCount aggregates across sites and calculates cumulative 
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
   )
 
-  # After aggregation and cumsum:
-  # Month 202301: (5+3)=8 -> cumsum=8 (but filtered out, < 25 denominator)
-  # Month 202302: (10+8)=18 -> cumsum=8+18=26 (first month in result)
-  # Month 202303: (15+12)=27 -> cumsum=8+18+27=53 (second month)
+  # After aggregation and cumsum (no filtering now):
+  # Month 202301: (5+3)=8 -> cumsum=8
+  # Month 202302: (10+8)=18 -> cumsum=8+18=26
+  # Month 202303: (15+12)=27 -> cumsum=8+18+27=53
 
-  # First month (202302) should have cumulative sum including 202301
+  # First month should have just its aggregate
+  expect_equal(result$Numerator[result$MonthYYYYMM == 202301], 8)
+  # Second month should have cumulative sum
   expect_equal(result$Numerator[result$MonthYYYYMM == 202302], 8 + 18)
-  # Second month (202303) should have cumulative sum of all
+  # Third month should have cumulative sum of all
   expect_equal(result$Numerator[result$MonthYYYYMM == 202303], 8 + 18 + 27)
 
   # Same for denominators
+  expect_equal(result$Denominator[result$MonthYYYYMM == 202301], 20)
   expect_equal(result$Denominator[result$MonthYYYYMM == 202302], 20 + 40)
   expect_equal(result$Denominator[result$MonthYYYYMM == 202303], 20 + 40 + 60)
 
@@ -73,7 +74,6 @@ test_that("Transform_CumCount creates sequential StudyMonth", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
   )
 
   # After filtering (only months with > 25 denominator), should be sequential 1, 2, ...
@@ -81,33 +81,6 @@ test_that("Transform_CumCount creates sequential StudyMonth", {
 
   # StudyMonth should start at 1
   expect_equal(min(result$StudyMonth), 1)
-})
-
-test_that("Transform_CumCount applies minimum denominator filter", {
-  dfInput <- data.frame(
-    StudyID = rep("STUDY001", 9),
-    GroupID = rep(c("SITE01", "SITE02", "SITE03"), each = 3),
-    GroupLevel = "Site",
-    MonthYYYYMM = rep(c(202301, 202302, 202303), 3),
-    Numerator = rep(c(2, 5, 10), 3),
-    Denominator = rep(c(5, 15, 30), 3),
-    Metric = rep(c(0.4, 0.33, 0.33), 3)
-  )
-
-  result <- Transform_CumCount(
-    dfInput = dfInput,
-    vBy = "StudyID",
-    nMinDenominator = 25
-  )
-
-  # Month 202301: 3 sites * 5 = 15 denominator (< 25, should be filtered)
-  # Month 202302: 3 sites * 15 = 45 denominator (> 25, should be kept)
-  # Month 202303: 3 sites * 30 = 90 denominator (> 25, should be kept)
-
-  expect_false(202301 %in% result$MonthYYYYMM)
-  expect_true(202302 %in% result$MonthYYYYMM)
-  expect_true(202303 %in% result$MonthYYYYMM)
-  expect_equal(nrow(result), 2)
 })
 
 test_that("Transform_CumCount calculates Metric correctly with cumulative counts", {
@@ -124,13 +97,14 @@ test_that("Transform_CumCount calculates Metric correctly with cumulative counts
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
   )
 
-  # Cumulative totals after aggregation:
+  # Cumulative totals after aggregation (no filtering):
+  # Month 202301: cumsum(8) = 8 numerator, cumsum(20) = 20 denominator
   # Month 202302: cumsum(8, 18) = 26 numerator, cumsum(20, 40) = 60 denominator
   # Month 202303: cumsum(8, 18, 27) = 53 numerator, cumsum(20, 40, 60) = 120 denominator
 
+  expect_equal(result$Metric[result$MonthYYYYMM == 202301], 8 / 20)
   expect_equal(result$Metric[result$MonthYYYYMM == 202302], 26 / 60)
   expect_equal(result$Metric[result$MonthYYYYMM == 202303], 53 / 120)
 })
@@ -150,7 +124,6 @@ test_that("Transform_CumCount handles multiple grouping columns", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = c("StudyID", "BootstrapRep"),
-    nMinDenominator = 25
   )
 
   expect_true("StudyID" %in% names(result))
@@ -178,7 +151,6 @@ test_that("Transform_CumCount handles single site", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
   )
 
   expect_s3_class(result, "data.frame")
@@ -200,7 +172,6 @@ test_that("Transform_CumCount handles zero denominators", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 5
   )
 
   # Month with zero total denominator should have NA metric (though filtered by > threshold)
@@ -264,52 +235,6 @@ test_that("Transform_CumCount validates vBy parameter", {
   )
 })
 
-test_that("Transform_CumCount validates nMinDenominator parameter", {
-  dfInput <- data.frame(
-    StudyID = "STUDY001",
-    GroupID = "SITE01",
-    MonthYYYYMM = 202301,
-    Numerator = 10,
-    Denominator = 30,
-    Metric = 0.33
-  )
-
-  expect_error(
-    Transform_CumCount(dfInput = dfInput, vBy = "StudyID", nMinDenominator = "25"),
-    "nMinDenominator must be a single non-negative numeric value"
-  )
-
-  expect_error(
-    Transform_CumCount(dfInput = dfInput, vBy = "StudyID", nMinDenominator = -5),
-    "nMinDenominator must be a single non-negative numeric value"
-  )
-
-  expect_error(
-    Transform_CumCount(dfInput = dfInput, vBy = "StudyID", nMinDenominator = c(10, 20)),
-    "nMinDenominator must be a single non-negative numeric value"
-  )
-})
-
-test_that("Transform_CumCount filters all data when threshold too high", {
-  dfInput <- data.frame(
-    StudyID = rep("STUDY001", 6),
-    GroupID = rep(c("SITE01", "SITE02"), each = 3),
-    GroupLevel = "Site",
-    MonthYYYYMM = rep(c(202301, 202302, 202303), 2),
-    Numerator = c(1, 2, 3, 1, 2, 3),
-    Denominator = c(5, 10, 15, 5, 10, 15),
-    Metric = c(0.2, 0.2, 0.2, 0.2, 0.2, 0.2)
-  )
-
-  result <- Transform_CumCount(
-    dfInput = dfInput,
-    vBy = "StudyID",
-    nMinDenominator = 100
-  )
-
-  # All data should be filtered out
-  expect_equal(nrow(result), 0)
-})
 
 test_that("Transform_CumCount preserves MonthYYYYMM in output", {
   dfInput <- data.frame(
@@ -325,11 +250,10 @@ test_that("Transform_CumCount preserves MonthYYYYMM in output", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
   )
 
   expect_true("MonthYYYYMM" %in% names(result))
-  expect_true(all(result$MonthYYYYMM %in% c(202302, 202303)))
+  expect_true(all(result$MonthYYYYMM %in% c(202301, 202302, 202303)))
 })
 
 test_that("Transform_CumCount works with actual Input_CountSiteByMonth output", {
@@ -349,7 +273,6 @@ test_that("Transform_CumCount works with actual Input_CountSiteByMonth output", 
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
   )
 
   expect_s3_class(result, "data.frame")
@@ -366,9 +289,6 @@ test_that("Transform_CumCount works with actual Input_CountSiteByMonth output", 
     expect_equal(max(study_data$StudyMonth), nrow(study_data))
     expect_equal(study_data$StudyMonth, seq_len(nrow(study_data)))
   }
-
-  # All denominators should be > 25
-  expect_true(all(result$Denominator > 25))
 
   # Metric should match manual calculation
   expect_equal(
@@ -392,7 +312,6 @@ test_that("Transform_CumCount fills gaps in calendar months with zeros", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 0 # Don't filter to see all months including filled gaps
   )
 
   # Should have all months from Jan to May: 202301, 202302, 202303, 202304, 202305
@@ -447,7 +366,6 @@ test_that("Cumulative counts are monotonically increasing within each study", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 0 # Don't filter any data
   )
 
   # Check each study has monotonically increasing (non-decreasing) cumulative counts
@@ -500,7 +418,6 @@ test_that("Cumulative counts persist when sites drop out (integration test)", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 0
   )
 
   # Month 1: Site1=10 + Site2=20 = 30 (cumsum=30)
@@ -534,7 +451,6 @@ test_that("Transform_CumCount accepts tbl (non-lazy) input", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
   )
 
   expect_s3_class(result, "data.frame")
@@ -556,7 +472,6 @@ test_that("Transform_CumCount handles zero cumulative denominator correctly", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 0 # Don't filter to see all months
   )
 
   # Month with zero total denominator should be filtered by threshold,
@@ -583,7 +498,6 @@ test_that("Transform_CumCount handles multiple Numerator columns", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
   )
 
   # Check that both Numerator columns are present
@@ -620,7 +534,6 @@ test_that("Transform_CumCount single Numerator column still works", {
   result <- Transform_CumCount(
     dfInput = dfInput,
     vBy = "StudyID",
-    nMinDenominator = 25
   )
 
   # Check single Numerator and Metric columns
