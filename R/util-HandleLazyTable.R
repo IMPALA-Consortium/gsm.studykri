@@ -104,11 +104,17 @@ SortDf <- function(data, ...) {
 
 #' Generate Complete Month Sequence
 #'
-#' @param start_yyyymm numeric. Start month in YYYYMM format
-#' @param end_yyyymm numeric. End month in YYYYMM format
+#' @param start_yyyymm numeric or character. Start month in YYYYMM format.
+#'   Character values (e.g., from Snowflake) are automatically coerced to numeric.
+#' @param end_yyyymm numeric or character. End month in YYYYMM format.
+#'   Character values (e.g., from Snowflake) are automatically coerced to numeric.
 #' @return data.frame with MonthYYYYMM column
 #' @keywords internal
 GenerateMonthSeq <- function(start_yyyymm, end_yyyymm) {
+  # Coerce to numeric to handle database backends (e.g., Snowflake) that return character
+  start_yyyymm <- as.numeric(start_yyyymm)
+  end_yyyymm <- as.numeric(end_yyyymm)
+  
   start_year <- floor(start_yyyymm / 100)
   start_month <- start_yyyymm %% 100
   end_year <- floor(end_yyyymm / 100)

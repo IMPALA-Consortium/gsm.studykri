@@ -41,7 +41,36 @@ library(gsm.studykri)
 
 ## Introduction
 
-{gsm.studykir} functions can be executed on a database back-end instead of relying on in-memory calculations
+{gsm.studykir} functions can be executed on a database back-end instead of relying on in-memory calculations. 
+
+The package supports various database backends including DuckDB, PostgreSQL, and Snowflake. For backends that use large integer values for random number generation (such as Snowflake), use the `vDbIntRandomRange` parameter in bootstrap functions to ensure proper normalization of random values.
+
+## Database Backend Compatibility
+
+### Random Number Generation
+
+Most SQL databases translate R's `runif()` to a `RANDOM()` function that returns decimal values between 0 and 1. However, some databases (notably Snowflake) return large integers instead. For these backends, you must specify the integer range using the `vDbIntRandomRange` parameter.
+
+**Common Random Number Ranges:**
+
+- **Snowflake** (signed 64-bit): `c(-9223372036854775808, 9223372036854775807)` (range: −2^63 to 2^63−1)
+- **Standard databases** (DuckDB, PostgreSQL, etc.): `NULL` (default, returns 0-1 decimals)
+
+When `vDbIntRandomRange` is specified, the package automatically normalizes the integer values to the 0-1 range using the formula:
+
+```r
+normalized_value = (random_value - min_value) / (max_value - min_value)
+```
+
+**How to determine your database's random range:**
+
+If you're unsure whether your database backend needs normalization, run this query:
+
+```sql
+SELECT RANDOM() FROM your_table LIMIT 10;
+```
+
+If the values are between 0 and 1, use the default (`vDbIntRandomRange = NULL`). If they're large integers, specify the appropriate range.
 
 
 ## Simulate Data Set and Save to DuckDb
@@ -221,6 +250,41 @@ tblBoundsRef
 
 tblTransformed
 ```
+
+## Using Snowflake or Other Integer Random Backends
+
+If you're using Snowflake or another database that returns large integers for `RANDOM()`, add the `vDbIntRandomRange` parameter to your bootstrap function calls:
+
+```{r eval=FALSE}
+# For Snowflake: specify signed 64-bit integer range
+Bounds_Wide_Snowflake <- purrr::map(
+  lJoined, ~ Analyze_StudyKRI_PredictBounds(
+    .,
+    dfStudyRef = tblStudyRef,
+    tblBootstrapReps = tblRep,
+    tblMonthSequence = tblMonths,
+    vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+  )
+)
+
+BoundsRef_Wide_Snowflake <- purrr::map(
+  lJoined, ~ Analyze_StudyKRI_PredictBoundsRef(
+    .,
+    dfStudyRef = tblStudyRef,
+    tblBootstrapReps = tblRep,
+    tblMonthSequence = tblMonths,
+    vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+  )
+)
+```
+
+The `vDbIntRandomRange` parameter should be added to:
+
+- `Analyze_StudyKRI_PredictBounds()`
+- `Analyze_StudyKRI_PredictBoundsRef()`
+- `Analyze_StudyKRI_PredictBoundsRefSet()`
+
+This ensures that random values are properly normalized regardless of the database backend's random number generation method.
 
 Finally before plotting we need to collect the results into memory.
 

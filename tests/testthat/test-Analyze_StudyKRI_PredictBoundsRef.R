@@ -562,4 +562,47 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet validates all numeric parameters
   )
 })
 
+# Test vDbIntRandomRange parameter
+test_that("Analyze_StudyKRI_PredictBoundsRef works with vDbIntRandomRange parameter", {
+  # Create minimal test data
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "REF1", "REF2"), each = 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4, times = 3),
+    Numerator = sample(0:5, 36, replace = TRUE),
+    Denominator = sample(10:20, 36, replace = TRUE),
+    MonthYYYYMM = rep(rep(202301:202302, each = 6), times = 3),
+    Metric = runif(36, 0.1, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Create study reference mapping
+  dfStudyRef <- data.frame(
+    study = "STUDY1",
+    studyref = c("REF1", "REF2"),
+    stringsAsFactors = FALSE
+  )
+
+  # Test with Snowflake range
+  result <- Analyze_StudyKRI_PredictBoundsRef(
+    dfInput = dfTest,
+    dfStudyRef = dfStudyRef,
+    nBootstrapReps = 10,
+    nConfLevel = 0.95,
+    seed = 123,
+    vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+  )
+
+  # Verify function completes without error and returns expected structure
+  expect_s3_class(result, "data.frame")
+  expect_true("StudyID" %in% colnames(result))
+  expect_true("StudyRefID" %in% colnames(result))
+  expect_true("StudyMonth" %in% colnames(result))
+  expect_true(any(grepl("^Median", colnames(result))))
+  expect_true(any(grepl("^Lower", colnames(result))))
+  expect_true(any(grepl("^Upper", colnames(result))))
+  expect_equal(unique(result$StudyID), "STUDY1")
+  expect_true(nrow(result) > 0)
+})
+
 # Lazy table tests have been moved to test-dbplyr-compatibility.R

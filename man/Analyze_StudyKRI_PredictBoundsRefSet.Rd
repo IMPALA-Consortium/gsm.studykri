@@ -14,7 +14,8 @@ Analyze_StudyKRI_PredictBoundsRefSet(
   strStudyMonthCol = "StudyMonth",
   seed = NULL,
   tblBootstrapReps = NULL,
-  tblMonthSequence = NULL
+  tblMonthSequence = NULL,
+  vDbIntRandomRange = NULL
 )
 }
 \arguments{
@@ -50,6 +51,17 @@ create temp table (requires write privileges).}
 Optional pre-generated month sequence with only a \code{MonthYYYYMM} column
 (output of \code{GenerateMonthSeq()}). If NULL, attempts to create temp table
 (requires write privileges).}
+
+\item{vDbIntRandomRange}{Numeric vector of length 2 or NULL. When using database
+backends that return large integers instead of 0-1 decimals for random numbers,
+specify the min/max range as c(min, max). Accepts both numeric and character
+vectors (character values are automatically converted to numeric, useful when
+reading from YAML files). Common values:
+\itemize{
+\item Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)
+\item Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+Default: NULL (no normalization, assumes 0-1 decimal random values).
+}}
 }
 \value{
 A tibble (or tbl_lazy if input was lazy) with confidence intervals.
@@ -90,6 +102,14 @@ dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
   nBootstrapReps = 100, # Use small number for example
   nConfLevel = 0.95,
   seed = 42
+)
+
+# Example with Snowflake backend
+dfGroupBounds_Snowflake <- Analyze_StudyKRI_PredictBoundsRefSet(
+  dfInput = dfSiteLevel,
+  vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
+  nBootstrapReps = 100,
+  vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
 )
 
 print(head(dfGroupBounds))

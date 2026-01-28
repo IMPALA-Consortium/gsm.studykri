@@ -4,7 +4,7 @@
 \alias{JoinKRIByDenominator}
 \title{Join KRI Analysis_Input by Denominator Type}
 \usage{
-JoinKRIByDenominator(dfInput, dfMetrics)
+JoinKRIByDenominator(dfInput, dfMetrics, bSkipValidation = FALSE)
 }
 \arguments{
 \item{dfInput}{data.frame. Bound Analysis_Input from BindResults.
@@ -13,6 +13,12 @@ StudyID, MonthYYYYMM, and DenominatorType.}
 
 \item{dfMetrics}{data.frame. Metrics metadata from MakeMetric.
 Must contain columns: MetricID and AccrualThreshold.}
+
+\item{bSkipValidation}{logical. If TRUE, skips validation checks that require
+collect() operations (AccrualThreshold consistency, GroupLevel consistency,
+and Denominator value matching). Use this to improve performance with large
+database tables when you are confident your workflow configuration is correct.
+Default: FALSE.}
 }
 \value{
 Named list with one tibble per denominator type. Each tibble
@@ -53,11 +59,21 @@ names(lJoined)
 \dontrun{
 dfMetrics_mismatched <- data.frame(
   MetricID = c("kri0001", "kri0003"),
-  AccrualThreshold = c(180, 25)  # Different values!
+  AccrualThreshold = c(180, 25) # Different values!
 )
 
 # This will throw an error:
 lJoined <- JoinKRIByDenominator(dfInput, dfMetrics_mismatched)
+}
+
+# Example 3: Skip validation for performance with large database tables
+\dontrun{
+# When working with lazy tables and confident about data quality:
+lJoined <- JoinKRIByDenominator(
+  dfInput = tbl_lazy_input,
+  dfMetrics = dfMetrics,
+  bSkipValidation = TRUE
+)
 }
 
 }

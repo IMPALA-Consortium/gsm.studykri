@@ -36,6 +36,14 @@
 #'   Optional pre-generated month sequence with only a `MonthYYYYMM` column
 #'   (output of `GenerateMonthSeq()`). If NULL, attempts to create temp table
 #'   (requires write privileges).
+#' @param vDbIntRandomRange Numeric vector of length 2 or NULL. When using database
+#'   backends that return large integers instead of 0-1 decimals for random numbers,
+#'   specify the min/max range as c(min, max). Accepts both numeric and character
+#'   vectors (character values are automatically converted to numeric, useful when
+#'   reading from YAML files). Common values:
+#'   - Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)
+#'   - Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+#'   Default: NULL (no normalization, assumes 0-1 decimal random values).
 #'
 #' @return A tibble (or tbl_lazy if input was lazy) with confidence intervals.
 #'   Output columns: `StudyMonth`, `Median_*`, `Lower_*`, `Upper_*` for each Metric column,
@@ -64,6 +72,14 @@
 #'   seed = 42
 #' )
 #'
+#' # Example with Snowflake backend
+#' dfGroupBounds_Snowflake <- Analyze_StudyKRI_PredictBoundsRefSet(
+#'   dfInput = dfSiteLevel,
+#'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
+#'   nBootstrapReps = 100,
+#'   vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+#' )
+#'
 #' print(head(dfGroupBounds))
 #'
 #' @export
@@ -77,7 +93,8 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     strStudyMonthCol = "StudyMonth",
     seed = NULL,
     tblBootstrapReps = NULL,
-    tblMonthSequence = NULL) {
+    tblMonthSequence = NULL,
+    vDbIntRandomRange = NULL) {
   # Input Validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfInput, c("data.frame", "tbl"))) {
     stop("dfInput must be a data.frame or tbl object")
@@ -154,7 +171,8 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     strStudyCol = strStudyCol,
     strGroupCol = strGroupCol,
     seed = seed,
-    tblBootstrapReps = tblBootstrapReps
+    tblBootstrapReps = tblBootstrapReps,
+    vDbIntRandomRange = vDbIntRandomRange
   )
 
   # Transform to study-level, but group by BootstrapRep only (not StudyID)
@@ -212,6 +230,14 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #'   Optional pre-generated month sequence with only a `MonthYYYYMM` column
 #'   (output of `GenerateMonthSeq()`). If NULL, attempts to create temp table
 #'   (requires write privileges).
+#' @param vDbIntRandomRange Numeric vector of length 2 or NULL. When using database
+#'   backends that return large integers instead of 0-1 decimals for random numbers,
+#'   specify the min/max range as c(min, max). Accepts both numeric and character
+#'   vectors (character values are automatically converted to numeric, useful when
+#'   reading from YAML files). Common values:
+#'   - Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)
+#'   - Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+#'   Default: NULL (no normalization, assumes 0-1 decimal random values).
 #'
 #' @return A tibble (or tbl_lazy if input was lazy) with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
 #'   `Median_*`, `Lower_*`, `Upper_*` for each Metric column, `BootstrapCount`,
@@ -243,6 +269,14 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #'   seed = 42
 #' )
 #'
+#' # Example with Snowflake backend
+#' dfBounds_Snowflake <- Analyze_StudyKRI_PredictBoundsRef(
+#'   dfInput = dfSiteLevel,
+#'   dfStudyRef = dfStudyRef,
+#'   nBootstrapReps = 100,
+#'   vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+#' )
+#'
 #' print(head(dfBounds))
 #'
 #' @export
@@ -255,7 +289,8 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     strStudyMonthCol = "StudyMonth",
     seed = NULL,
     tblBootstrapReps = NULL,
-    tblMonthSequence = NULL) {
+    tblMonthSequence = NULL,
+    vDbIntRandomRange = NULL) {
   # Input validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfStudyRef, c("data.frame", "tbl"))) {
     stop("dfStudyRef must be a data.frame or tbl object")
@@ -298,7 +333,8 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       strStudyMonthCol = strStudyMonthCol,
       seed = seed,
       tblBootstrapReps = tblBootstrapReps,
-      tblMonthSequence = tblMonthSequence
+      tblMonthSequence = tblMonthSequence,
+      vDbIntRandomRange = vDbIntRandomRange
     )
 
     # Compute constant values outside mutate to avoid SQL translation issues

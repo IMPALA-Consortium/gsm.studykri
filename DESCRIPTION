@@ -1,6 +1,6 @@
 Package: gsm.studykri
 Title: Bootstrap Study KRI comnfidence intervals based on reference studies
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: 
     person("Bjoern", "Koneswarakantha", , "bjoern.koneswarakantha@roche.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-4585-7799"))

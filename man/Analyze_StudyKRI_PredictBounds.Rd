@@ -14,7 +14,8 @@ Analyze_StudyKRI_PredictBounds(
   tblMonthSequence = NULL,
   strStudyCol = "StudyID",
   strGroupCol = "GroupID",
-  strStudyMonthCol = "StudyMonth"
+  strStudyMonthCol = "StudyMonth",
+  vDbIntRandomRange = NULL
 )
 }
 \arguments{
@@ -47,6 +48,17 @@ Default: "StudyID".}
 \item{strGroupCol}{character. Column name for group identifier. Default: "GroupID".}
 
 \item{strStudyMonthCol}{character. Name of study month column. Default: "StudyMonth".}
+
+\item{vDbIntRandomRange}{Numeric vector of length 2 or NULL. When using database
+backends that return large integers instead of 0-1 decimals for random numbers,
+specify the min/max range as c(min, max). Accepts both numeric and character
+vectors (character values are automatically converted to numeric, useful when
+reading from YAML files). Common values:
+\itemize{
+\item Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)
+\item Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+Default: NULL (no normalization, assumes 0-1 decimal random values).
+}}
 }
 \value{
 A tibble (or tbl_lazy if input was lazy) with confidence intervals:
@@ -74,7 +86,7 @@ Input_CountSiteByMonth with nMinDenominator parameter.
 \dontrun{
 # Example 1: Calculate bounds for all studies in dfInput
 Bounds_Wide <- purrr::map(
-  lJoined, 
+  lJoined,
   ~ Analyze_StudyKRI_PredictBounds(.)
 )
 
@@ -86,8 +98,17 @@ dfStudyRef <- data.frame(
 
 # Calculate bounds for target studies (AA-1 and AA-2) specified in first column
 Bounds_Wide <- purrr::map(
-  lJoined, 
+  lJoined,
   ~ Analyze_StudyKRI_PredictBounds(., dfStudyRef = dfStudyRef)
+)
+
+# Example 3: Using Snowflake backend with integer random values
+Bounds_Wide_Snowflake <- purrr::map(
+  lJoined,
+  ~ Analyze_StudyKRI_PredictBounds(
+    .,
+    vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+  )
 )
 }
 

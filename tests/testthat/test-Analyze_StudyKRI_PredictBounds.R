@@ -538,3 +538,84 @@ test_that("CalculateStudyBounds errors when no Metric column found", {
     "dfInput must have at least one Metric column"
   )
 })
+
+# Test vDbIntRandomRange parameter
+test_that("Analyze_StudyKRI_PredictBounds works with vDbIntRandomRange parameter", {
+  # Create minimal test data
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4),
+    Numerator = sample(0:5, 12, replace = TRUE),
+    Denominator = sample(10:20, 12, replace = TRUE),
+    MonthYYYYMM = rep(202301:202302, each = 6),
+    Metric = runif(12, 0.1, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Test with Snowflake range
+  result <- Analyze_StudyKRI_PredictBounds(
+    dfInput = dfTest,
+    nBootstrapReps = 10,
+    nConfLevel = 0.95,
+    seed = 123,
+    vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+  )
+
+  # Verify function completes without error and returns expected structure
+  expect_s3_class(result, "data.frame")
+  expect_true("StudyID" %in% colnames(result))
+  expect_true("StudyMonth" %in% colnames(result))
+  expect_true(any(grepl("^Median", colnames(result))))
+  expect_true(any(grepl("^Lower", colnames(result))))
+  expect_true(any(grepl("^Upper", colnames(result))))
+  expect_equal(unique(result$StudyID), "STUDY1")
+  expect_true(nrow(result) > 0)
+})
+
+test_that("Analyze_StudyKRI_PredictBounds handles character vDbIntRandomRange from YAML", {
+  # Create minimal test data
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4),
+    Numerator = sample(0:5, 12, replace = TRUE),
+    Denominator = sample(10:20, 12, replace = TRUE),
+    MonthYYYYMM = rep(202301:202302, each = 6),
+    Metric = runif(12, 0.1, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Test with character vector (as YAML would provide)
+  result <- Analyze_StudyKRI_PredictBounds(
+    dfInput = dfTest,
+    nBootstrapReps = 10,
+    seed = 123,
+    vDbIntRandomRange = c("-9223372036854775808", "9223372036854775807")
+  )
+
+  # Verify function completes and returns valid results
+  expect_s3_class(result, "data.frame")
+  expect_true(nrow(result) > 0)
+})
+
+test_that("Analyze_StudyKRI_PredictBounds rejects invalid character values", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4),
+    Numerator = sample(0:5, 12, replace = TRUE),
+    Denominator = sample(10:20, 12, replace = TRUE),
+    MonthYYYYMM = rep(202301:202302, each = 6),
+    Metric = runif(12, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  # Test with non-numeric character values
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      vDbIntRandomRange = c("invalid", "values")
+    ),
+    "non-numeric character values"
+  )
+})
