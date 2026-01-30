@@ -114,7 +114,7 @@ GenerateMonthSeq <- function(start_yyyymm, end_yyyymm) {
   # Coerce to numeric to handle database backends (e.g., Snowflake) that return character
   start_yyyymm <- as.numeric(start_yyyymm)
   end_yyyymm <- as.numeric(end_yyyymm)
-  
+
   start_year <- floor(start_yyyymm / 100)
   start_month <- start_yyyymm %% 100
   end_year <- floor(end_yyyymm / 100)

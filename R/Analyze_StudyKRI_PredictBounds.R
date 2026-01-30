@@ -352,17 +352,19 @@ BootstrapStudyKRI <- function(
       vDbIntRandomRange <- tryCatch(
         as.numeric(vDbIntRandomRange),
         warning = function(w) {
-          stop("vDbIntRandomRange contains non-numeric character values: ", 
-               paste(vDbIntRandomRange, collapse = ", "))
+          stop(
+            "vDbIntRandomRange contains non-numeric character values: ",
+            paste(vDbIntRandomRange, collapse = ", ")
+          )
         }
       )
     }
-    
+
     # Validate after coercion
     if (!is.numeric(vDbIntRandomRange) || length(vDbIntRandomRange) != 2) {
       stop("vDbIntRandomRange must be NULL or a numeric vector of length 2")
     }
-    
+
     if (any(is.na(vDbIntRandomRange))) {
       stop("vDbIntRandomRange contains NA values after conversion")
     }

@@ -349,13 +349,16 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     # Filter to get reference studies for this target study
     studyRefRow <- dfStudyRefCollected %>%
       dplyr::filter(.data[[strStudyCol]] == .env$study)
-    
+
     vRefStudies <- studyRefRow %>%
       dplyr::pull(.data[[strStudyRefCol]])
 
     # Get nMinGroups if available (performance optimization)
     nMinGroupsProvided <- if (bHasMinGroups) {
-      studyRefRow %>% dplyr::pull(.data[[strMinGroupsCol]]) %>% unique() %>% as.integer()
+      studyRefRow %>%
+        dplyr::pull(.data[[strMinGroupsCol]]) %>%
+        unique() %>%
+        as.integer()
     } else {
       NULL
     }

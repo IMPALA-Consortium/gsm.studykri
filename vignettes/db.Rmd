@@ -336,7 +336,7 @@ The StudyRef.yaml workflow selects only the required `studyid` and `studyrefid` 
 dfStudyRef <- tibble(
   studyid = "AA-1",
   studyrefid = c("AA-2", "AA-3", "AA-4"),
-  MinGroups = 8  # Pre-calculated minimum across reference studies
+  MinGroups = 8 # Pre-calculated minimum across reference studies
 )
 
 # Write to database
@@ -377,7 +377,7 @@ dfStudyRef_Custom <- tibble(
 BoundsRef_Custom <- Analyze_StudyKRI_PredictBoundsRef(
   dfInput = tblInput,
   dfStudyRef = tblStudyRef_Custom,
-  strMinGroupsCol = "min_grp_cnt",  # Specify custom column name
+  strMinGroupsCol = "min_grp_cnt", # Specify custom column name
   tblBootstrapReps = tblRep,
   tblMonthSequence = tblMonths
 )
@@ -395,9 +395,9 @@ The `JoinKRIByDenominator()` function performs several validation checks that re
 
 ```{r eval=FALSE}
 lJoined <- JoinKRIByDenominator(
-  tblInput, 
+  tblInput,
   dfMetrics,
-  bSkipValidation = TRUE  # Disable validation collect() operations
+  bSkipValidation = TRUE # Disable validation collect() operations
 )
 ```
 
