@@ -619,3 +619,64 @@ test_that("Analyze_StudyKRI_PredictBounds rejects invalid character values", {
     "non-numeric character values"
   )
 })
+
+test_that("Analyze_StudyKRI_PredictBounds rejects character vector with wrong length", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4),
+    Numerator = sample(0:5, 12, replace = TRUE),
+    Denominator = sample(10:20, 12, replace = TRUE),
+    MonthYYYYMM = rep(202301:202302, each = 6),
+    Metric = runif(12, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  # Test with single numeric string (wrong length)
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      vDbIntRandomRange = c("100")
+    ),
+    "vDbIntRandomRange must be NULL or a numeric vector of length 2"
+  )
+
+  # Test with three numeric strings (wrong length)
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      vDbIntRandomRange = c("1", "2", "3")
+    ),
+    "vDbIntRandomRange must be NULL or a numeric vector of length 2"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBounds rejects NA values after conversion", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4),
+    Numerator = sample(0:5, 12, replace = TRUE),
+    Denominator = sample(10:20, 12, replace = TRUE),
+    MonthYYYYMM = rep(202301:202302, each = 6),
+    Metric = runif(12, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  # Test with one valid and one invalid numeric string
+  # as.numeric(c("100", "abc")) produces c(100, NA)
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      vDbIntRandomRange = c("100", "not_a_number")
+    ),
+    "contains NA values after conversion|non-numeric character values"
+  )
+
+  # Test with numeric vector containing NA
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      vDbIntRandomRange = c(100, NA)
+    ),
+    "contains NA values after conversion"
+  )
+})

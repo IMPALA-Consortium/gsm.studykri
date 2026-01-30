@@ -605,4 +605,150 @@ test_that("Analyze_StudyKRI_PredictBoundsRef works with vDbIntRandomRange parame
   expect_true(nrow(result) > 0)
 })
 
+test_that("Analyze_StudyKRI_PredictBoundsRefSet validates nMinGroups parameter", {
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2"), each = 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4, times = 2),
+    Numerator = sample(0:5, 24, replace = TRUE),
+    Denominator = sample(10:20, 24, replace = TRUE),
+    MonthYYYYMM = rep(rep(202301:202302, each = 6), times = 2),
+    Metric = runif(24, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  # Test with non-numeric nMinGroups
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = c("STUDY1", "STUDY2"),
+      nMinGroups = "invalid"
+    ),
+    "nMinGroups must be a single positive integer"
+  )
+
+  # Test with vector length > 1
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = c("STUDY1", "STUDY2"),
+      nMinGroups = c(2, 3)
+    ),
+    "nMinGroups must be a single positive integer"
+  )
+
+  # Test with zero
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = c("STUDY1", "STUDY2"),
+      nMinGroups = 0
+    ),
+    "nMinGroups must be a single positive integer"
+  )
+
+  # Test with negative value
+  expect_error(
+    Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = c("STUDY1", "STUDY2"),
+      nMinGroups = -5
+    ),
+    "nMinGroups must be a single positive integer"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRefSet uses provided nMinGroups", {
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2"), each = 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4, times = 2),
+    Numerator = sample(0:5, 24, replace = TRUE),
+    Denominator = sample(10:20, 24, replace = TRUE),
+    MonthYYYYMM = rep(rep(202301:202302, each = 6), times = 2),
+    Metric = runif(24, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  # Test with valid nMinGroups - should succeed and use provided value
+  expect_message(
+    result <- Analyze_StudyKRI_PredictBoundsRefSet(
+      dfInput = dfTest,
+      vStudyFilter = c("STUDY1", "STUDY2"),
+      nBootstrapReps = 10,
+      nMinGroups = 2,
+      seed = 123
+    ),
+    "Using provided minimum group count: 2"
+  )
+
+  expect_s3_class(result, "data.frame")
+  expect_true(nrow(result) > 0)
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRef uses MinGroups column from StudyRef", {
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "REF1", "REF2"), each = 12),
+    GroupID = rep(paste0("Site", 1:4), each = 3, times = 3),
+    Numerator = sample(0:5, 36, replace = TRUE),
+    Denominator = sample(10:20, 36, replace = TRUE),
+    MonthYYYYMM = rep(rep(202301:202302, each = 6), times = 3),
+    Metric = runif(36, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  # Create study reference mapping WITH MinGroups column
+  dfStudyRef <- data.frame(
+    study = "STUDY1",
+    studyref = c("REF1", "REF2"),
+    MinGroups = 3 # Pre-calculated value
+  )
+
+  # Should use provided MinGroups and not calculate
+  expect_message(
+    result <- Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfTest,
+      dfStudyRef = dfStudyRef,
+      nBootstrapReps = 10,
+      seed = 123
+    ),
+    "Using provided minimum group count: 3"
+  )
+
+  expect_s3_class(result, "data.frame")
+  expect_true(nrow(result) > 0)
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRef uses custom MinGroups column name", {
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "REF1", "REF2"), each = 12),
+    GroupID = rep(paste0("Site", 1:4), each = 3, times = 3),
+    Numerator = sample(0:5, 36, replace = TRUE),
+    Denominator = sample(10:20, 36, replace = TRUE),
+    MonthYYYYMM = rep(rep(202301:202302, each = 6), times = 3),
+    Metric = runif(36, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  # Create study reference mapping with CUSTOM column name
+  dfStudyRef <- data.frame(
+    study = "STUDY1",
+    studyref = c("REF1", "REF2"),
+    custom_min_grps = 2
+  )
+
+  # Should use custom column via strMinGroupsCol parameter
+  expect_message(
+    result <- Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfTest,
+      dfStudyRef = dfStudyRef,
+      strMinGroupsCol = "custom_min_grps",
+      nBootstrapReps = 10,
+      seed = 123
+    ),
+    "Using provided minimum group count: 2"
+  )
+
+  expect_s3_class(result, "data.frame")
+  expect_true(nrow(result) > 0)
+})
+
 # Lazy table tests have been moved to test-dbplyr-compatibility.R
