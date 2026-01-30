@@ -44,6 +44,11 @@
 #'   - Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)
 #'   - Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
 #'   Default: NULL (no normalization, assumes 0-1 decimal random values).
+#' @param nMinGroups integer or NULL. Minimum number of groups for bootstrapping.
+#'   If NULL (default), calculated as min(n_distinct(GroupID)) across vStudyFilter.
+#'   Providing this value avoids an expensive collect() operation on database backends.
+#'   This value should represent the minimum group count across all reference studies.
+#'   Default: NULL.
 #'
 #' @return A tibble (or tbl_lazy if input was lazy) with confidence intervals.
 #'   Output columns: `StudyMonth`, `Median_*`, `Lower_*`, `Upper_*` for each Metric column,
@@ -94,7 +99,8 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL,
-    vDbIntRandomRange = NULL) {
+    vDbIntRandomRange = NULL,
+    nMinGroups = NULL) {
   # Input Validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfInput, c("data.frame", "tbl"))) {
     stop("dfInput must be a data.frame or tbl object")
@@ -150,18 +156,25 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     stop("No data found for specified studies in vStudyFilter")
   }
 
-  # Count unique groups per study and find minimum
-  dfGroupCounts <- dfFiltered %>%
-    dplyr::summarise(
-      GroupCount = dplyr::n_distinct(.data[[strGroupCol]]),
-      .by = dplyr::all_of(.env$strStudyCol)
-    ) %>%
-    dplyr::collect()
+  # Count unique groups per study and find minimum (ONLY if not provided)
+  if (is.null(nMinGroups)) {
+    dfGroupCounts <- dfFiltered %>%
+      dplyr::summarise(
+        GroupCount = dplyr::n_distinct(.data[[strGroupCol]]),
+        .by = dplyr::all_of(.env$strStudyCol)
+      ) %>%
+      dplyr::collect()
 
-  nMinGroups <- min(dfGroupCounts$GroupCount)
-
-  # Inform user
-  message(sprintf("Resampling with minimum group count: %.0f", nMinGroups))
+    nMinGroups <- min(dfGroupCounts$GroupCount)
+    message(sprintf("Calculated minimum group count: %.0f", nMinGroups))
+  } else {
+    # Validate provided nMinGroups
+    if (!is.numeric(nMinGroups) || length(nMinGroups) != 1 || nMinGroups < 1) {
+      stop("nMinGroups must be a single positive integer")
+    }
+    nMinGroups <- as.integer(nMinGroups)
+    message(sprintf("Using provided minimum group count: %.0f", nMinGroups))
+  }
 
   # Resample each study independently with nGroups = nMinGroups
   dfBootstrapped <- BootstrapStudyKRI(
@@ -211,15 +224,27 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' reference groups. For each study in `dfStudyRef`, calculates bounds using its
 #' mapped reference studies.
 #'
+#' @details
+#' For optimal performance with database backends:
+#' - Include a MinGroups column in dfStudyRef (or specify custom name via strMinGroupsCol)
+#'   to avoid collecting the full dataset to count groups
+#' - Calculate as: min(n_distinct(GroupID)) across all reference studies per target study
+#' - This avoids materializing the entire Analysis_Input table just to count groups
+#'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
 #'   Must contain one or more `Numerator_*` columns, `Denominator`, `MonthYYYYMM`.
 #' @param dfStudyRef data.frame or tbl_lazy. Study-to-reference mappings with at least
 #'   two columns: first column = target studies, second column = reference studies.
 #'   Can have multiple rows per target study (one row per target-reference pair).
+#'   Optional column (name specified by strMinGroupsCol): minimum group count for
+#'   performance optimization.
 #' @param nBootstrapReps integer. Number of bootstrap replicates (default: 1000).
 #' @param nConfLevel numeric. Confidence level for the bounds (default: 0.95).
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
 #' @param strStudyMonthCol character. Column name for study month (default: "StudyMonth").
+#' @param strMinGroupsCol character. Column name for minimum groups in dfStudyRef (default: "MinGroups").
+#'   If this column exists in dfStudyRef, its value will be used instead of calculating
+#'   minimum group counts, improving performance with database backends.
 #' @param seed integer or NULL. Random seed (default: NULL).
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
@@ -287,6 +312,7 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     nConfLevel = 0.95,
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
+    strMinGroupsCol = "MinGroups",
     seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL,
@@ -309,6 +335,9 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
   strStudyCol <- colnames(dfStudyRefCollected)[1]
   strStudyRefCol <- colnames(dfStudyRefCollected)[2]
 
+  # Check if MinGroups column exists by name
+  bHasMinGroups <- strMinGroupsCol %in% colnames(dfStudyRefCollected)
+
   # Get unique target studies
   vTargetStudies <- unique(dfStudyRefCollected[[strStudyCol]])
 
@@ -318,9 +347,18 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
   # Loop over each target study
   for (study in vTargetStudies) {
     # Filter to get reference studies for this target study
-    vRefStudies <- dfStudyRefCollected %>%
-      dplyr::filter(.data[[strStudyCol]] == .env$study) %>%
+    studyRefRow <- dfStudyRefCollected %>%
+      dplyr::filter(.data[[strStudyCol]] == .env$study)
+    
+    vRefStudies <- studyRefRow %>%
       dplyr::pull(.data[[strStudyRefCol]])
+
+    # Get nMinGroups if available (performance optimization)
+    nMinGroupsProvided <- if (bHasMinGroups) {
+      studyRefRow %>% dplyr::pull(.data[[strMinGroupsCol]]) %>% unique() %>% as.integer()
+    } else {
+      NULL
+    }
 
     # Call the set function
     dfBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
@@ -334,7 +372,8 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       seed = seed,
       tblBootstrapReps = tblBootstrapReps,
       tblMonthSequence = tblMonthSequence,
-      vDbIntRandomRange = vDbIntRandomRange
+      vDbIntRandomRange = vDbIntRandomRange,
+      nMinGroups = nMinGroupsProvided
     )
 
     # Compute constant values outside mutate to avoid SQL translation issues

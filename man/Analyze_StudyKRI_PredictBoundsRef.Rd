@@ -11,6 +11,7 @@ Analyze_StudyKRI_PredictBoundsRef(
   nConfLevel = 0.95,
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
+  strMinGroupsCol = "MinGroups",
   seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL,
@@ -23,7 +24,9 @@ Must contain one or more \verb{Numerator_*} columns, \code{Denominator}, \code{M
 
 \item{dfStudyRef}{data.frame or tbl_lazy. Study-to-reference mappings with at least
 two columns: first column = target studies, second column = reference studies.
-Can have multiple rows per target study (one row per target-reference pair).}
+Can have multiple rows per target study (one row per target-reference pair).
+Optional column (name specified by strMinGroupsCol): minimum group count for
+performance optimization.}
 
 \item{nBootstrapReps}{integer. Number of bootstrap replicates (default: 1000).}
 
@@ -32,6 +35,10 @@ Can have multiple rows per target study (one row per target-reference pair).}
 \item{strGroupCol}{character. Column name for group identifier (default: "GroupID").}
 
 \item{strStudyMonthCol}{character. Column name for study month (default: "StudyMonth").}
+
+\item{strMinGroupsCol}{character. Column name for minimum groups in dfStudyRef (default: "MinGroups").
+If this column exists in dfStudyRef, its value will be used instead of calculating
+minimum group counts, improving performance with database backends.}
 
 \item{seed}{integer or NULL. Random seed (default: NULL).}
 
@@ -66,6 +73,15 @@ A tibble (or tbl_lazy if input was lazy) with columns: \code{StudyID}, \code{Stu
 Wrapper for \code{Analyze_StudyKRI_PredictBoundsRefSet} that applies study-specific
 reference groups. For each study in \code{dfStudyRef}, calculates bounds using its
 mapped reference studies.
+}
+\details{
+For optimal performance with database backends:
+\itemize{
+\item Include a MinGroups column in dfStudyRef (or specify custom name via strMinGroupsCol)
+to avoid collecting the full dataset to count groups
+\item Calculate as: min(n_distinct(GroupID)) across all reference studies per target study
+\item This avoids materializing the entire Analysis_Input table just to count groups
+}
 }
 \examples{
 # Create study reference mapping

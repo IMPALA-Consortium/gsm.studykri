@@ -286,6 +286,157 @@ The `vDbIntRandomRange` parameter should be added to:
 
 This ensures that random values are properly normalized regardless of the database backend's random number generation method.
 
+## Performance Optimization for Database Backends
+
+### Overview of Collect Operations
+
+When working with database backends, certain operations require materializing data from the database into R memory using `collect()`. Understanding these operations helps optimize performance:
+
+| Location | Purpose | Data Size | Avoidable? | How to Avoid |
+|----------|---------|-----------|------------|--------------|
+| **`Analyze_StudyKRI_PredictBoundsRefSet`** | Calculate min group count | Full filtered dataset | **Yes** | Add MinGroups column to StudyRef |
+| `Analyze_StudyKRI_PredictBoundsRef` | Extract study mappings | Small (< 100 rows) | No - needed for R loop | N/A |
+| `Transform_CumCount` | Get min/max MonthYYYYMM | 2 numeric values | No - minimal impact | N/A |
+| `JoinKRIByDenominator` | Validation checks | Varies | Yes | Use `bSkipValidation = TRUE` |
+| Final reporting | Create charts | Full result set | No - required | N/A |
+
+### Optimization Strategy 1: Pass nMinGroups via StudyRef
+
+The most impactful optimization is avoiding the collection of the full dataset to calculate minimum group counts. By pre-calculating and including a MinGroups column in your StudyRef table, you can avoid materializing potentially millions of rows.
+
+**How to calculate MinGroups:**
+
+For each target study in your StudyRef mapping, calculate the minimum group count across all its reference studies:
+
+```sql
+-- Example: Calculate MinGroups for each target-reference set
+WITH GroupCounts AS (
+  SELECT 
+    StudyID,
+    COUNT(DISTINCT GroupID) AS group_count
+  FROM Analysis_Input
+  WHERE StudyID IN ('REF_STUDY_1', 'REF_STUDY_2', 'REF_STUDY_3')
+  GROUP BY StudyID
+)
+SELECT 
+  'TARGET_STUDY' AS studyid,
+  'REF_STUDY_1' AS studyrefid,  -- repeat for each reference
+  MIN(group_count) AS MinGroups
+FROM GroupCounts;
+```
+
+**Then include it in your StudyRef table:**
+
+The StudyRef.yaml workflow selects only the required `studyid` and `studyrefid` columns. To use the MinGroups optimization, you have two options:
+
+**Option 1: Add MinGroups directly to your StudyRef data**
+
+```{r eval=FALSE}
+# Create Raw_StudyRef with MinGroups column
+dfStudyRef <- tibble(
+  studyid = "AA-1",
+  studyrefid = c("AA-2", "AA-3", "AA-4"),
+  MinGroups = 8  # Pre-calculated minimum across reference studies
+)
+
+# Write to database
+DBI::dbWriteTable(con, "StudyRef", dfStudyRef, overwrite = TRUE)
+tblStudyRef <- tbl(con, "StudyRef")
+
+# Use in analysis - MinGroups will be automatically detected and used
+BoundsRef_Optimized <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = tblInput,
+  dfStudyRef = tblStudyRef,
+  tblBootstrapReps = tblRep,
+  tblMonthSequence = tblMonths
+)
+```
+
+**Option 2: Use a custom mapping query**
+
+If you need to transform the column name, create a custom StudyRef.yaml workflow:
+
+```yaml
+steps:
+  - output: Mapped_StudyRef
+    name: gsm.core::RunQuery
+    params:
+      df: Raw_StudyRef
+      strQuery: "SELECT studyid AS study, studyrefid AS studyref, mingroups AS MinGroups FROM df"
+```
+
+**Option 3: Use a custom column name**
+
+```{r eval=FALSE}
+dfStudyRef_Custom <- tibble(
+  studyid = "AA-1",
+  studyrefid = c("AA-2", "AA-3", "AA-4"),
+  min_grp_cnt = 8
+)
+
+BoundsRef_Custom <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = tblInput,
+  dfStudyRef = tblStudyRef_Custom,
+  strMinGroupsCol = "min_grp_cnt",  # Specify custom column name
+  tblBootstrapReps = tblRep,
+  tblMonthSequence = tblMonths
+)
+```
+
+**Performance Impact:**
+
+- **Before**: Collects full filtered dataset → groups by StudyID and GroupID → calculates minimum
+- **After**: Reads single integer value from StudyRef (no collect on main dataset)
+- **Savings**: Can avoid collecting millions of rows for large studies
+
+### Optimization Strategy 2: Skip Validation Checks
+
+The `JoinKRIByDenominator()` function performs several validation checks that require `collect()` operations. When confident in data quality, skip these:
+
+```{r eval=FALSE}
+lJoined <- JoinKRIByDenominator(
+  tblInput, 
+  dfMetrics,
+  bSkipValidation = TRUE  # Disable validation collect() operations
+)
+```
+
+### Optimization Strategy 3: Pre-generate Temporary Tables
+
+Provide pre-generated bootstrap replicates and month sequences to avoid repeated temp table creation:
+
+```{r eval=FALSE}
+# Create once, reuse many times
+dfRep <- tibble(BootstrapRep = seq(1, 1000))
+dfMonths <- tibble(
+  YYYY = seq(2003, 2020)
+) %>%
+  cross_join(tibble(MM = seq(1, 12))) %>%
+  mutate(MonthYYYYMM = YYYY * 100 + MM) %>%
+  select(MonthYYYYMM)
+
+DBI::dbWriteTable(con, "Rep", dfRep)
+DBI::dbWriteTable(con, "Months", dfMonths)
+
+tblRep <- tbl(con, "Rep")
+tblMonths <- tbl(con, "Months")
+
+# Pass to all functions
+Bounds <- Analyze_StudyKRI_PredictBounds(
+  dfInput,
+  tblBootstrapReps = tblRep,
+  tblMonthSequence = tblMonths
+)
+```
+
+### Best Practices Summary
+
+1. **Add MinGroups column to StudyRef** (or use `strMinGroupsCol` parameter for custom names) for the biggest performance gain
+2. **Use `bSkipValidation = TRUE`** in `JoinKRIByDenominator()` when data quality is assured
+3. **Pre-generate temp tables** (`tblBootstrapReps`, `tblMonthSequence`) to avoid repeated creation
+4. **Ensure proper indexing** on StudyID, GroupID, and MonthYYYYMM columns in your database
+5. **Collect only at the end** - keep data as lazy tables until final visualization/reporting
+
 Finally before plotting we need to collect the results into memory.
 
 ```{r}

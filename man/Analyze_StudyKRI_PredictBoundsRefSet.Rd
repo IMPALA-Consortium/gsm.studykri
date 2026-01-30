@@ -15,7 +15,8 @@ Analyze_StudyKRI_PredictBoundsRefSet(
   seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL,
-  vDbIntRandomRange = NULL
+  vDbIntRandomRange = NULL,
+  nMinGroups = NULL
 )
 }
 \arguments{
@@ -62,6 +63,12 @@ reading from YAML files). Common values:
 \item Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
 Default: NULL (no normalization, assumes 0-1 decimal random values).
 }}
+
+\item{nMinGroups}{integer or NULL. Minimum number of groups for bootstrapping.
+If NULL (default), calculated as min(n_distinct(GroupID)) across vStudyFilter.
+Providing this value avoids an expensive collect() operation on database backends.
+This value should represent the minimum group count across all reference studies.
+Default: NULL.}
 }
 \value{
 A tibble (or tbl_lazy if input was lazy) with confidence intervals.
