@@ -5,7 +5,7 @@
 \title{Calculate Monthly Count by Site and Month}
 \usage{
 Input_CountSiteByMonth(
-  dfSubjects,
+  dfSubjects = NULL,
   dfNumerator,
   dfDenominator,
   strStudyCol = "studyid",
@@ -49,7 +49,7 @@ When > 0, adjusts dates of the first N denominator events to the MAX date in tha
 creating a consistent "study start" at the threshold. Preserves event durations for date ranges.}
 }
 \value{
-data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM, StudyMonth.
+data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM
 If strDenominatorType is provided, also includes DenominatorType column.
 }
 \description{

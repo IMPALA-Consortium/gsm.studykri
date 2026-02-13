@@ -290,6 +290,7 @@ test_that("CalculateStudyBounds integration with full workflow", {
   )
 
   dfNumerator <- data.frame(
+    studyid = c("STUDY1", "STUDY1", "STUDY1", "STUDY1", "STUDY1", "STUDY1"),
     subjid = c("S1", "S2", "S3", "S4", "S1", "S3"),
     aest_dt = as.Date(c(
       "2024-01-15", "2024-01-20", "2024-02-10",
@@ -299,6 +300,7 @@ test_that("CalculateStudyBounds integration with full workflow", {
   )
 
   dfDenominator <- data.frame(
+    studyid = rep("STUDY1", 8),
     subjid = c("S1", "S2", "S3", "S4", "S1", "S2", "S3", "S4"),
     visit_dt = as.Date(c(
       "2024-01-10", "2024-01-12", "2024-02-05",

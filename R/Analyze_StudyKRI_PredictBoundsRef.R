@@ -188,17 +188,47 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     vDbIntRandomRange = vDbIntRandomRange
   )
 
-  # Transform to study-level, but group by BootstrapRep only (not StudyID)
-  # This combines all studies into a single distribution per bootstrap replicate
+  browser()
+
+  # Transform to study-level first with proper StudyMonth calculation per study
   dfStudyLevel <- Transform_CumCount(
     dfInput = dfBootstrapped,
-    vBy = "BootstrapRep", # Critical: only group by BootstrapRep, not StudyID
+    vBy = c("StudyID", "BootstrapRep"), # Include both to get correct StudyMonth per study
     tblMonthSequence = tblMonthSequence
   )
 
+
+  # Aggregate across studies within each bootstrap replicate
+  # This combines study-level cumulative counts into a portfolio-level distribution
+  vNumeratorCols <- grep("^Numerator", colnames(dfStudyLevel), value = TRUE)
+
+  dfBootstrapLevel <- dfStudyLevel %>%
+    dplyr::summarise(
+      dplyr::across(
+        .cols = dplyr::all_of(.env$vNumeratorCols),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      ),
+      Denominator = sum(.data$Denominator, na.rm = TRUE),
+      GroupCount = sum(.data$GroupCount, na.rm = TRUE), # Sum sites across studies
+      .by = c("BootstrapRep", "StudyMonth") # Group by bootstrap and study month only
+    ) %>%
+    dplyr::mutate(
+      dplyr::across(
+        .cols = dplyr::all_of(.env$vNumeratorCols),
+        # Note: .data pronoun intentionally removed from lambda function for dbplyr compatibility
+        # dbplyr cannot properly translate .data inside across() lambda functions
+        .fns = ~ dplyr::if_else(
+          Denominator > 0,
+          .x / Denominator,
+          NA_real_
+        ),
+        .names = "{gsub('^Numerator', 'Metric', .col)}"
+      )
+    )
+
   # Calculate CI for the combined distribution
   dfBounds <- CalculateStudyBounds(
-    dfInput = dfStudyLevel,
+    dfInput = dfBootstrapLevel,
     vBy = character(0), # No additional grouping
     nConfLevel = nConfLevel,
     strStudyMonthCol = strStudyMonthCol

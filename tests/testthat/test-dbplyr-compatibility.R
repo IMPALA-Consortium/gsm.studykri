@@ -16,11 +16,13 @@ create_minimal_test_data <- function() {
       stringsAsFactors = FALSE
     ),
     dfNumerator = data.frame(
+      studyid = c("STUDY1", "STUDY1", "STUDY1"),
       subjid = c("S1", "S2", "S3"),
       aest_dt = as.Date(c("2024-01-15", "2024-01-20", "2024-02-10")),
       stringsAsFactors = FALSE
     ),
     dfDenominator = data.frame(
+      studyid = c("STUDY1", "STUDY1", "STUDY1"),
       subjid = c("S1", "S2", "S3"),
       visit_dt = as.Date(c("2024-01-10", "2024-01-12", "2024-02-05")),
       stringsAsFactors = FALSE
@@ -111,6 +113,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet returns lazy table with lazy inp
       stringsAsFactors = FALSE
     ),
     dfNumerator = data.frame(
+      studyid = rep(c("STUDY1", "STUDY2"), each = 3),
       subjid = c("S1", "S2", "S3", "S4", "S5", "S6"),
       aest_dt = as.Date(c(
         "2024-01-15", "2024-01-20", "2024-02-10",
@@ -119,6 +122,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet returns lazy table with lazy inp
       stringsAsFactors = FALSE
     ),
     dfDenominator = data.frame(
+      studyid = rep(c("STUDY1", "STUDY2"), each = 3),
       subjid = c("S1", "S2", "S3", "S4", "S5", "S6"),
       visit_dt = as.Date(c(
         "2024-01-10", "2024-01-12", "2024-02-05",
@@ -223,11 +227,13 @@ test_that("Input_CountSiteByMonth with nMinDenominator returns lazy table and ad
       stringsAsFactors = FALSE
     ),
     dfNumerator = data.frame(
+      studyid = rep("STUDY1", 5),
       subjid = c("S1", "S2", "S3", "S4", "S5"),
       aest_dt = as.Date(c("2024-01-15", "2024-01-20", "2024-02-10", "2024-01-18", "2024-01-25")),
       stringsAsFactors = FALSE
     ),
     dfDenominator = data.frame(
+      studyid = rep("STUDY1", 5),
       subjid = c("S1", "S2", "S3", "S4", "S5"),
       visit_dt = as.Date(c("2024-01-10", "2024-01-12", "2024-02-05", "2024-01-11", "2024-01-15")),
       stringsAsFactors = FALSE
@@ -377,12 +383,14 @@ test_that("Input_CountSiteByMonth works with lazy tables", {
   )
 
   dfNumerator <- data.frame(
+    studyid = rep("STUDY001", 3),
     subjid = c("SUBJ001", "SUBJ002", "SUBJ003"),
     aest_dt = as.Date(c("2024-01-15", "2024-01-20", "2024-02-10")),
     stringsAsFactors = FALSE
   )
 
   dfDenominator <- data.frame(
+    studyid = rep("STUDY001", 3),
     subjid = c("SUBJ001", "SUBJ002", "SUBJ003"),
     visit_dt = as.Date(c("2024-01-10", "2024-01-15", "2024-02-05")),
     stringsAsFactors = FALSE
@@ -437,12 +445,14 @@ test_that("calculate_days_by_month works with lazy tables", {
   )
 
   dfNumerator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     aest_dt = as.Date("2024-01-15"),
     stringsAsFactors = FALSE
   )
 
   dfDenominator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     start_date = as.Date("2024-01-01"),
     end_date = as.Date("2024-02-29"),

@@ -1,10 +1,12 @@
-# gsm.studykri 0.2.1
+# gsm.studykri 0.3.0
 
 - Established compatibility with snowflake backend by:
 - Added `vDbIntRandomRange` parameter to bootstrap functions (`Analyze_StudyKRI_PredictBounds()`, `Analyze_StudyKRI_PredictBoundsRef()`, `Analyze_StudyKRI_PredictBoundsRefSet()`) to support database backends that use large integer values for random number generation (e.g., Snowflake) (#7)
 - Added `nMinGroups` parameter to `Analyze_StudyKRI_PredictBoundsRefSet()` to allow passing pre-calculated minimum group counts, avoiding expensive `collect()` operations on database backends
 - Added `strMinGroupsCol` parameter to `Analyze_StudyKRI_PredictBoundsRef()` to specify custom column name for minimum group counts in StudyRef tables (default: "MinGroups")
 - Added `bSkipValidation` parameter to `JoinKRIByDenominator()` to disable validation checks that require `collect()` operations for improved performance with database backends
+- Corrected StudyMonth calculation for Analyze_StudyKRI_PredictBoundsRef to calculated study-specific studymonth before aggregating
+- Fixed Bug that mixed patients with identical subject ids between studies in Input_CountSiteByMonth
 
 
 # gsm.studykri 0.2.0

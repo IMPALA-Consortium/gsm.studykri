@@ -230,12 +230,14 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet integration with full workflow",
   )
 
   dfNumerator <- data.frame(
+    studyid = rep(rep(c("STUDY1", "STUDY2", "STUDY3"), each = 20), each = 3),
     subjid = rep(paste0("SUBJ", 1:60), each = 3),
     aest_dt = as.Date("2023-01-01") + sample(0:150, 180, replace = TRUE),
     stringsAsFactors = FALSE
   )
 
   dfDenominator <- data.frame(
+    studyid = rep(rep(c("STUDY1", "STUDY2", "STUDY3"), each = 20), each = 3),
     subjid = rep(paste0("SUBJ", 1:60), each = 3),
     visit_dt = as.Date("2023-01-01") + sample(0:150, 180, replace = TRUE),
     stringsAsFactors = FALSE

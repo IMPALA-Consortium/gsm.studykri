@@ -267,12 +267,14 @@ test_that("Input_CountSiteByMonth handles zero denominator correctly", {
   )
 
   dfNumerator <- data.frame(
+    studyid = c("STUDY001", "STUDY001"),
     subjid = c("SUBJ001", "SUBJ001"),
     aest_dt = as.Date(c("2024-01-15", "2024-02-15")),
     stringsAsFactors = FALSE
   )
 
   dfDenominator <- data.frame(
+    studyid = character(0),
     subjid = character(0),
     visit_dt = as.Date(character(0)),
     stringsAsFactors = FALSE
@@ -303,6 +305,7 @@ test_that("Input_CountSiteByMonth works with strDenominatorEndDateCol (days calc
   )
 
   dfNumerator <- data.frame(
+    studyid = c("STUDY001", "STUDY001"),
     subjid = c("SUBJ001", "SUBJ002"),
     aest_dt = as.Date(c("2024-01-15", "2024-01-20")),
     stringsAsFactors = FALSE
@@ -310,6 +313,7 @@ test_that("Input_CountSiteByMonth works with strDenominatorEndDateCol (days calc
 
   # Denominator with start and end dates (exposure periods)
   dfDenominator <- data.frame(
+    studyid = c("STUDY001", "STUDY001"),
     subjid = c("SUBJ001", "SUBJ002"),
     visit_start = as.Date(c("2024-01-01", "2024-01-10")),
     visit_end = as.Date(c("2024-01-31", "2024-01-25")),
@@ -343,6 +347,7 @@ test_that("calculate_days_by_month handles multi-month date ranges", {
   )
 
   dfNumerator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     aest_dt = as.Date("2024-02-15"),
     stringsAsFactors = FALSE
@@ -350,6 +355,7 @@ test_that("calculate_days_by_month handles multi-month date ranges", {
 
   # Date range spanning 3 months: Jan 15 to Mar 15
   dfDenominator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     start_date = as.Date("2024-01-15"),
     end_date = as.Date("2024-03-15"),
@@ -384,6 +390,7 @@ test_that("calculate_days_by_month handles same month start and end", {
   )
 
   dfNumerator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     aest_dt = as.Date("2024-01-15"),
     stringsAsFactors = FALSE
@@ -391,6 +398,7 @@ test_that("calculate_days_by_month handles same month start and end", {
 
   # Same month: Jan 10 to Jan 20 (11 days)
   dfDenominator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     start_date = as.Date("2024-01-10"),
     end_date = as.Date("2024-01-20"),
@@ -423,6 +431,7 @@ test_that("calculate_days_by_month handles leap year correctly", {
   )
 
   dfNumerator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     aest_dt = as.Date("2024-02-15"),
     stringsAsFactors = FALSE
@@ -430,6 +439,7 @@ test_that("calculate_days_by_month handles leap year correctly", {
 
   # Full month of Feb 2024 (leap year - 29 days)
   dfDenominator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     start_date = as.Date("2024-02-01"),
     end_date = as.Date("2024-02-29"),
@@ -461,6 +471,7 @@ test_that("calculate_days_by_month handles non-leap year February", {
   )
 
   dfNumerator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     aest_dt = as.Date("2023-02-15"),
     stringsAsFactors = FALSE
@@ -468,6 +479,7 @@ test_that("calculate_days_by_month handles non-leap year February", {
 
   # Full month of Feb 2023 (non-leap year - 28 days)
   dfDenominator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     start_date = as.Date("2023-02-01"),
     end_date = as.Date("2023-02-28"),
@@ -499,12 +511,14 @@ test_that("calculate_days_by_month handles months with different day counts", {
   )
 
   dfNumerator <- data.frame(
+    studyid = rep("STUDY001", 2),
     subjid = c("SUBJ001", "SUBJ002"),
     aest_dt = as.Date(c("2024-04-15", "2024-05-15")),
     stringsAsFactors = FALSE
   )
 
   dfDenominator <- data.frame(
+    studyid = rep("STUDY001", 2),
     subjid = c("SUBJ001", "SUBJ002"),
     start_date = as.Date(c("2024-04-01", "2024-05-01")),
     end_date = as.Date(c("2024-04-30", "2024-05-31")),
@@ -538,6 +552,7 @@ test_that("Input_CountSiteByMonth validates strDenominatorEndDateCol is present"
   )
 
   dfNumerator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     aest_dt = as.Date("2024-01-15"),
     stringsAsFactors = FALSE
@@ -545,6 +560,7 @@ test_that("Input_CountSiteByMonth validates strDenominatorEndDateCol is present"
 
   # Missing the end date column
   dfDenominator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     start_date = as.Date("2024-01-01"),
     stringsAsFactors = FALSE
@@ -573,12 +589,14 @@ test_that("Input_CountSiteByMonth validates nMinDenominator parameter", {
   )
 
   dfNumerator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     aest_dt = as.Date("2024-01-15"),
     stringsAsFactors = FALSE
   )
 
   dfDenominator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     visit_dt = as.Date("2024-01-01"),
     stringsAsFactors = FALSE
@@ -658,6 +676,7 @@ test_that("Input_CountSiteByMonth handles NA dates in denominator end date", {
   )
 
   dfNumerator <- data.frame(
+    studyid = c("STUDY001", "STUDY001"),
     subjid = c("SUBJ001", "SUBJ002"),
     aest_dt = as.Date(c("2024-01-15", "2024-01-20")),
     stringsAsFactors = FALSE
@@ -665,6 +684,7 @@ test_that("Input_CountSiteByMonth handles NA dates in denominator end date", {
 
   # One record has NA end date
   dfDenominator <- data.frame(
+    studyid = c("STUDY001", "STUDY001"),
     subjid = c("SUBJ001", "SUBJ002"),
     start_date = as.Date(c("2024-01-01", "2024-01-10")),
     end_date = as.Date(c("2024-01-31", NA)),

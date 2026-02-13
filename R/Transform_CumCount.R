@@ -98,7 +98,7 @@ Transform_CumCount <- function(
       ),
       Denominator = sum(.data$Denominator, na.rm = TRUE),
       GroupCount = dplyr::n_distinct(.data$GroupID),
-      .by = c(dplyr::all_of(.env$vBy), "MonthYYYYMM")
+      .by = c(dplyr::all_of(.env$vBy), "MonthYYYYMM") 
     )
 
   # Fill gaps in calendar months with zeros to maintain timeline continuity
@@ -113,9 +113,16 @@ Transform_CumCount <- function(
     dplyr::summarise(min_month = min(.data$min_month, na.rm = TRUE)) %>%
     dplyr::pull(.data$min_month)
 
-  global_max <- dfMonthRanges %>%
+  global_max_calculated <- dfMonthRanges %>%
     dplyr::summarise(max_month = max(.data$max_month, na.rm = TRUE)) %>%
     dplyr::pull(.data$max_month)
+
+  # Limit global_max to current year-month to prevent imputing future months
+  # Future calendar months in the data are allowed and will be included,
+  # but we will not fill gaps between the current month and those future months
+  current_month <- as.integer(format(Sys.Date(), "%Y%m"))
+  global_max <- min(global_max_calculated, current_month)
+
 
   dfAllMonths_mem <- GenerateMonthSeq(global_min, global_max)
 
@@ -132,12 +139,7 @@ Transform_CumCount <- function(
 
   # Cross-join and filter (unified for both lazy and in-memory)
   dfCompleteMonths <- dfMonthRanges %>%
-    dplyr::select(dplyr::all_of(.env$vBy)) %>%
     dplyr::cross_join(dfAllMonths) %>%
-    dplyr::left_join(
-      dfMonthRanges %>% dplyr::select(dplyr::all_of(.env$vBy), "min_month", "max_month"),
-      by = vBy
-    ) %>%
     dplyr::filter(
       .data$MonthYYYYMM >= .data$min_month &
         .data$MonthYYYYMM <= .data$max_month
