@@ -12,6 +12,7 @@ Analyze_StudyKRI_PredictBoundsRef(
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
   strMinGroupsCol = "MinGroups",
+  bMixStudies = FALSE,
   seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL,
@@ -39,6 +40,14 @@ performance optimization.}
 \item{strMinGroupsCol}{character. Column name for minimum groups in dfStudyRef (default: "MinGroups").
 If this column exists in dfStudyRef, its value will be used instead of calculating
 minimum group counts, improving performance with database backends.}
+
+\item{bMixStudies}{logical. If TRUE, aggregates studies at the StudyMonth level
+before calculating cumulative counts (faster SQL performance, but disables
+extrapolation). If FALSE (default), keeps study-level granularity through
+extrapolation step, allowing studies with different timeline lengths to be
+properly aligned before aggregation. Use TRUE for database backends when
+SQL performance is critical and all studies have similar timeline lengths.
+Default: FALSE.}
 
 \item{seed}{integer or NULL. Random seed (default: NULL).}
 

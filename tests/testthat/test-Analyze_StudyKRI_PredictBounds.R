@@ -66,9 +66,9 @@ test_that("CalculateStudyBounds works with no grouping (multi-study combined)", 
   expect_named(result, c("StudyMonth", "Median", "Lower", "Upper", "BootstrapCount"))
   expect_equal(nrow(result), 2) # Only 2 months, combined across studies
 
-  # Check bootstrap count (should be 20 per month: 2 studies × 10 reps)
-  expect_equal(result$BootstrapCount[1], 20)
-  expect_equal(result$BootstrapCount[2], 20)
+  # Check bootstrap count (should be 10 per month: 2 studies × 10 reps)
+  expect_equal(result$BootstrapCount[1], 10)
+  expect_equal(result$BootstrapCount[2], 10)
 })
 
 test_that("CalculateStudyBounds handles different confidence levels", {

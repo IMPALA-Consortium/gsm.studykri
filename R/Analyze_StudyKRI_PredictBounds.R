@@ -97,7 +97,7 @@ CalculateStudyBounds <- function(
         ),
         .names = "{.fn}_{gsub('^Metric_', '', .col)}"
       ),
-      BootstrapCount = dplyr::n(),
+      BootstrapCount = max(.data$BootstrapRep, na.rm = TRUE),
       .by = dplyr::all_of(.env$group_cols)
     ) %>%
     # remove trailing metric from colnames which is the case for single metric

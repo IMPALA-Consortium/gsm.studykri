@@ -13,6 +13,17 @@
 #' This enables comparing one study's KRI against expected variation from a portfolio
 #' of similar studies.
 #'
+#' @details
+#' The `bMixStudies` parameter controls when studies are aggregated:
+#' \itemize{
+#'   \item FALSE (default): Calculate 1 timeline per reference study and bootstrap
+#'    iteration then aggeregate to calculate confidence intervals. Preserves
+#'    study variability.
+#'   \item TRUE: Mix all sampled sites from all reference studies to calculate
+#'    one common timeline per bootstrap iteration. (More efficient calculation
+#'    but inter study variability not well conserved)
+#' }
+#'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
 #'   Must contain columns: `StudyID`, `GroupID`, one or more `Numerator_*` columns,
 #'   `Denominator`, `MonthYYYYMM`.
@@ -26,6 +37,7 @@
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
 #' @param strStudyMonthCol character. Column name for sequential study month
 #'   (default: "StudyMonth").
+#' @param bMixStudies logical. Default: False, see Details
 #' @param seed integer or NULL. Random seed for reproducibility (default: NULL).
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
@@ -53,7 +65,6 @@
 #' @return A tibble (or tbl_lazy if input was lazy) with confidence intervals.
 #'   Output columns: `StudyMonth`, `Median_*`, `Lower_*`, `Upper_*` for each Metric column,
 #'   `BootstrapCount`, `GroupCount`, `StudyCount`.
-#'   Note: No `StudyID` column as studies are intentionally combined.
 #'
 #' @examples
 #' # Create example site-level data for multiple studies
@@ -85,6 +96,15 @@
 #'   vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
 #' )
 #'
+#' # Example with early study mixing (faster SQL)
+#' dfGroupBounds_Mixed <- Analyze_StudyKRI_PredictBoundsRefSet(
+#'   dfInput = dfSiteLevel,
+#'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
+#'   nBootstrapReps = 100,
+#'   bMixStudies = TRUE,  # Aggregate studies early for SQL performance
+#'   seed = 42
+#' )
+#'
 #' print(head(dfGroupBounds))
 #'
 #' @export
@@ -96,6 +116,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
+    bMixStudies = FALSE,
     seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL,
@@ -176,7 +197,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     message(sprintf("Using provided minimum group count: %.0f", nMinGroups))
   }
 
-  # Resample each study independently with nGroups = nMinGroups
+  # Sample minGroups sites from each study per bootstrap iteration
   dfBootstrapped <- BootstrapStudyKRI(
     dfInput = dfFiltered,
     nBootstrapReps = nBootstrapReps,
@@ -188,47 +209,72 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     vDbIntRandomRange = vDbIntRandomRange
   )
 
-  browser()
+  vNumeratorCols <- grep("^Numerator", colnames(dfInput), value = TRUE)
 
-  # Transform to study-level first with proper StudyMonth calculation per study
-  dfStudyLevel <- Transform_CumCount(
-    dfInput = dfBootstrapped,
-    vBy = c("StudyID", "BootstrapRep"), # Include both to get correct StudyMonth per study
-    tblMonthSequence = tblMonthSequence
-  )
-
-
-  # Aggregate across studies within each bootstrap replicate
-  # This combines study-level cumulative counts into a portfolio-level distribution
-  vNumeratorCols <- grep("^Numerator", colnames(dfStudyLevel), value = TRUE)
-
-  dfBootstrapLevel <- dfStudyLevel %>%
-    dplyr::summarise(
-      dplyr::across(
-        .cols = dplyr::all_of(.env$vNumeratorCols),
-        .fns = ~ sum(.x, na.rm = TRUE)
-      ),
-      Denominator = sum(.data$Denominator, na.rm = TRUE),
-      GroupCount = sum(.data$GroupCount, na.rm = TRUE), # Sum sites across studies
-      .by = c("BootstrapRep", "StudyMonth") # Group by bootstrap and study month only
-    ) %>%
-    dplyr::mutate(
-      dplyr::across(
-        .cols = dplyr::all_of(.env$vNumeratorCols),
-        # Note: .data pronoun intentionally removed from lambda function for dbplyr compatibility
-        # dbplyr cannot properly translate .data inside across() lambda functions
-        .fns = ~ dplyr::if_else(
-          Denominator > 0,
-          .x / Denominator,
-          NA_real_
-        ),
-        .names = "{gsub('^Numerator', 'Metric', .col)}"
-      )
+  if (bMixStudies) {
+    # APPROACH 1: Mix studies early (faster SQL, no extrapolation)
+    # Step 1: Calculate StudyMonth per study+bootstrap
+    dfStudyMonth <- AggrStudyMonth(
+      dfInput = dfBootstrapped,
+      vBy = c("StudyID", "BootstrapRep"),
+      vNumeratorCols = vNumeratorCols,
+      tblMonthSequence = tblMonthSequence
     )
+    
+    # Step 2: Aggregate across studies for each StudyMonth+BootstrapRep
+    dfStudyMonthBoot <- dfStudyMonth %>%
+      dplyr::summarise(
+        dplyr::across(
+          .cols = c(dplyr::all_of(.env$vNumeratorCols), "Denominator", "GroupCount"),
+          .fns = sum
+        ),
+        .by = c("StudyMonth", "BootstrapRep")
+      )
+    
+    # Step 3: Calculate cumulative counts per bootstrap replicate only
+    dfCumCountBootComplete <- CumulativeCounts(
+      dfAggregated = dfStudyMonthBoot,
+      vBy = c("BootstrapRep"),
+      vNumeratorCols = vNumeratorCols
+    )
+    
+  } else {
+    # APPROACH 2: Keep studies separate 
+    # Step 1: Calculate cumulative counts per study+bootstrap
+    dfCumCountBoot <- Transform_CumCount(
+      dfBootstrapped,
+      vBy = c("StudyID", "BootstrapRep"),
+      tblMonthSequence = tblMonthSequence
+    )
+    
+    # Step 2: Extrapolate to align study timelines
+    # Study timelines will have different lengths; bring them all to the
+    # same length by extrapolating the last measurement
+    dfMiss <- dfCumCountBoot %>%
+      distinct(.data$StudyMonth, .data$BootstrapRep) %>%
+      cross_join(
+        distinct(dfCumCountBoot, .data$StudyID)
+      ) %>%
+      left_join(
+        # add the last measurement
+        dfCumCountBoot %>%
+          filter(.data$StudyMonth == max(.data$StudyMonth), .by = c("StudyID", "BootstrapRep")) %>%
+          select(-"StudyMonth"),
+        by = c("StudyID", "BootstrapRep")
+      ) %>%
+      anti_join(
+        # only keep records not in original
+        dfCumCountBoot %>%
+          select(c("StudyID", "BootstrapRep", "StudyMonth")),
+        by = c("StudyID", "BootstrapRep", "StudyMonth")
+      )
+    
+    dfCumCountBootComplete <- union_all(dfCumCountBoot, dfMiss)
+  }
 
-  # Calculate CI for the combined distribution
+  # Calculate CI combining data from each sample
   dfBounds <- CalculateStudyBounds(
-    dfInput = dfBootstrapLevel,
+    dfInput = dfCumCountBootComplete,
     vBy = character(0), # No additional grouping
     nConfLevel = nConfLevel,
     strStudyMonthCol = strStudyMonthCol
@@ -275,6 +321,13 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' @param strMinGroupsCol character. Column name for minimum groups in dfStudyRef (default: "MinGroups").
 #'   If this column exists in dfStudyRef, its value will be used instead of calculating
 #'   minimum group counts, improving performance with database backends.
+#' @param bMixStudies logical. If TRUE, aggregates studies at the StudyMonth level
+#'   before calculating cumulative counts (faster SQL performance, but disables
+#'   extrapolation). If FALSE (default), keeps study-level granularity through
+#'   extrapolation step, allowing studies with different timeline lengths to be
+#'   properly aligned before aggregation. Use TRUE for database backends when
+#'   SQL performance is critical and all studies have similar timeline lengths.
+#'   Default: FALSE.
 #' @param seed integer or NULL. Random seed (default: NULL).
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
@@ -343,6 +396,7 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
     strMinGroupsCol = "MinGroups",
+    bMixStudies = FALSE,
     seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL,
@@ -402,6 +456,7 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       strStudyCol = "StudyID",
       strGroupCol = strGroupCol,
       strStudyMonthCol = strStudyMonthCol,
+      bMixStudies = bMixStudies,
       seed = seed,
       tblBootstrapReps = tblBootstrapReps,
       tblMonthSequence = tblMonthSequence,

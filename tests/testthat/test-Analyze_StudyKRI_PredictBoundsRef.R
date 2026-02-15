@@ -753,4 +753,138 @@ test_that("Analyze_StudyKRI_PredictBoundsRef uses custom MinGroups column name",
   expect_true(nrow(result) > 0)
 })
 
+test_that("Analyze_StudyKRI_PredictBoundsRefSet works with bMixStudies = TRUE", {
+  # Create site-level data for 3 studies
+  dfTest <- data.frame(
+    StudyID = c(
+      rep("STUDY1", 60),
+      rep("STUDY2", 48),
+      rep("STUDY3", 72)
+    ),
+    GroupID = c(
+      rep(paste0("S1_Site", 1:10), each = 6),
+      rep(paste0("S2_Site", 1:8), each = 6),
+      rep(paste0("S3_Site", 1:12), each = 6)
+    ),
+    Numerator = c(
+      rep(1:6, times = 10),
+      rep(1:6, times = 8),
+      rep(1:6, times = 12)
+    ),
+    Denominator = c(
+      rep(10:15, times = 10),
+      rep(10:15, times = 8),
+      rep(10:15, times = 12)
+    ),
+    MonthYYYYMM = c(
+      rep(202301:202306, times = 10),
+      rep(202301:202306, times = 8),
+      rep(202301:202306, times = 12)
+    ),
+    Metric = runif(180, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  result <- Analyze_StudyKRI_PredictBoundsRefSet(
+    dfInput = dfTest,
+    vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
+    nBootstrapReps = 50,
+    nConfLevel = 0.95,
+    bMixStudies = TRUE,
+    seed = 123
+  )
+
+  # Verify structure (same as FALSE mode)
+  expect_s3_class(result, "data.frame")
+  expect_true(all(c(
+    "StudyMonth", "Median", "Lower", "Upper",
+    "BootstrapCount", "GroupCount", "StudyCount"
+  ) %in% names(result)))
+
+  # Verify no StudyID column
+  expect_false("StudyID" %in% names(result))
+
+  # Verify metadata
+  expect_equal(unique(result$GroupCount), 8)
+  expect_equal(unique(result$StudyCount), 3)
+
+  # Verify confidence intervals
+  expect_true(all(result$Lower <= result$Median))
+  expect_true(all(result$Median <= result$Upper))
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRefSet bMixStudies modes both work", {
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2"), each = 30),
+    GroupID = rep(paste0("Site", 1:5), each = 6, times = 2),
+    Numerator = rep(1:6, times = 10),
+    Denominator = rep(10:15, times = 10),
+    MonthYYYYMM = rep(202301:202306, times = 10),
+    Metric = runif(60, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Run both modes
+  result_mixed <- Analyze_StudyKRI_PredictBoundsRefSet(
+    dfInput = dfTest,
+    vStudyFilter = c("STUDY1", "STUDY2"),
+    nBootstrapReps = 30,
+    bMixStudies = TRUE,
+    seed = 456
+  )
+
+  result_separated <- Analyze_StudyKRI_PredictBoundsRefSet(
+    dfInput = dfTest,
+    vStudyFilter = c("STUDY1", "STUDY2"),
+    nBootstrapReps = 30,
+    bMixStudies = FALSE,
+    seed = 456
+  )
+
+  # Both should return valid results
+  expect_s3_class(result_mixed, "data.frame")
+  expect_s3_class(result_separated, "data.frame")
+
+  # Both should have the same columns
+  expect_equal(sort(names(result_mixed)), sort(names(result_separated)))
+
+  # Both should have same metadata
+  expect_equal(result_mixed$GroupCount, result_separated$GroupCount)
+  expect_equal(result_mixed$StudyCount, result_separated$StudyCount)
+
+  # Note: Actual values may differ due to different aggregation logic
+  # We're just verifying both modes execute successfully
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRef passes through bMixStudies", {
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "REF1", "REF2"), each = 12),
+    GroupID = rep(paste0("Site", 1:4), each = 3, times = 3),
+    Numerator = sample(0:5, 36, replace = TRUE),
+    Denominator = sample(10:20, 36, replace = TRUE),
+    MonthYYYYMM = rep(rep(202301:202302, each = 6), times = 3),
+    Metric = runif(36, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  dfStudyRef <- data.frame(
+    study = "STUDY1",
+    studyref = c("REF1", "REF2")
+  )
+
+  result <- Analyze_StudyKRI_PredictBoundsRef(
+    dfInput = dfTest,
+    dfStudyRef = dfStudyRef,
+    nBootstrapReps = 20,
+    bMixStudies = TRUE,
+    seed = 789
+  )
+
+  expect_s3_class(result, "data.frame")
+  expect_true(nrow(result) > 0)
+  expect_true("StudyID" %in% names(result))
+})
+
 # Lazy table tests have been moved to test-dbplyr-compatibility.R

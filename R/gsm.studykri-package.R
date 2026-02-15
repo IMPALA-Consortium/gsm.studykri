@@ -5,7 +5,8 @@
 ## Core tidyverse imports
 #' @importFrom dplyr %>%
 #' @importFrom dplyr select filter mutate left_join distinct collect pull
-#' @importFrom dplyr rename rename_with all_of union_all
+#' @importFrom dplyr rename rename_with all_of union_all summarise anti_join
+#' @importFrom dplyr cross_join
 #' @importFrom rlang .data .env :=
 #' @importFrom tibble tibble as_tibble
 #' @importFrom tidyr unnest pivot_wider

@@ -12,6 +12,7 @@ Analyze_StudyKRI_PredictBoundsRefSet(
   strStudyCol = "StudyID",
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
+  bMixStudies = FALSE,
   seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL,
@@ -39,6 +40,8 @@ Example: \code{c("STUDY1", "STUDY2", "STUDY3")}.}
 
 \item{strStudyMonthCol}{character. Column name for sequential study month
 (default: "StudyMonth").}
+
+\item{bMixStudies}{logical. Default: False, see Details}
 
 \item{seed}{integer or NULL. Random seed for reproducibility (default: NULL).}
 
@@ -74,7 +77,6 @@ Default: NULL.}
 A tibble (or tbl_lazy if input was lazy) with confidence intervals.
 Output columns: \code{StudyMonth}, \verb{Median_*}, \verb{Lower_*}, \verb{Upper_*} for each Metric column,
 \code{BootstrapCount}, \code{GroupCount}, \code{StudyCount}.
-Note: No \code{StudyID} column as studies are intentionally combined.
 }
 \description{
 Calculates percentile-based confidence intervals (bounds) for a combined portfolio
@@ -88,6 +90,17 @@ of comparison studies. This function creates a "comparison envelope" by:
 
 This enables comparing one study's KRI against expected variation from a portfolio
 of similar studies.
+}
+\details{
+The \code{bMixStudies} parameter controls when studies are aggregated:
+\itemize{
+\item FALSE (default): Calculate 1 timeline per reference study and bootstrap
+iteration then aggeregate to calculate confidence intervals. Preserves
+study variability.
+\item TRUE: Mix all sampled sites from all reference studies to calculate
+one common timeline per bootstrap iteration. (More efficient calculation
+but inter study variability not well conserved)
+}
 }
 \examples{
 # Create example site-level data for multiple studies
@@ -117,6 +130,15 @@ dfGroupBounds_Snowflake <- Analyze_StudyKRI_PredictBoundsRefSet(
   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
   nBootstrapReps = 100,
   vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+)
+
+# Example with early study mixing (faster SQL)
+dfGroupBounds_Mixed <- Analyze_StudyKRI_PredictBoundsRefSet(
+  dfInput = dfSiteLevel,
+  vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
+  nBootstrapReps = 100,
+  bMixStudies = TRUE,  # Aggregate studies early for SQL performance
+  seed = 42
 )
 
 print(head(dfGroupBounds))

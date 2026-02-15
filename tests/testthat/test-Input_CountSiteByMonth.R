@@ -766,3 +766,64 @@ test_that("Input_CountSiteByMonth includes DenominatorType with days-based calcu
   expect_true("DenominatorType" %in% names(result))
   expect_true(all(result$DenominatorType == "Days on Study"))
 })
+
+test_that("Input_CountSiteByMonth validates GroupCol in dfNumerator when dfSubjects is NULL", {
+  # Create test data where GroupCol is missing in dfNumerator
+  dfNumerator <- data.frame(
+    studyid = rep("STUDY1", 10),
+    subjid = paste0("SUBJ", 1:10),
+    # MISSING invid (the default GroupCol)
+    aest_dt = as.Date("2023-01-01") + 1:10,
+    stringsAsFactors = FALSE
+  )
+
+  dfDenominator <- data.frame(
+    studyid = rep("STUDY1", 10),
+    subjid = paste0("SUBJ", 1:10),
+    invid = rep(paste0("SITE", 1:2), each = 5),  # GroupCol present
+    visit_dt = as.Date("2023-01-01") + 1:10,
+    stringsAsFactors = FALSE
+  )
+
+  # Should fail because dfNumerator is missing GroupCol 'invid'
+  expect_error(
+    Input_CountSiteByMonth(
+      dfSubjects = NULL,  # KEY: NULL means no join happens
+      dfNumerator = dfNumerator,
+      dfDenominator = dfDenominator,
+      strNumeratorDateCol = "aest_dt",
+      strDenominatorDateCol = "visit_dt"
+    ),
+    "GroupCol 'invid' not found in dfNumerator"
+  )
+})
+
+test_that("Input_CountSiteByMonth validates GroupCol in dfDenominator when dfSubjects is NULL", {
+  dfNumerator <- data.frame(
+    studyid = rep("STUDY1", 10),
+    subjid = paste0("SUBJ", 1:10),
+    invid = rep(paste0("SITE", 1:2), each = 5),  # GroupCol present
+    aest_dt = as.Date("2023-01-01") + 1:10,
+    stringsAsFactors = FALSE
+  )
+
+  dfDenominator <- data.frame(
+    studyid = rep("STUDY1", 10),
+    subjid = paste0("SUBJ", 1:10),
+    # MISSING invid (the default GroupCol)
+    visit_dt = as.Date("2023-01-01") + 1:10,
+    stringsAsFactors = FALSE
+  )
+
+  # Should fail because dfDenominator is missing GroupCol 'invid'
+  expect_error(
+    Input_CountSiteByMonth(
+      dfSubjects = NULL,  # KEY: NULL means no join happens
+      dfNumerator = dfNumerator,
+      dfDenominator = dfDenominator,
+      strNumeratorDateCol = "aest_dt",
+      strDenominatorDateCol = "visit_dt"
+    ),
+    "GroupCol 'invid' not found in dfDenominator"
+  )
+})

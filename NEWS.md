@@ -5,8 +5,10 @@
 - Added `nMinGroups` parameter to `Analyze_StudyKRI_PredictBoundsRefSet()` to allow passing pre-calculated minimum group counts, avoiding expensive `collect()` operations on database backends
 - Added `strMinGroupsCol` parameter to `Analyze_StudyKRI_PredictBoundsRef()` to specify custom column name for minimum group counts in StudyRef tables (default: "MinGroups")
 - Added `bSkipValidation` parameter to `JoinKRIByDenominator()` to disable validation checks that require `collect()` operations for improved performance with database backends
-- Corrected StudyMonth calculation for Analyze_StudyKRI_PredictBoundsRef to calculated study-specific studymonth before aggregating
+- Revised reference calculation now creating study-level timelines for each bootstrap iteration before calculating confidcence intervalls. introduced bMixStudies: FALSE
+  this better conserves inter-study variability leading to wider reference confidence intervalls.
 - Fixed Bug that mixed patients with identical subject ids between studies in Input_CountSiteByMonth
+- dfSubjects from Input_CountSiteByMonth() is optional when strGroupCol already in dfNumerator and dfDenominator
 
 
 # gsm.studykri 0.2.0
