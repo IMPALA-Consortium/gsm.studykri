@@ -1,4 +1,3 @@
-
 #' Aggregate to Study Level by Month with Complete Timeline
 #'
 #' @description
@@ -17,11 +16,10 @@ AggrStudyMonth <- function(
     vBy,
     vNumeratorCols,
     tblMonthSequence = NULL) {
-  
   # Filter out rows with NA MonthYYYYMM before processing
   dfInput <- dfInput %>%
     dplyr::filter(!is.na(.data$MonthYYYYMM))
-  
+
   # Aggregate to study level by grouping columns and MonthYYYYMM first
   dfAggregated <- dfInput %>%
     dplyr::summarise(
@@ -31,9 +29,9 @@ AggrStudyMonth <- function(
       ),
       Denominator = sum(.data$Denominator, na.rm = TRUE),
       GroupCount = dplyr::n_distinct(.data$GroupID),
-      .by = c(dplyr::all_of(.env$vBy), "MonthYYYYMM") 
+      .by = c(dplyr::all_of(.env$vBy), "MonthYYYYMM")
     )
-  
+
   # Fill gaps in calendar months with zeros to maintain timeline continuity
   dfMonthRanges <- dfAggregated %>%
     dplyr::summarise(
@@ -41,23 +39,23 @@ AggrStudyMonth <- function(
       max_month = max(.data$MonthYYYYMM, na.rm = TRUE),
       .by = dplyr::all_of(.env$vBy)
     )
-  
+
   global_min <- dfMonthRanges %>%
     dplyr::summarise(min_month = min(.data$min_month, na.rm = TRUE)) %>%
     dplyr::pull(.data$min_month)
-  
+
   global_max_calculated <- dfMonthRanges %>%
     dplyr::summarise(max_month = max(.data$max_month, na.rm = TRUE)) %>%
     dplyr::pull(.data$max_month)
-  
+
   # Limit global_max to current year-month to prevent imputing future months
   # Future calendar months in the data are allowed and will be included,
   # but we will not fill gaps between the current month and those future months
   current_month <- as.integer(format(Sys.Date(), "%Y%m"))
   global_max <- min(global_max_calculated, current_month)
-  
+
   dfAllMonths_mem <- GenerateMonthSeq(global_min, global_max)
-  
+
   # HandleLazyTable handles both lazy and in-memory cases:
   # - For lazy: writes to temp table or uses provided tblUser
   # - For in-memory: returns dfMem directly
@@ -68,7 +66,7 @@ AggrStudyMonth <- function(
     strTempTableName = "month_sequences",
     strTableType = "month sequence"
   )
-  
+
   # Cross-join and filter (unified for both lazy and in-memory)
   dfCompleteMonths <- dfMonthRanges %>%
     select(all_of(.env$vBy)) %>%
@@ -80,7 +78,7 @@ AggrStudyMonth <- function(
         .data$MonthYYYYMM <= .data$max_month
     ) %>%
     dplyr::select(-"min_month", -"max_month")
-  
+
   # Left join to fill gaps and calculate StudyMonth
   dfAggregated <- dfCompleteMonths %>%
     dplyr::left_join(
@@ -98,7 +96,7 @@ AggrStudyMonth <- function(
       StudyMonth = dplyr::dense_rank(.data$MonthYYYYMM),
       .by = dplyr::all_of(.env$vBy)
     )
-  
+
   return(dfAggregated)
 }
 
@@ -118,7 +116,6 @@ CumulativeCounts <- function(
     dfAggregated,
     vBy,
     vNumeratorCols) {
-  
   # Calculate cumulative sums at study level
   dfCumulative <- dfAggregated %>%
     SortDf(dplyr::across(dplyr::all_of(.env$vBy)), .data$StudyMonth) %>%
@@ -131,7 +128,7 @@ CumulativeCounts <- function(
       Denominator = cumsum(.data$Denominator)
     ) %>%
     dplyr::ungroup()
-  
+
   # Generate Metric columns using across with .names
   vMetricCols <- gsub("^Numerator", "Metric", vNumeratorCols)
   dfResult <- dfCumulative %>%
@@ -149,7 +146,7 @@ CumulativeCounts <- function(
         .names = "{gsub('^Numerator', 'Metric', .col)}"
       )
     )
-  
+
   return(dfResult)
 }
 

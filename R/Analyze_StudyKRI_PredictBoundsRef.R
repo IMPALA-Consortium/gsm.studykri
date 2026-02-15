@@ -101,7 +101,7 @@
 #'   dfInput = dfSiteLevel,
 #'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
 #'   nBootstrapReps = 100,
-#'   bMixStudies = TRUE,  # Aggregate studies early for SQL performance
+#'   bMixStudies = TRUE, # Aggregate studies early for SQL performance
 #'   seed = 42
 #' )
 #'
@@ -220,7 +220,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
       vNumeratorCols = vNumeratorCols,
       tblMonthSequence = tblMonthSequence
     )
-    
+
     # Step 2: Aggregate across studies for each StudyMonth+BootstrapRep
     dfStudyMonthBoot <- dfStudyMonth %>%
       dplyr::summarise(
@@ -230,23 +230,22 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
         ),
         .by = c("StudyMonth", "BootstrapRep")
       )
-    
+
     # Step 3: Calculate cumulative counts per bootstrap replicate only
     dfCumCountBootComplete <- CumulativeCounts(
       dfAggregated = dfStudyMonthBoot,
       vBy = c("BootstrapRep"),
       vNumeratorCols = vNumeratorCols
     )
-    
   } else {
-    # APPROACH 2: Keep studies separate 
+    # APPROACH 2: Keep studies separate
     # Step 1: Calculate cumulative counts per study+bootstrap
     dfCumCountBoot <- Transform_CumCount(
       dfBootstrapped,
       vBy = c("StudyID", "BootstrapRep"),
       tblMonthSequence = tblMonthSequence
     )
-    
+
     # Step 2: Extrapolate to align study timelines
     # Study timelines will have different lengths; bring them all to the
     # same length by extrapolating the last measurement
@@ -268,7 +267,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
           select(c("StudyID", "BootstrapRep", "StudyMonth")),
         by = c("StudyID", "BootstrapRep", "StudyMonth")
       )
-    
+
     dfCumCountBootComplete <- union_all(dfCumCountBoot, dfMiss)
   }
 

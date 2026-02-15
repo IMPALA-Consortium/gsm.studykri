@@ -780,7 +780,7 @@ test_that("Input_CountSiteByMonth validates GroupCol in dfNumerator when dfSubje
   dfDenominator <- data.frame(
     studyid = rep("STUDY1", 10),
     subjid = paste0("SUBJ", 1:10),
-    invid = rep(paste0("SITE", 1:2), each = 5),  # GroupCol present
+    invid = rep(paste0("SITE", 1:2), each = 5), # GroupCol present
     visit_dt = as.Date("2023-01-01") + 1:10,
     stringsAsFactors = FALSE
   )
@@ -788,7 +788,7 @@ test_that("Input_CountSiteByMonth validates GroupCol in dfNumerator when dfSubje
   # Should fail because dfNumerator is missing GroupCol 'invid'
   expect_error(
     Input_CountSiteByMonth(
-      dfSubjects = NULL,  # KEY: NULL means no join happens
+      dfSubjects = NULL, # KEY: NULL means no join happens
       dfNumerator = dfNumerator,
       dfDenominator = dfDenominator,
       strNumeratorDateCol = "aest_dt",
@@ -802,7 +802,7 @@ test_that("Input_CountSiteByMonth validates GroupCol in dfDenominator when dfSub
   dfNumerator <- data.frame(
     studyid = rep("STUDY1", 10),
     subjid = paste0("SUBJ", 1:10),
-    invid = rep(paste0("SITE", 1:2), each = 5),  # GroupCol present
+    invid = rep(paste0("SITE", 1:2), each = 5), # GroupCol present
     aest_dt = as.Date("2023-01-01") + 1:10,
     stringsAsFactors = FALSE
   )
@@ -818,7 +818,7 @@ test_that("Input_CountSiteByMonth validates GroupCol in dfDenominator when dfSub
   # Should fail because dfDenominator is missing GroupCol 'invid'
   expect_error(
     Input_CountSiteByMonth(
-      dfSubjects = NULL,  # KEY: NULL means no join happens
+      dfSubjects = NULL, # KEY: NULL means no join happens
       dfNumerator = dfNumerator,
       dfDenominator = dfDenominator,
       strNumeratorDateCol = "aest_dt",

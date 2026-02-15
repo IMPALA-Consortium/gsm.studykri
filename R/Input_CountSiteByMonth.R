@@ -200,7 +200,7 @@ Input_CountSiteByMonth <- function(
     if (!inherits(dfSubjects, c("data.frame", "tbl"))) {
       stop("dfSubjects must be a data.frame or tbl object")
     }
-    
+
     required_subj_cols <- c(strStudyCol, strGroupCol, strSubjectCol)
     missing_subj_cols <- setdiff(required_subj_cols, colnames(dfSubjects))
     if (length(missing_subj_cols) > 0) {
@@ -209,17 +209,17 @@ Input_CountSiteByMonth <- function(
         paste(missing_subj_cols, collapse = ", ")
       ))
     }
-    
+
     # Prepare subject lookup with GroupCol
     dfSubjectLookup <- dfSubjects %>%
       dplyr::select(dplyr::all_of(c(strStudyCol, strGroupCol, strSubjectCol))) %>%
       dplyr::distinct()
-    
+
     # Join to numerator - ALWAYS use StudyID + SubjectID composite key
     dfNumerator <- dfNumerator %>%
       dplyr::select(-dplyr::any_of(.env$strGroupCol)) %>%
       dplyr::inner_join(dfSubjectLookup, by = c(strStudyCol, strSubjectCol))
-    
+
     # Join to denominator - ALWAYS use StudyID + SubjectID composite key
     dfDenominator <- dfDenominator %>%
       dplyr::select(-dplyr::any_of(.env$strGroupCol)) %>%
