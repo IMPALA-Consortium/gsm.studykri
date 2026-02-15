@@ -141,8 +141,7 @@ test_that("script_vs_wflow", {
   dfBoundsRefW6 <- dfBoundsRefW %>%
     filter(MetricID == "Analysis_kri0006")
 
-  # bootstraping will expand timeline
-  expect_lt(
+  expect_equal(
     dfTransformedW6 %>%
       filter(StudyID %in% unique(lRaw$Raw_StudyRef$studyid)) %>%
       nrow(),
