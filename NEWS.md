@@ -9,6 +9,7 @@
   this better conserves inter-study variability leading to wider reference confidence intervalls.
 - Fixed Bug that mixed patients with identical subject ids between studies in Input_CountSiteByMonth
 - dfSubjects from Input_CountSiteByMonth() is optional when strGroupCol already in dfNumerator and dfDenominator
+- HandleLazyTables will use unique names for temp tables using random integers
 
 
 # gsm.studykri 0.2.0

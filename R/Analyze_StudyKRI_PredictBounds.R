@@ -241,6 +241,7 @@ Analyze_StudyKRI_PredictBounds <- function(
   dfFiltered <- dfInput %>%
     dplyr::filter(.data[[strStudyCol]] %in% .env$vTargetStudies)
 
+
   # Step 1: Generate bootstrap resamples
   dfBootstrapped <- BootstrapStudyKRI(
     dfInput = dfFiltered,
@@ -527,6 +528,7 @@ BootstrapStudyKRI <- function(
       relationship = "many-to-many"
     ) %>%
     dplyr::select(-"GroupNumber")
+
 
   return(dfBootstrapData)
 }

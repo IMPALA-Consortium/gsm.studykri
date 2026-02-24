@@ -1,3 +1,17 @@
+#' Generate Unique Temporary Table Name
+#'
+#' Creates a unique table name by appending process ID and random integer.
+#' This prevents conflicts when multiple function calls create temp tables
+#' in the same database session (e.g., when processing multiple KRIs via purrr::map).
+#'
+#' @param base_name character. Base name for the table (e.g., "bootstrap_reps")
+#' @return character. Unique table name (e.g., "bootstrap_reps_12345_678901")
+#' @keywords internal
+GenerateUniqueTempName <- function(base_name) {
+  suffix <- paste0(Sys.getpid(), "_", sample.int(1e6, 1))
+  paste0(base_name, "_", suffix)
+}
+
 #' Handle Lazy Table with Fallback Strategy
 #'
 #' @description
@@ -60,11 +74,14 @@ HandleLazyTable <- function(tblInput,
         stop("Cannot extract database connection from lazy table")
       }
 
+      # Generate unique name to prevent conflicts in parallel/nested execution
+      unique_name <- GenerateUniqueTempName(strTempTableName)
+
       # Attempt to write temp table
       tblResult <- dplyr::copy_to(
         con,
         dfMem,
-        name = strTempTableName,
+        name = unique_name,
         temporary = TRUE,
         overwrite = TRUE
       )

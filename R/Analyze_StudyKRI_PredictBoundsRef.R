@@ -209,6 +209,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     vDbIntRandomRange = vDbIntRandomRange
   )
 
+
   vNumeratorCols <- grep("^Numerator", colnames(dfInput), value = TRUE)
 
   if (bMixStudies) {

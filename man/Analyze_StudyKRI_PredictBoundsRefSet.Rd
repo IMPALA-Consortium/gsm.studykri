@@ -137,7 +137,7 @@ dfGroupBounds_Mixed <- Analyze_StudyKRI_PredictBoundsRefSet(
   dfInput = dfSiteLevel,
   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
   nBootstrapReps = 100,
-  bMixStudies = TRUE,  # Aggregate studies early for SQL performance
+  bMixStudies = TRUE, # Aggregate studies early for SQL performance
   seed = 42
 )
 
