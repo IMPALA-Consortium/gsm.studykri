@@ -100,6 +100,51 @@ test_that("AddScreeningFailures works without seed", {
   expect_true(nrow(result) >= nrow(dfEnrolled))
 })
 
+test_that("AddScreeningFailures seed parameter produces reproducible results", {
+  # Test that explicitly passing seed produces reproducible results
+  dfEnrolled <- data.frame(
+    subjid = paste0("S", 1:20),
+    studyid = "Study1",
+    siteid = rep(c("Site1", "Site2"), each = 10),
+    enrollyn = "Y",
+    stringsAsFactors = FALSE
+  )
+
+  dfSource <- data.frame(
+    subjid = paste0("SRC", 1:50),
+    studyid = "SourceStudy",
+    siteid = rep(c("SiteA", "SiteB"), each = 25),
+    enrollyn = c(
+      rep("Y", 20), rep("N", 5),
+      rep("Y", 15), rep("N", 10)
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  # Call with seed = 123
+  result1 <- AddScreeningFailures(
+    dfEnrolled = dfEnrolled,
+    dfSource = dfSource,
+    strSiteCol = "siteid",
+    strStudyCol = "studyid",
+    seed = 123
+  )
+
+  # Call with same seed
+  result2 <- AddScreeningFailures(
+    dfEnrolled = dfEnrolled,
+    dfSource = dfSource,
+    strSiteCol = "siteid",
+    strStudyCol = "studyid",
+    seed = 123
+  )
+
+  # Should produce identical results
+  expect_equal(nrow(result1), nrow(result2))
+  expect_equal(sum(result1$enrollyn == "N"), sum(result2$enrollyn == "N"))
+  expect_equal(result1$subjid, result2$subjid)
+})
+
 test_that("AddScreeningFailures handles edge case with zero screening failures calculated", {
   # Create scenario where ratio might result in very few or zero screening failures
   dfEnrolled <- data.frame(

@@ -378,6 +378,24 @@ test_that("ResampleStudy is reproducible with seed", {
   expect_equal(nrow(result1$Raw_AE), nrow(result2$Raw_AE))
 })
 
+test_that("ResampleStudy seed parameter produces reproducible results", {
+  # Test explicitly passing seed parameter (covers line 105)
+  lRaw <- list(
+    Raw_SUBJ = get_test_raw_subj(),
+    Raw_AE = clindata::rawplus_ae,
+    Raw_SITE = clindata::ctms_site
+  )
+
+  # Call with seed parameter
+  result1 <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, seed = 999)
+  result2 <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, seed = 999)
+
+  # Should produce identical results
+  expect_equal(result1$Raw_SUBJ$subjid, result2$Raw_SUBJ$subjid)
+  expect_equal(result1$Raw_SUBJ$invid, result2$Raw_SUBJ$invid)
+  expect_equal(nrow(result1$Raw_AE), nrow(result2$Raw_AE))
+})
+
 # Site variability tests ----------------------------------------------------
 test_that("ResampleStudy with TargetSiteCount generates multiple sites", {
   lRaw_small <- list(

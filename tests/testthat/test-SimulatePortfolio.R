@@ -168,6 +168,52 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
   expect_true(nrow(result4$Raw_SUBJ) > 0)
 })
 
+test_that("SimulatePortfolio seed parameter produces reproducible results", {
+  # Test explicit seed parameter (covers line 643)
+  lRaw <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_SITE = clindata::ctms_site
+  )
+
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
+
+  # Call with seed parameter
+  result1 <- SimulatePortfolio(lRaw, nStudies = 2, seed = 456)
+  result2 <- SimulatePortfolio(lRaw, nStudies = 2, seed = 456)
+
+  # Should produce identical study IDs and structure
+  expect_equal(unique(result1$Raw_SUBJ$studyid), unique(result2$Raw_SUBJ$studyid))
+  expect_equal(nrow(result1$Raw_SUBJ), nrow(result2$Raw_SUBJ))
+  expect_equal(result1$Raw_SUBJ$subjid, result2$Raw_SUBJ$subjid)
+})
+
+test_that("SimulatePortfolio without dfConfig generates default config with seed", {
+  # Test generate_default_config function with seed (covers line 545)
+  lRaw <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SITE = clindata::ctms_site
+  )
+
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
+
+  # When dfConfig is NULL, generate_default_config is called with seed
+  result1 <- SimulatePortfolio(lRaw, nStudies = 3, seed = 789)
+  result2 <- SimulatePortfolio(lRaw, nStudies = 3, seed = 789)
+
+  # Should produce same study IDs and subject counts
+  expect_equal(unique(result1$Raw_SUBJ$studyid), unique(result2$Raw_SUBJ$studyid))
+  
+  # Count subjects per study
+  counts1 <- table(result1$Raw_SUBJ$studyid)
+  counts2 <- table(result2$Raw_SUBJ$studyid)
+  expect_equal(counts1, counts2)
+})
+
 # Tests for ResampleStudy function ----
 
 test_that("ResampleStudy validates vSubjectIDs columns exist", {
