@@ -24,8 +24,7 @@ lRaw_original$Raw_SUBJ$subjectenrollmentnumber <- lRaw_original$Raw_SUBJ$subjid
 lRaw <- SimulatePortfolio(
   lRaw = lRaw_original,
   nStudies = 3,
-  seed = 123,
-  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4", "AA-5", "AA-6"),
     nSubjects = c(500, 750, 150, 200, 250, 300),
@@ -141,12 +140,11 @@ test_that("script_vs_wflow", {
   dfBoundsRefW6 <- dfBoundsRefW %>%
     filter(MetricID == "Analysis_kri0006")
 
-  expect_equal(
+  # by joining KRI with the same Denominator extra study months may be added by calendar months with only numerator events
+  expect_true(
     dfTransformedW6 %>%
       filter(StudyID %in% unique(lRaw$Raw_StudyRef$studyid)) %>%
-      nrow(),
-    dfBoundsW6 %>%
-      nrow()
+      nrow() <= nrow(dfBoundsW6)
   )
 
   expect_true(dplyr::near(mean(dfTransformedS$Metric), mean(dfTransformedW6$Metric)))

@@ -13,7 +13,6 @@ Analyze_StudyKRI_PredictBoundsRefSet(
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
   bMixStudies = FALSE,
-  seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL,
   vDbIntRandomRange = NULL,
@@ -42,8 +41,6 @@ Example: \code{c("STUDY1", "STUDY2", "STUDY3")}.}
 (default: "StudyMonth").}
 
 \item{bMixStudies}{logical. Default: False, see Details}
-
-\item{seed}{integer or NULL. Random seed for reproducibility (default: NULL).}
 
 \item{tblBootstrapReps}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
 Optional pre-generated bootstrap replicate indices with a \code{BootstrapRep} column
@@ -120,8 +117,7 @@ dfGroupBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
   dfInput = dfSiteLevel,
   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
   nBootstrapReps = 100, # Use small number for example
-  nConfLevel = 0.95,
-  seed = 42
+  nConfLevel = 0.95
 )
 
 # Example with Snowflake backend
@@ -137,8 +133,7 @@ dfGroupBounds_Mixed <- Analyze_StudyKRI_PredictBoundsRefSet(
   dfInput = dfSiteLevel,
   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
   nBootstrapReps = 100,
-  bMixStudies = TRUE, # Aggregate studies early for SQL performance
-  seed = 42
+  bMixStudies = TRUE # Aggregate studies early for SQL performance
 )
 
 print(head(dfGroupBounds))

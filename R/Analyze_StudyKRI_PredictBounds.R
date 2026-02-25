@@ -136,7 +136,6 @@ CalculateStudyBounds <- function(
 #'   Default: 1000.
 #' @param nConfLevel numeric. Confidence level between 0 and 1. Default: 0.95
 #'   (95% confidence interval).
-#' @param seed integer or NULL. Random seed for reproducibility. Default: NULL.
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices. Default: NULL.
 #' @param tblMonthSequence tbl_lazy, data.frame, or NULL. For lazy table inputs:
@@ -196,7 +195,6 @@ Analyze_StudyKRI_PredictBounds <- function(
     dfStudyRef = NULL,
     nBootstrapReps = 1000,
     nConfLevel = 0.95,
-    seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL,
     strStudyCol = "StudyID",
@@ -249,7 +247,6 @@ Analyze_StudyKRI_PredictBounds <- function(
     nGroups = NULL,
     strStudyCol = strStudyCol,
     strGroupCol = strGroupCol,
-    seed = seed,
     tblBootstrapReps = tblBootstrapReps,
     vDbIntRandomRange = vDbIntRandomRange
   )
@@ -294,8 +291,6 @@ Analyze_StudyKRI_PredictBounds <- function(
 #'   can be used to upsample (larger than actual) or downsample (smaller than actual).
 #' @param strStudyCol character. Column name for study identifier. Defaults to "StudyID".
 #' @param strGroupCol character. Column name for group identifier. Defaults to "GroupID".
-#' @param seed integer or NULL. Random seed for reproducibility. If NULL (default),
-#'   no seed is set. Note: seed only affects in-memory data frames, not SQL queries.
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices. Must have 'BootstrapRep'
 #'   column with values 1 to nBootstrapReps. If NULL, attempts to create temp table
@@ -322,7 +317,6 @@ BootstrapStudyKRI <- function(
     nGroups = NULL,
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
-    seed = NULL,
     tblBootstrapReps = NULL,
     vDbIntRandomRange = NULL) {
   # Input Validation
@@ -374,14 +368,6 @@ BootstrapStudyKRI <- function(
   # Check for empty data
   if (is.data.frame(dfInput) && nrow(dfInput) == 0) {
     stop("dfInput has no rows")
-  }
-
-  # Set random seed if provided (only affects in-memory operations)
-  if (!is.null(seed)) {
-    if (!is.numeric(seed) || length(seed) != 1) {
-      stop("seed must be NULL or a single numeric value")
-    }
-    set.seed(seed)
   }
 
   # Create replicate index

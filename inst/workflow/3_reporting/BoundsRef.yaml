@@ -33,7 +33,6 @@ steps:
       nBootstrapReps: BootstrapReps
       nConfLevel: Threshold
       bMixStudies: bMixStudies
-      seed: 42
 
   # Step 3: Transform reference bounds to long format
   - output: Reporting_BoundsRef

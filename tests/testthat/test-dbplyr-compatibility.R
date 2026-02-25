@@ -153,8 +153,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet returns lazy table with lazy inp
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 5,
       nConfLevel = 0.95,
-      seed = 123
-    )
+          )
   })
 
   # Verify result is lazy table
@@ -300,8 +299,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet works with lazy tables", {
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 888
-    )
+          )
   })
 
   # Verify result is lazy table
@@ -349,8 +347,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet with lazy table and NULL vStudyF
       vStudyFilter = NULL,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 777
-    ),
+          ),
     "No vStudyFilter specified. Using all 3 studies."
   )
 
@@ -523,8 +520,7 @@ test_that("Analyze_StudyKRI_PredictBounds returns lazy table with lazy input", {
       dfStudyRef = NULL,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 999
-    )
+          )
   })
 
   # Verify result is lazy table
@@ -583,8 +579,7 @@ test_that("Analyze_StudyKRI_PredictBounds works with lazy dfStudyRef", {
       dfStudyRef = dfStudyRefLazy,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 888
-    )
+          )
   })
 
   # Verify result is lazy table
@@ -646,8 +641,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef returns lazy table with lazy input"
       dfStudyRef = dfStudyRefLazy,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 555
-    )
+          )
   })
 
   # Should return lazy table when input is lazy
@@ -799,8 +793,7 @@ test_that("User-supplied tblBootstrapReps controls bootstrap count", {
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 100, # This should be overridden by tblBootstrapReps
       nConfLevel = 0.95,
-      seed = 42,
-      tblBootstrapReps = tblBootstrapRepsLazy
+            tblBootstrapReps = tblBootstrapRepsLazy
     )
   })
 
@@ -852,8 +845,7 @@ test_that("User-supplied tblMonthSequence controls output months", {
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 10,
       nConfLevel = 0.95,
-      seed = 42,
-      tblMonthSequence = tblMonthSeqLazy
+            tblMonthSequence = tblMonthSeqLazy
     )
   })
 
@@ -912,8 +904,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef works with user-supplied tblBootstr
       dfStudyRef = dfStudyRef,
       nBootstrapReps = 50, # Should be overridden by tblBootstrapReps
       nConfLevel = 0.95,
-      seed = 42,
-      tblBootstrapReps = tblBootstrapRepsLazy
+            tblBootstrapReps = tblBootstrapRepsLazy
     )
   })
 
@@ -967,8 +958,7 @@ test_that("Analyze_StudyKRI_PredictBounds works with user-supplied tblBootstrapR
       dfStudyRef = NULL, # All studies
       nBootstrapReps = 200, # Should be overridden by tblBootstrapReps
       nConfLevel = 0.95,
-      seed = 42,
-      tblBootstrapReps = tblBootstrapRepsLazy
+            tblBootstrapReps = tblBootstrapRepsLazy
     )
   })
 

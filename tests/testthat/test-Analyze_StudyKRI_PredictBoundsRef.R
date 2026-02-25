@@ -36,7 +36,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet calculates bounds for multiple s
     vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
     nBootstrapReps = 50, # Small number for speed
     nConfLevel = 0.95,
-    seed = 123
+    
   )
 
   # Verify structure
@@ -82,7 +82,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet works with single study", {
     vStudyFilter = "STUDY1",
     nBootstrapReps = 20,
     nConfLevel = 0.95,
-    seed = 123
+    
   )
 
   expect_s3_class(result, "data.frame")
@@ -117,7 +117,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet uses minimum group count", {
       vStudyFilter = c("STUDY_SMALL", "STUDY_LARGE"),
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 123
+      
     )
   })
 
@@ -262,7 +262,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet integration with full workflow",
       vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
       nBootstrapReps = 30, # Small for speed
       nConfLevel = 0.95,
-      seed = 789
+      
     )
   })
 
@@ -299,7 +299,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet output has correct column types"
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 30,
       nConfLevel = 0.95,
-      seed = 999
+      
     )
   })
 
@@ -331,7 +331,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet filters studies correctly", {
       vStudyFilter = c("STUDY1", "STUDY2"), # Only use 2 of 3 studies
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 111
+      
     )
   })
 
@@ -364,7 +364,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef wrapper works with study mapping", 
       dfInput = dfTest,
       dfStudyRef = dfStudyRef,
       nBootstrapReps = 20,
-      seed = 456
+      
     )
   })
 
@@ -446,7 +446,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef works with any column names", {
       dfInput = dfTest,
       dfStudyRef = dfStudyRef,
       nBootstrapReps = 20,
-      seed = 789
+      
     )
   })
 
@@ -477,7 +477,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet with NULL vStudyFilter uses all 
       vStudyFilter = NULL,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 999
+      
     ),
     "No vStudyFilter specified. Using all 3 studies."
   )
@@ -591,7 +591,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef works with vDbIntRandomRange parame
     dfStudyRef = dfStudyRef,
     nBootstrapReps = 10,
     nConfLevel = 0.95,
-    seed = 123,
+    
     vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
   )
 
@@ -677,7 +677,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet uses provided nMinGroups", {
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 10,
       nMinGroups = 2,
-      seed = 123
+      
     ),
     "Using provided minimum group count: 2"
   )
@@ -710,7 +710,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef uses MinGroups column from StudyRef
       dfInput = dfTest,
       dfStudyRef = dfStudyRef,
       nBootstrapReps = 10,
-      seed = 123
+      
     ),
     "Using provided minimum group count: 3"
   )
@@ -744,7 +744,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef uses custom MinGroups column name",
       dfStudyRef = dfStudyRef,
       strMinGroupsCol = "custom_min_grps",
       nBootstrapReps = 10,
-      seed = 123
+      
     ),
     "Using provided minimum group count: 2"
   )
@@ -792,7 +792,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet works with bMixStudies = TRUE", 
     nBootstrapReps = 50,
     nConfLevel = 0.95,
     bMixStudies = TRUE,
-    seed = 123
+    
   )
 
   # Verify structure (same as FALSE mode)
@@ -832,7 +832,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet bMixStudies modes both work", {
     vStudyFilter = c("STUDY1", "STUDY2"),
     nBootstrapReps = 30,
     bMixStudies = TRUE,
-    seed = 456
+    
   )
 
   result_separated <- Analyze_StudyKRI_PredictBoundsRefSet(
@@ -840,7 +840,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet bMixStudies modes both work", {
     vStudyFilter = c("STUDY1", "STUDY2"),
     nBootstrapReps = 30,
     bMixStudies = FALSE,
-    seed = 456
+    
   )
 
   # Both should return valid results
@@ -879,7 +879,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRef passes through bMixStudies", {
     dfStudyRef = dfStudyRef,
     nBootstrapReps = 20,
     bMixStudies = TRUE,
-    seed = 789
+    
   )
 
   expect_s3_class(result, "data.frame")

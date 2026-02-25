@@ -328,8 +328,7 @@ test_that("CalculateStudyBounds integration with full workflow", {
     nBootstrapReps = 10,
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
-    seed = 123
-  )
+      )
 
   # Aggregate to study level
   dfBootstrapStudy <- Transform_CumCount(
@@ -384,8 +383,7 @@ test_that("Analyze_StudyKRI_PredictBounds works with NULL dfStudyRef (all studie
       dfStudyRef = NULL,
       nBootstrapReps = 10,
       nConfLevel = 0.95,
-      seed = 123
-    ),
+          ),
     "Using all 2 studies found in dfInput"
   )
 
@@ -423,8 +421,7 @@ test_that("Analyze_StudyKRI_PredictBounds uses first column of dfStudyRef", {
     dfStudyRef = dfStudyRef,
     nBootstrapReps = 10,
     nConfLevel = 0.95,
-    seed = 456
-  )
+      )
 
   # Should only include STUDY1 and STUDY2 (from first column)
   expect_s3_class(result, "data.frame")
@@ -518,8 +515,7 @@ test_that("Analyze_StudyKRI_PredictBounds with dfStudyRef filters correctly", {
     dfStudyRef = dfStudyRef,
     nBootstrapReps = 10,
     nConfLevel = 0.95,
-    seed = 789
-  )
+      )
 
   # Should only include STUDY1
   expect_equal(unique(result$StudyID), "STUDY1")
@@ -560,8 +556,7 @@ test_that("Analyze_StudyKRI_PredictBounds works with vDbIntRandomRange parameter
     dfInput = dfTest,
     nBootstrapReps = 10,
     nConfLevel = 0.95,
-    seed = 123,
-    vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+        vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
   )
 
   # Verify function completes without error and returns expected structure
@@ -592,8 +587,7 @@ test_that("Analyze_StudyKRI_PredictBounds handles character vDbIntRandomRange fr
   result <- Analyze_StudyKRI_PredictBounds(
     dfInput = dfTest,
     nBootstrapReps = 10,
-    seed = 123,
-    vDbIntRandomRange = c("-9223372036854775808", "9223372036854775807")
+        vDbIntRandomRange = c("-9223372036854775808", "9223372036854775807")
   )
 
   # Verify function completes and returns valid results

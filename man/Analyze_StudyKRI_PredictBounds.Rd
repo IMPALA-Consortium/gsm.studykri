@@ -9,7 +9,6 @@ Analyze_StudyKRI_PredictBounds(
   dfStudyRef = NULL,
   nBootstrapReps = 1000,
   nConfLevel = 0.95,
-  seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL,
   strStudyCol = "StudyID",
@@ -33,8 +32,6 @@ Default: 1000.}
 
 \item{nConfLevel}{numeric. Confidence level between 0 and 1. Default: 0.95
 (95\% confidence interval).}
-
-\item{seed}{integer or NULL. Random seed for reproducibility. Default: NULL.}
 
 \item{tblBootstrapReps}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
 Optional pre-generated bootstrap replicate indices. Default: NULL.}

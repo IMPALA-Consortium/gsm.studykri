@@ -38,7 +38,6 @@
 #' @param strStudyMonthCol character. Column name for sequential study month
 #'   (default: "StudyMonth").
 #' @param bMixStudies logical. Default: False, see Details
-#' @param seed integer or NULL. Random seed for reproducibility (default: NULL).
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
 #'   containing values 1 to N (where N is the desired number of replicates).
@@ -84,8 +83,7 @@
 #'   dfInput = dfSiteLevel,
 #'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
 #'   nBootstrapReps = 100, # Use small number for example
-#'   nConfLevel = 0.95,
-#'   seed = 42
+#'   nConfLevel = 0.95
 #' )
 #'
 #' # Example with Snowflake backend
@@ -101,8 +99,7 @@
 #'   dfInput = dfSiteLevel,
 #'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
 #'   nBootstrapReps = 100,
-#'   bMixStudies = TRUE, # Aggregate studies early for SQL performance
-#'   seed = 42
+#'   bMixStudies = TRUE # Aggregate studies early for SQL performance
 #' )
 #'
 #' print(head(dfGroupBounds))
@@ -117,7 +114,6 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
     bMixStudies = FALSE,
-    seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL,
     vDbIntRandomRange = NULL,
@@ -204,7 +200,6 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     nGroups = nMinGroups, # Key: use minimum to ensure fair comparison
     strStudyCol = strStudyCol,
     strGroupCol = strGroupCol,
-    seed = seed,
     tblBootstrapReps = tblBootstrapReps,
     vDbIntRandomRange = vDbIntRandomRange
   )
@@ -328,7 +323,6 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #'   properly aligned before aggregation. Use TRUE for database backends when
 #'   SQL performance is critical and all studies have similar timeline lengths.
 #'   Default: FALSE.
-#' @param seed integer or NULL. Random seed (default: NULL).
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
 #'   containing values 1 to N (where N is the desired number of replicates).
@@ -373,8 +367,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' dfBounds <- Analyze_StudyKRI_PredictBoundsRef(
 #'   dfInput = dfSiteLevel,
 #'   dfStudyRef = dfStudyRef,
-#'   nBootstrapReps = 100,
-#'   seed = 42
+#'   nBootstrapReps = 100
 #' )
 #'
 #' # Example with Snowflake backend
@@ -397,7 +390,6 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     strStudyMonthCol = "StudyMonth",
     strMinGroupsCol = "MinGroups",
     bMixStudies = FALSE,
-    seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL,
     vDbIntRandomRange = NULL) {
@@ -457,7 +449,6 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       strGroupCol = strGroupCol,
       strStudyMonthCol = strStudyMonthCol,
       bMixStudies = bMixStudies,
-      seed = seed,
       tblBootstrapReps = tblBootstrapReps,
       tblMonthSequence = tblMonthSequence,
       vDbIntRandomRange = vDbIntRandomRange,

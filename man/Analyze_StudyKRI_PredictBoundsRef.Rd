@@ -13,7 +13,6 @@ Analyze_StudyKRI_PredictBoundsRef(
   strStudyMonthCol = "StudyMonth",
   strMinGroupsCol = "MinGroups",
   bMixStudies = FALSE,
-  seed = NULL,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL,
   vDbIntRandomRange = NULL
@@ -48,8 +47,6 @@ extrapolation step, allowing studies with different timeline lengths to be
 properly aligned before aggregation. Use TRUE for database backends when
 SQL performance is critical and all studies have similar timeline lengths.
 Default: FALSE.}
-
-\item{seed}{integer or NULL. Random seed (default: NULL).}
 
 \item{tblBootstrapReps}{tbl_lazy, data.frame, or NULL. For lazy table inputs:
 Optional pre-generated bootstrap replicate indices with a \code{BootstrapRep} column
@@ -114,8 +111,7 @@ dfSiteLevel <- data.frame(
 dfBounds <- Analyze_StudyKRI_PredictBoundsRef(
   dfInput = dfSiteLevel,
   dfStudyRef = dfStudyRef,
-  nBootstrapReps = 100,
-  seed = 42
+  nBootstrapReps = 100
 )
 
 # Example with Snowflake backend
