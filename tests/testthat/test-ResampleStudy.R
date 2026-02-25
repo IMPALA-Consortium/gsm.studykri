@@ -73,7 +73,7 @@ test_that("ResampleStudy handles replacement parameter", {
     "STUDY002",
     nSubjects = 50,
     replacement = TRUE,
-      )
+  )
   expect_equal(nrow(result_fewer$Raw_SUBJ), 50)
 
   # Without replacement - error if requesting more than available
@@ -83,7 +83,7 @@ test_that("ResampleStudy handles replacement parameter", {
       "STUDY003",
       nSubjects = n_enrolled + 100,
       replacement = FALSE,
-          ),
+    ),
     "Cannot sample"
   )
 })
@@ -172,7 +172,7 @@ test_that("ResampleStudy handles strOversampleDomain parameter", {
       nSubjects = 100,
       strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.75, 1.0),
-          )
+    )
   )
 
   # Sample from low-AE patients (bottom 25%)
@@ -183,7 +183,7 @@ test_that("ResampleStudy handles strOversampleDomain parameter", {
       nSubjects = 100,
       strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0, 0.25),
-          )
+    )
   )
 
   # Both should have sampled subjects (may be < 100 due to filtering)
@@ -368,7 +368,7 @@ test_that("ResampleStudy is reproducible with seed", {
 
   set.seed(42)
   result1 <- ResampleStudy(lRaw, "STUDY001", nSubjects = 100)
-  
+
   set.seed(42)
   result2 <- ResampleStudy(lRaw, "STUDY001", nSubjects = 100)
 
@@ -409,7 +409,7 @@ test_that("ResampleStudy with TargetSiteCount generates multiple sites", {
     strNewStudyID = "SITETEST001",
     nSubjects = 100,
     TargetSiteCount = 20,
-      )
+  )
 
   # Check that result has reasonable number of sites (allow some variation)
   actual_site_count <- length(unique(result$Raw_SUBJ$invid))
@@ -434,7 +434,7 @@ test_that("TargetSiteCount generates sites with valid metadata", {
     strNewStudyID = "SITETEST002",
     nSubjects = 50,
     TargetSiteCount = 15,
-      )
+  )
 
   # Check that site metadata columns exist (note: lowercase 'country' in ctms_site)
   expect_true("country" %in% names(result$Raw_SITE) || "Country" %in% names(result$Raw_SITE))
@@ -464,7 +464,7 @@ test_that("TargetSiteCount creates realistic site distributions", {
     strNewStudyID = "SITETEST003",
     nSubjects = 100,
     TargetSiteCount = 10,
-      )
+  )
 
   # Check that patients are distributed across sites
   site_patient_counts <- table(result$Raw_SUBJ$invid)
@@ -488,7 +488,7 @@ test_that("ResampleStudy with TargetSiteCount = NULL uses default behavior", {
     strNewStudyID = "SITETEST004",
     nSubjects = 50,
     TargetSiteCount = NULL,
-      )
+  )
 
   # Should work normally without errors
   expect_true(length(unique(result$Raw_SUBJ$invid)) > 0)
@@ -547,7 +547,7 @@ test_that("ResampleStudy preserves all input domains and column names", {
     lRaw = lRaw_full,
     strNewStudyID = "DOMAINTEST001",
     nSubjects = 50,
-      )
+  )
 
   # Check that all input domains exist in output
   input_domains <- names(lRaw_full)
@@ -611,7 +611,7 @@ test_that("ResampleStudy works with minimal required domains", {
     lRaw = lRaw_minimal,
     strNewStudyID = "MINTEST001",
     nSubjects = 20,
-      )
+  )
 
   expect_equal(names(result), names(lRaw_minimal))
   expect_equal(sort(names(result$Raw_SUBJ)), sort(names(lRaw_minimal$Raw_SUBJ)))
@@ -635,7 +635,7 @@ test_that("ResampleStudy handles unknown/custom domains", {
     lRaw = lRaw_custom,
     strNewStudyID = "CUSTOMTEST001",
     nSubjects = 20,
-      )
+  )
 
   # Custom domain should be preserved
   expect_true("Raw_CUSTOM" %in% names(result))
@@ -657,7 +657,7 @@ test_that("ResampleStudy maintains reasonable column order", {
     lRaw = lRaw_test,
     strNewStudyID = "ORDERTEST001",
     nSubjects = 30,
-      )
+  )
 
   # Column order doesn't need to be identical, but key columns should be early
   # For Raw_SUBJ, studyid, subjid should be in first few columns
@@ -717,7 +717,7 @@ test_that("ResampleStudy handles extreme quantile ranges", {
       nSubjects = 50,
       strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.95, 1.0),
-          )
+    )
   )
 
   # Should work - may have fewer subjects than requested if range is very narrow
@@ -795,7 +795,7 @@ test_that("ResampleStudy handles invalid composite ID mappings", {
       nSubjects = 20,
       strOversampleDomain = "Raw_AE_TEST",
       vOversamplQuantileRange = c(0, 1),
-          )
+    )
   )
 
   expect_true(nrow(result$Raw_SUBJ) > 0)
@@ -842,7 +842,7 @@ test_that("ResampleStudy with TargetSiteCount updates site studyid", {
     "STUDY001",
     nSubjects = 50,
     TargetSiteCount = 10,
-      )
+  )
 
   # Generated sites should have studyid updated
   if ("studyid" %in% names(result$Raw_SITE)) {
@@ -872,7 +872,7 @@ test_that("ResampleStudy handles site data with studyid column", {
     lRaw_with_studyid,
     "NEWSTUDY",
     nSubjects = 15,
-      )
+  )
 
   # Site studyid should be updated to new study ID
   expect_true("studyid" %in% names(result$Raw_SITE))
@@ -901,7 +901,7 @@ test_that("ResampleStudy with TargetSiteCount updates studyid in generated sites
     "NEWSTUDY",
     nSubjects = 15,
     TargetSiteCount = 8,
-      )
+  )
 
   # Generated sites should have studyid updated
   expect_true("studyid" %in% names(result$Raw_SITE))
@@ -941,7 +941,7 @@ test_that("ResampleStudy handles site data with invid as primary site ID", {
     lRaw_with_invid,
     "NEWSTUDY",
     nSubjects = 15,
-      )
+  )
 
   # Site invid should be prefixed with new study ID
   expect_true("invid" %in% names(result$Raw_SITE))
@@ -1024,7 +1024,7 @@ test_that("ResampleStudy output works with mapping workflows", {
     lRaw,
     strNewStudyID = "RESAMPLED001",
     nSubjects = 100,
-      )
+  )
 
   # Verify basic structure
   expect_type(lResampled, "list")
@@ -1104,7 +1104,7 @@ test_that("ResampleStudy with oversampling works with mapping workflows", {
       nSubjects = 50,
       strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.75, 1.0),
-          )
+    )
   )
 
   # Should have resampled subjects

@@ -106,7 +106,7 @@ test_that("mapping workflows execute successfully on portfolio data", {
   lPortfolio <- SimulatePortfolio(
     lRaw = lRaw_original,
     nStudies = 3,
-      )
+  )
 
   # Optionally populate with references between the 3 studies
   study_ids <- unique(lPortfolio$Raw_SUBJ$studyid)

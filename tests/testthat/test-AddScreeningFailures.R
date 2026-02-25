@@ -31,7 +31,7 @@ test_that("AddScreeningFailures basic functionality works", {
     dfSource = dfSource,
     strSiteCol = "siteid",
     strStudyCol = "studyid",
-      )
+  )
 
   # Basic checks
   expect_s3_class(result, "data.frame")
@@ -169,7 +169,7 @@ test_that("AddScreeningFailures handles edge case with zero screening failures c
     dfSource = dfSource,
     strSiteCol = "siteid",
     strStudyCol = "studyid",
-      )
+  )
 
   # Should still return a valid dataframe
   expect_s3_class(result, "data.frame")
@@ -204,7 +204,7 @@ test_that("AddScreeningFailures handles sites with zero enrolled patients in sou
     dfSource = dfSource,
     strSiteCol = "siteid",
     strStudyCol = "studyid",
-      )
+  )
 
   # Should return valid results
   expect_s3_class(result, "data.frame")
@@ -316,7 +316,7 @@ test_that("AddScreeningFailures handles overlapping site names across studies", 
     dfSource = dfSource,
     strSiteCol = "siteid",
     strStudyCol = "studyid",
-      )
+  )
 
   # Check that we have 4 distinct study-site combinations
   combinations <- result %>%
@@ -371,7 +371,7 @@ test_that("AddScreeningFailures handles studies with different numbers of sites"
     dfSource = dfSource,
     strSiteCol = "siteid",
     strStudyCol = "studyid",
-      )
+  )
 
   # Should have 7 study-site combinations total
   # Study1: S1, S2, S3, S4 (4)

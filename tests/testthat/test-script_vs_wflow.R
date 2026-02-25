@@ -24,7 +24,7 @@ lRaw_original$Raw_SUBJ$subjectenrollmentnumber <- lRaw_original$Raw_SUBJ$subjid
 lRaw <- SimulatePortfolio(
   lRaw = lRaw_original,
   nStudies = 3,
-    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
+  vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid"),
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4", "AA-5", "AA-6"),
     nSubjects = c(500, 750, 150, 200, 250, 300),

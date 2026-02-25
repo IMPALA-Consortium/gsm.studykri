@@ -207,7 +207,7 @@ test_that("SimulatePortfolio without dfConfig generates default config with seed
 
   # Should produce same study IDs and subject counts
   expect_equal(unique(result1$Raw_SUBJ$studyid), unique(result2$Raw_SUBJ$studyid))
-  
+
   # Count subjects per study
   counts1 <- table(result1$Raw_SUBJ$studyid)
   counts2 <- table(result2$Raw_SUBJ$studyid)
@@ -286,7 +286,7 @@ test_that("ResampleStudy handles invalid mapping in find_subject_id_column", {
       "TEST001",
       nSubjects = 2,
       strOversampleDomain = "Raw_AE",
-            vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+      vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
     )
   )
 
@@ -321,7 +321,7 @@ test_that("ResampleStudy handles siteid updates correctly", {
     lRaw,
     "TEST001",
     nSubjects = 2,
-        vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
 
   # siteid should be updated to match randomized invid
@@ -354,7 +354,7 @@ test_that("ResampleStudy with TargetSiteCount generates sites correctly", {
     "TEST001",
     nSubjects = 30,
     TargetSiteCount = 5,
-        vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
 
   # Should have generated sites with study prefix
@@ -390,7 +390,7 @@ test_that("ResampleStudy processes domain without subject or site columns", {
     lRaw,
     "TEST001",
     nSubjects = 2,
-        vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
 
   # studyid should be updated in study domain
@@ -420,7 +420,7 @@ test_that("ResampleStudy process_site_domain with invid column", {
     lRaw,
     "TEST001",
     nSubjects = 2,
-        vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
+    vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
 
   # Site domain invid should have study prefix

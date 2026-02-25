@@ -70,7 +70,7 @@ test_that("BootstrapStudyKRI seed produces reproducible results", {
 
   set.seed(999)
   result1 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10)
-  
+
   set.seed(999)
   result2 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10)
 
@@ -256,7 +256,7 @@ test_that("BootstrapStudyKRI handles custom column names", {
     nBootstrapReps = 5,
     strStudyCol = "ProtocolID",
     strGroupCol = "SiteCode",
-      )
+  )
 
   expect_true("BootstrapRep" %in% names(result))
   expect_true("SiteCode" %in% names(result))
