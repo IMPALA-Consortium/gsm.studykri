@@ -9,3 +9,5 @@
 ^docs$
 ^\.Rproj\.user$
 ^.+\.parquet
+^report_studykri\.html$
+^.*_studykri\.html$
