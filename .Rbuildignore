@@ -11,3 +11,4 @@
 ^.+\.parquet
 ^report_studykri\.html$
 ^.*_studykri\.html$
+^vignettes/.tmp$
