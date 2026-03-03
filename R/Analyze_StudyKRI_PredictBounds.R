@@ -97,7 +97,7 @@ CalculateStudyBounds <- function(
         ),
         .names = "{.fn}_{gsub('^Metric_', '', .col)}"
       ),
-      BootstrapCount = dplyr::n(),
+      BootstrapCount = max(.data$BootstrapRep, na.rm = TRUE),
       .by = dplyr::all_of(.env$group_cols)
     ) %>%
     # remove trailing metric from colnames which is the case for single metric
@@ -136,7 +136,6 @@ CalculateStudyBounds <- function(
 #'   Default: 1000.
 #' @param nConfLevel numeric. Confidence level between 0 and 1. Default: 0.95
 #'   (95% confidence interval).
-#' @param seed integer or NULL. Random seed for reproducibility. Default: NULL.
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices. Default: NULL.
 #' @param tblMonthSequence tbl_lazy, data.frame, or NULL. For lazy table inputs:
@@ -145,6 +144,14 @@ CalculateStudyBounds <- function(
 #'   Default: "StudyID".
 #' @param strGroupCol character. Column name for group identifier. Default: "GroupID".
 #' @param strStudyMonthCol character. Name of study month column. Default: "StudyMonth".
+#' @param vDbIntRandomRange Numeric vector of length 2 or NULL. When using database
+#'   backends that return large integers instead of 0-1 decimals for random numbers,
+#'   specify the min/max range as c(min, max). Accepts both numeric and character
+#'   vectors (character values are automatically converted to numeric, useful when
+#'   reading from YAML files). Common values:
+#'   - Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)
+#'   - Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+#'   Default: NULL (no normalization, assumes 0-1 decimal random values).
 #'
 #' @return A tibble (or tbl_lazy if input was lazy) with confidence intervals:
 #'   - `StudyID`: Target study identifier
@@ -171,6 +178,15 @@ CalculateStudyBounds <- function(
 #'   lJoined,
 #'   ~ Analyze_StudyKRI_PredictBounds(., dfStudyRef = dfStudyRef)
 #' )
+#'
+#' # Example 3: Using Snowflake backend with integer random values
+#' Bounds_Wide_Snowflake <- purrr::map(
+#'   lJoined,
+#'   ~ Analyze_StudyKRI_PredictBounds(
+#'     .,
+#'     vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+#'   )
+#' )
 #' }
 #'
 #' @export
@@ -179,12 +195,12 @@ Analyze_StudyKRI_PredictBounds <- function(
     dfStudyRef = NULL,
     nBootstrapReps = 1000,
     nConfLevel = 0.95,
-    seed = NULL,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL,
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
-    strStudyMonthCol = "StudyMonth") {
+    strStudyMonthCol = "StudyMonth",
+    vDbIntRandomRange = NULL) {
   # Handle dfStudyRef - extract target studies
   if (is.null(dfStudyRef)) {
     # Extract all unique study IDs from input
@@ -223,6 +239,7 @@ Analyze_StudyKRI_PredictBounds <- function(
   dfFiltered <- dfInput %>%
     dplyr::filter(.data[[strStudyCol]] %in% .env$vTargetStudies)
 
+
   # Step 1: Generate bootstrap resamples
   dfBootstrapped <- BootstrapStudyKRI(
     dfInput = dfFiltered,
@@ -230,8 +247,8 @@ Analyze_StudyKRI_PredictBounds <- function(
     nGroups = NULL,
     strStudyCol = strStudyCol,
     strGroupCol = strGroupCol,
-    seed = seed,
-    tblBootstrapReps = tblBootstrapReps
+    tblBootstrapReps = tblBootstrapReps,
+    vDbIntRandomRange = vDbIntRandomRange
   )
 
   # Step 2: Aggregate to study level by bootstrap replicate and study
@@ -274,12 +291,18 @@ Analyze_StudyKRI_PredictBounds <- function(
 #'   can be used to upsample (larger than actual) or downsample (smaller than actual).
 #' @param strStudyCol character. Column name for study identifier. Defaults to "StudyID".
 #' @param strGroupCol character. Column name for group identifier. Defaults to "GroupID".
-#' @param seed integer or NULL. Random seed for reproducibility. If NULL (default),
-#'   no seed is set. Note: seed only affects in-memory data frames, not SQL queries.
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices. Must have 'BootstrapRep'
 #'   column with values 1 to nBootstrapReps. If NULL, attempts to create temp table
 #'   (requires write privileges).
+#' @param vDbIntRandomRange Numeric vector of length 2 or NULL. When using database
+#'   backends that return large integers instead of 0-1 decimals for random numbers,
+#'   specify the min/max range as c(min, max). Accepts both numeric and character
+#'   vectors (character values are automatically converted to numeric, useful when
+#'   reading from YAML files). Common values:
+#'   - Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)
+#'   - Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+#'   Default: NULL (no normalization, assumes 0-1 decimal random values).
 #'
 #' @return A data.frame (or tbl_lazy if input was lazy) with all original columns plus:
 #'   - `BootstrapRep`: integer, bootstrap replicate number (1 to nBootstrapReps)
@@ -294,8 +317,8 @@ BootstrapStudyKRI <- function(
     nGroups = NULL,
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
-    seed = NULL,
-    tblBootstrapReps = NULL) {
+    tblBootstrapReps = NULL,
+    vDbIntRandomRange = NULL) {
   # Input Validation
   if (!is.data.frame(dfInput) && !inherits(dfInput, "tbl_lazy")) {
     stop("dfInput must be a data frame or lazy table")
@@ -318,17 +341,33 @@ BootstrapStudyKRI <- function(
     nGroups <- as.integer(nGroups)
   }
 
+  if (!is.null(vDbIntRandomRange)) {
+    # Coerce character to numeric (common when reading from YAML)
+    if (is.character(vDbIntRandomRange)) {
+      vDbIntRandomRange <- tryCatch(
+        as.numeric(vDbIntRandomRange),
+        warning = function(w) {
+          stop(
+            "vDbIntRandomRange contains non-numeric character values: ",
+            paste(vDbIntRandomRange, collapse = ", ")
+          )
+        }
+      )
+    }
+
+    # Validate after coercion
+    if (!is.numeric(vDbIntRandomRange) || length(vDbIntRandomRange) != 2) {
+      stop("vDbIntRandomRange must be NULL or a numeric vector of length 2")
+    }
+
+    if (any(is.na(vDbIntRandomRange))) {
+      stop("vDbIntRandomRange contains NA values after conversion")
+    }
+  }
+
   # Check for empty data
   if (is.data.frame(dfInput) && nrow(dfInput) == 0) {
     stop("dfInput has no rows")
-  }
-
-  # Set random seed if provided (only affects in-memory operations)
-  if (!is.null(seed)) {
-    if (!is.numeric(seed) || length(seed) != 1) {
-      stop("seed must be NULL or a single numeric value")
-    }
-    set.seed(seed)
   }
 
   # Create replicate index
@@ -373,6 +412,7 @@ BootstrapStudyKRI <- function(
   # Step 2: Generate bootstrap selections (matching get_boot pattern)
   # Simplified: cross_join with dfGroupsNumbered creates groups × reps rows automatically!
 
+
   if (is.null(nGroups)) {
     # Standard case: sample all groups with replacement (no positions needed!)
     dfBootstrapSelections <- dfGroupsNumbered %>%
@@ -381,6 +421,20 @@ BootstrapStudyKRI <- function(
       dplyr::mutate(
         # runif(n()) where n() = groups (per study-rep group)
         rnd_value = stats::runif(dplyr::n()),
+        .by = c(dplyr::all_of(.env$strStudyCol), "BootstrapRep")
+      )
+
+    # Normalize if using integer random backend (e.g., Snowflake)
+    if (!is.null(vDbIntRandomRange)) {
+      dfBootstrapSelections <- dfBootstrapSelections %>%
+        dplyr::mutate(
+          rnd_value = (.data$rnd_value - local(vDbIntRandomRange[1])) /
+            local(vDbIntRandomRange[2] - vDbIntRandomRange[1])
+        )
+    }
+
+    dfBootstrapSelections <- dfBootstrapSelections %>%
+      dplyr::mutate(
         # Random selection between 1 and ActualGroupCount
         GroupNumber = floor(.data$rnd_value * .data$ActualGroupCount) + 1L,
         .by = c(dplyr::all_of(.env$strStudyCol), "BootstrapRep")
@@ -421,6 +475,20 @@ BootstrapStudyKRI <- function(
       dplyr::filter(.data$Position <= .data$EffectiveGroupCount) %>%
       dplyr::mutate(
         rnd_value = stats::runif(dplyr::n()),
+        .by = c(dplyr::all_of(.env$strStudyCol), "BootstrapRep")
+      )
+
+    # Normalize if using integer random backend (e.g., Snowflake)
+    if (!is.null(vDbIntRandomRange)) {
+      dfBootstrapSelections <- dfBootstrapSelections %>%
+        dplyr::mutate(
+          rnd_value = (.data$rnd_value - local(vDbIntRandomRange[1])) /
+            local(vDbIntRandomRange[2] - vDbIntRandomRange[1])
+        )
+    }
+
+    dfBootstrapSelections <- dfBootstrapSelections %>%
+      dplyr::mutate(
         GroupNumber = floor(.data$rnd_value * .data$ActualGroupCount) + 1L,
         .by = c(dplyr::all_of(.env$strStudyCol), "BootstrapRep")
       ) %>%
@@ -446,6 +514,7 @@ BootstrapStudyKRI <- function(
       relationship = "many-to-many"
     ) %>%
     dplyr::select(-"GroupNumber")
+
 
   return(dfBootstrapData)
 }

@@ -11,7 +11,7 @@ test_that("BootstrapStudyKRI returns correct structure", {
     MonthYYYYMM = c(202301, 202302, 202301, 202302)
   )
 
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 42)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, )
 
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
@@ -30,7 +30,7 @@ test_that("BootstrapStudyKRI generates correct number of replicates", {
   )
 
   nReps <- 50
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = nReps, seed = 123)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = nReps, )
 
   expect_equal(length(unique(result$BootstrapRep)), nReps)
   expect_true(all(result$BootstrapRep >= 1 & result$BootstrapRep <= nReps))
@@ -47,7 +47,7 @@ test_that("BootstrapStudyKRI resamples with replacement", {
   )
 
   # With many replicates, we should see some sites appearing multiple times
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 100, seed = 456)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 100, )
 
   # Count sites per replicate
   site_counts <- result %>%
@@ -68,13 +68,16 @@ test_that("BootstrapStudyKRI seed produces reproducible results", {
     MonthYYYYMM = c(202301, 202301, 202301)
   )
 
-  result1 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 999)
-  result2 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 999)
+  set.seed(999)
+  result1 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10)
+
+  set.seed(999)
+  result2 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10)
 
   expect_equal(result1, result2)
 })
 
-test_that("BootstrapStudyKRI without seed produces different results", {
+test_that("BootstrapStudyKRI without set.seed produces different results", {
   BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
   dfInput <- data.frame(
     GroupID = c("SiteA", "SiteB", "SiteC"),
@@ -84,8 +87,8 @@ test_that("BootstrapStudyKRI without seed produces different results", {
     MonthYYYYMM = c(202301, 202301, 202301)
   )
 
-  result1 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 50, seed = NULL)
-  result2 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 50, seed = NULL)
+  result1 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 50)
+  result2 <- BootstrapStudyKRI(dfInput, nBootstrapReps = 50)
 
   # Results should differ (though technically could be identical by chance)
   # Check at least one row differs
@@ -102,7 +105,7 @@ test_that("BootstrapStudyKRI handles multiple studies independently", {
     MonthYYYYMM = c(202301, 202301, 202301, 202301)
   )
 
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 20, seed = 111)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 20, )
 
   # Check both studies present in all replicates
   study_counts <- result %>%
@@ -133,7 +136,7 @@ test_that("BootstrapStudyKRI nGroups parameter works for downsampling", {
     MonthYYYYMM = c(202301, 202301, 202301, 202301)
   )
 
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, nGroups = 2, seed = 222)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, nGroups = 2, )
 
   # Each replicate should have exactly 2 sites worth of data
   site_counts <- result %>%
@@ -153,7 +156,7 @@ test_that("BootstrapStudyKRI nGroups parameter works for upsampling", {
     MonthYYYYMM = c(202301, 202301)
   )
 
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, nGroups = 5, seed = 333)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, nGroups = 5, )
 
   # Each replicate should have 5 site selections (some will be duplicates)
   row_counts <- result %>%
@@ -173,7 +176,7 @@ test_that("BootstrapStudyKRI handles single site per study", {
     MonthYYYYMM = c(202301, 202302)
   )
 
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, seed = 444)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, )
 
   expect_true(nrow(result) > 0)
   expect_equal(length(unique(result$BootstrapRep)), 5)
@@ -191,7 +194,7 @@ test_that("BootstrapStudyKRI handles single study", {
     MonthYYYYMM = c(202301, 202301, 202301)
   )
 
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 555)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, )
 
   expect_true(all(result$StudyID == "Study1"))
   expect_equal(length(unique(result$BootstrapRep)), 10)
@@ -210,7 +213,7 @@ test_that("BootstrapStudyKRI preserves all original columns", {
     CustomColumn = c("A", "B")
   )
 
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, seed = 666)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, )
 
   original_cols <- names(dfInput)
   expect_true(all(original_cols %in% names(result)))
@@ -228,7 +231,7 @@ test_that("BootstrapStudyKRI preserves data types", {
     MonthYYYYMM = c(202301, 202301)
   )
 
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, seed = 777)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, )
 
   expect_type(result$GroupID, "character")
   expect_type(result$StudyID, "character")
@@ -253,7 +256,6 @@ test_that("BootstrapStudyKRI handles custom column names", {
     nBootstrapReps = 5,
     strStudyCol = "ProtocolID",
     strGroupCol = "SiteCode",
-    seed = 888
   )
 
   expect_true("BootstrapRep" %in% names(result))
@@ -358,19 +360,7 @@ test_that("BootstrapStudyKRI errors on invalid nGroups", {
   )
 })
 
-test_that("BootstrapStudyKRI errors on invalid seed", {
-  BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
-  dfInput <- data.frame(
-    GroupID = c("SiteA", "SiteB"),
-    StudyID = c("Study1", "Study1"),
-    Numerator = c(1, 2)
-  )
-
-  expect_error(
-    BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = c(1, 2)),
-    "seed must be NULL or a single numeric value"
-  )
-})
+# Seed validation test removed - seed parameter no longer exists for BootstrapStudyKRI
 
 test_that("BootstrapStudyKRI integrates with Input_CountSiteByMonth output", {
   BootstrapStudyKRI <- gsm.studykri:::BootstrapStudyKRI
@@ -388,7 +378,7 @@ test_that("BootstrapStudyKRI integrates with Input_CountSiteByMonth output", {
     strDenominatorDateCol = "visit_dt"
   )
 
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 12345)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, )
 
   expect_s3_class(result, "data.frame")
   expect_true(nrow(result) > 0)
@@ -415,7 +405,7 @@ test_that("BootstrapStudyKRI output works with Transform_CumCount", {
     strDenominatorDateCol = "visit_dt"
   )
 
-  dfBootstrap <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, seed = 99999)
+  dfBootstrap <- BootstrapStudyKRI(dfInput, nBootstrapReps = 5, )
 
   # Should work with vBy including BootstrapRep
   dfTransformed <- Transform_CumCount(
@@ -441,7 +431,7 @@ test_that("BootstrapStudyKRI maintains correct row multiplier", {
   )
 
   nReps <- 100
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = nReps, seed = 7777)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = nReps, )
 
   # Total rows should be approximately nReps * number of sites per study
   # (with variation due to sampling)
@@ -465,7 +455,7 @@ test_that("BootstrapStudyKRI bootstrap distribution has expected properties", {
   )
 
   nReps <- 500
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = nReps, seed = 8888)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = nReps, )
 
   # Calculate mean numerator per replicate
   rep_means <- result %>%
@@ -490,7 +480,7 @@ test_that("BootstrapStudyKRI handles multiple months correctly", {
     MonthYYYYMM = rep(c(202301, 202302, 202303), 2)
   )
 
-  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10, seed = 9999)
+  result <- BootstrapStudyKRI(dfInput, nBootstrapReps = 10)
 
   # All months should be represented in bootstrap samples
   expect_true(all(c(202301, 202302, 202303) %in% result$MonthYYYYMM))

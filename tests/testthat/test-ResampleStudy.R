@@ -16,7 +16,7 @@ test_that("ResampleStudy basic functionality works", {
   )
 
   # Basic resampling
-  result <- ResampleStudy(lRaw, "STUDY001", seed = 123)
+  result <- ResampleStudy(lRaw, "STUDY001", )
 
   # Check structure
   expect_type(result, "list")
@@ -40,7 +40,8 @@ test_that("ResampleStudy respects nSubjects parameter", {
   )
 
   # Sample specific number of subjects
-  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, seed = 123)
+  set.seed(123)
+  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50)
 
   expect_equal(nrow(result$Raw_SUBJ), 50)
   expect_true(all(grepl("^STUDY001_", result$Raw_SUBJ$subjid)))
@@ -57,12 +58,12 @@ test_that("ResampleStudy handles replacement parameter", {
   n_enrolled <- sum(lRaw$Raw_SUBJ$enrollyn == "Y")
 
   # With replacement - can sample more than available
+  set.seed(123)
   result_with <- ResampleStudy(
     lRaw,
     "STUDY001",
     nSubjects = 100,
-    replacement = TRUE,
-    seed = 123
+    replacement = TRUE
   )
   expect_equal(nrow(result_with$Raw_SUBJ), 100)
 
@@ -72,7 +73,6 @@ test_that("ResampleStudy handles replacement parameter", {
     "STUDY002",
     nSubjects = 50,
     replacement = TRUE,
-    seed = 123
   )
   expect_equal(nrow(result_fewer$Raw_SUBJ), 50)
 
@@ -83,7 +83,6 @@ test_that("ResampleStudy handles replacement parameter", {
       "STUDY003",
       nSubjects = n_enrolled + 100,
       replacement = FALSE,
-      seed = 123
     ),
     "Cannot sample"
   )
@@ -101,7 +100,7 @@ test_that("ResampleStudy randomizes site assignments", {
   enrolled <- lRaw$Raw_SUBJ[lRaw$Raw_SUBJ$enrollyn == "Y", ]
 
   # Resample with same seed and no filtering
-  result <- ResampleStudy(lRaw, "STUDY001", seed = 123)
+  result <- ResampleStudy(lRaw, "STUDY001", )
 
   # Should have resampled subjects
   expect_true(nrow(result$Raw_SUBJ) > 0)
@@ -127,7 +126,7 @@ test_that("ResampleStudy maintains referential integrity", {
     Raw_STUDY = clindata::ctms_study
   )
 
-  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 100, seed = 123)
+  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 100, )
 
   # All subjids in AE should exist in SUBJ
   ae_subjects <- unique(result$Raw_AE$subjid)
@@ -173,7 +172,6 @@ test_that("ResampleStudy handles strOversampleDomain parameter", {
       nSubjects = 100,
       strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.75, 1.0),
-      seed = 123
     )
   )
 
@@ -185,7 +183,6 @@ test_that("ResampleStudy handles strOversampleDomain parameter", {
       nSubjects = 100,
       strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0, 0.25),
-      seed = 456
     )
   )
 
@@ -280,7 +277,7 @@ test_that("ResampleStudy handles composite ID formats", {
     Raw_STUDY = clindata::ctms_study
   )
 
-  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, seed = 123)
+  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, )
 
   # Check that subjectid in Raw_ENROLL was updated
   if ("subjectid" %in% names(result$Raw_ENROLL)) {
@@ -301,7 +298,7 @@ test_that("ResampleStudy handles derived domains with subject_nsv", {
     Raw_STUDY = clindata::ctms_study
   )
 
-  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, seed = 123)
+  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, )
 
   # Check that subject_nsv was updated in derived domains (if column exists)
   if (nrow(result$Raw_DATAENT) > 0 && "subject_nsv" %in% names(result$Raw_DATAENT)) {
@@ -324,7 +321,7 @@ test_that("ResampleStudy updates site IDs correctly", {
     Raw_STUDY = clindata::ctms_study
   )
 
-  result <- ResampleStudy(lRaw, "STUDY001", seed = 123)
+  result <- ResampleStudy(lRaw, "STUDY001", )
 
   # Detect site ID column
   site_col <- if ("invid" %in% names(result$Raw_SITE)) {
@@ -369,10 +366,31 @@ test_that("ResampleStudy is reproducible with seed", {
     Raw_STUDY = clindata::ctms_study
   )
 
-  result1 <- ResampleStudy(lRaw, "STUDY001", nSubjects = 100, seed = 42)
-  result2 <- ResampleStudy(lRaw, "STUDY001", nSubjects = 100, seed = 42)
+  set.seed(42)
+  result1 <- ResampleStudy(lRaw, "STUDY001", nSubjects = 100)
+
+  set.seed(42)
+  result2 <- ResampleStudy(lRaw, "STUDY001", nSubjects = 100)
 
   # Same seed should give same results
+  expect_equal(result1$Raw_SUBJ$subjid, result2$Raw_SUBJ$subjid)
+  expect_equal(result1$Raw_SUBJ$invid, result2$Raw_SUBJ$invid)
+  expect_equal(nrow(result1$Raw_AE), nrow(result2$Raw_AE))
+})
+
+test_that("ResampleStudy seed parameter produces reproducible results", {
+  # Test explicitly passing seed parameter (covers line 105)
+  lRaw <- list(
+    Raw_SUBJ = get_test_raw_subj(),
+    Raw_AE = clindata::rawplus_ae,
+    Raw_SITE = clindata::ctms_site
+  )
+
+  # Call with seed parameter
+  result1 <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, seed = 999)
+  result2 <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, seed = 999)
+
+  # Should produce identical results
   expect_equal(result1$Raw_SUBJ$subjid, result2$Raw_SUBJ$subjid)
   expect_equal(result1$Raw_SUBJ$invid, result2$Raw_SUBJ$invid)
   expect_equal(nrow(result1$Raw_AE), nrow(result2$Raw_AE))
@@ -391,7 +409,6 @@ test_that("ResampleStudy with TargetSiteCount generates multiple sites", {
     strNewStudyID = "SITETEST001",
     nSubjects = 100,
     TargetSiteCount = 20,
-    seed = 456
   )
 
   # Check that result has reasonable number of sites (allow some variation)
@@ -417,7 +434,6 @@ test_that("TargetSiteCount generates sites with valid metadata", {
     strNewStudyID = "SITETEST002",
     nSubjects = 50,
     TargetSiteCount = 15,
-    seed = 789
   )
 
   # Check that site metadata columns exist (note: lowercase 'country' in ctms_site)
@@ -448,7 +464,6 @@ test_that("TargetSiteCount creates realistic site distributions", {
     strNewStudyID = "SITETEST003",
     nSubjects = 100,
     TargetSiteCount = 10,
-    seed = 101112
   )
 
   # Check that patients are distributed across sites
@@ -473,7 +488,6 @@ test_that("ResampleStudy with TargetSiteCount = NULL uses default behavior", {
     strNewStudyID = "SITETEST004",
     nSubjects = 50,
     TargetSiteCount = NULL,
-    seed = 131415
   )
 
   # Should work normally without errors
@@ -533,7 +547,6 @@ test_that("ResampleStudy preserves all input domains and column names", {
     lRaw = lRaw_full,
     strNewStudyID = "DOMAINTEST001",
     nSubjects = 50,
-    seed = 999
   )
 
   # Check that all input domains exist in output
@@ -598,7 +611,6 @@ test_that("ResampleStudy works with minimal required domains", {
     lRaw = lRaw_minimal,
     strNewStudyID = "MINTEST001",
     nSubjects = 20,
-    seed = 777
   )
 
   expect_equal(names(result), names(lRaw_minimal))
@@ -623,7 +635,6 @@ test_that("ResampleStudy handles unknown/custom domains", {
     lRaw = lRaw_custom,
     strNewStudyID = "CUSTOMTEST001",
     nSubjects = 20,
-    seed = 666
   )
 
   # Custom domain should be preserved
@@ -646,7 +657,6 @@ test_that("ResampleStudy maintains reasonable column order", {
     lRaw = lRaw_test,
     strNewStudyID = "ORDERTEST001",
     nSubjects = 30,
-    seed = 555
   )
 
   # Column order doesn't need to be identical, but key columns should be early
@@ -707,7 +717,6 @@ test_that("ResampleStudy handles extreme quantile ranges", {
       nSubjects = 50,
       strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.95, 1.0),
-      seed = 123
     )
   )
 
@@ -728,7 +737,7 @@ test_that("ResampleStudy works with site domain without invid", {
     Raw_SITE = site_no_invid
   )
 
-  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, seed = 123)
+  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 50, )
 
   # Should work - site domain will be filtered based on site_num or other site ID
   expect_true("Raw_SITE" %in% names(result))
@@ -751,7 +760,7 @@ test_that("ResampleStudy handles domains with subjectid", {
 
   lRaw$Raw_ENROLL_TEST <- enroll_test
 
-  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 30, seed = 123)
+  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 30, )
 
   # Should work and map via subjectid
   expect_true("Raw_ENROLL_TEST" %in% names(result))
@@ -786,7 +795,6 @@ test_that("ResampleStudy handles invalid composite ID mappings", {
       nSubjects = 20,
       strOversampleDomain = "Raw_AE_TEST",
       vOversamplQuantileRange = c(0, 1),
-      seed = 123
     )
   )
 
@@ -811,7 +819,7 @@ test_that("ResampleStudy handles domains with subject_nsv only", {
 
   lRaw$Raw_DATAENT_TEST <- dataent_test
 
-  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 30, seed = 123)
+  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 30, )
 
   # Should work and map via subject_nsv
   expect_true("Raw_DATAENT_TEST" %in% names(result))
@@ -834,7 +842,6 @@ test_that("ResampleStudy with TargetSiteCount updates site studyid", {
     "STUDY001",
     nSubjects = 50,
     TargetSiteCount = 10,
-    seed = 123
   )
 
   # Generated sites should have studyid updated
@@ -865,7 +872,6 @@ test_that("ResampleStudy handles site data with studyid column", {
     lRaw_with_studyid,
     "NEWSTUDY",
     nSubjects = 15,
-    seed = 123
   )
 
   # Site studyid should be updated to new study ID
@@ -895,7 +901,6 @@ test_that("ResampleStudy with TargetSiteCount updates studyid in generated sites
     "NEWSTUDY",
     nSubjects = 15,
     TargetSiteCount = 8,
-    seed = 123
   )
 
   # Generated sites should have studyid updated
@@ -936,7 +941,6 @@ test_that("ResampleStudy handles site data with invid as primary site ID", {
     lRaw_with_invid,
     "NEWSTUDY",
     nSubjects = 15,
-    seed = 123
   )
 
   # Site invid should be prefixed with new study ID
@@ -959,7 +963,7 @@ test_that("ResampleStudy handles site domain filtering", {
   )
 
   # Sample just a few subjects to create a small site set
-  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 5, seed = 123)
+  result <- ResampleStudy(lRaw, "STUDY001", nSubjects = 5, )
 
   # Should still have some sites
   expect_true(nrow(result$Raw_SITE) >= 0)
@@ -1020,7 +1024,6 @@ test_that("ResampleStudy output works with mapping workflows", {
     lRaw,
     strNewStudyID = "RESAMPLED001",
     nSubjects = 100,
-    seed = 42
   )
 
   # Verify basic structure
@@ -1101,7 +1104,6 @@ test_that("ResampleStudy with oversampling works with mapping workflows", {
       nSubjects = 50,
       strOversampleDomain = "Raw_AE",
       vOversamplQuantileRange = c(0.75, 1.0),
-      seed = 999
     )
   )
 

@@ -115,7 +115,7 @@ CalculateDaysByMonth <- function(dfData, strStartDateCol, strEndDateCol, vGroupC
 #' When > 0, adjusts dates of the first N denominator events to the MAX date in that group,
 #' creating a consistent "study start" at the threshold. Preserves event durations for date ranges.
 #'
-#' @return data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM, StudyMonth.
+#' @return data.frame with columns: GroupID, GroupLevel, Numerator, Denominator, Metric, StudyID, MonthYYYYMM
 #' If strDenominatorType is provided, also includes DenominatorType column.
 #'
 #' @examples
@@ -144,7 +144,7 @@ CalculateDaysByMonth <- function(dfData, strStartDateCol, strEndDateCol, vGroupC
 #'
 #' @export
 Input_CountSiteByMonth <- function(
-    dfSubjects,
+    dfSubjects = NULL,
     dfNumerator,
     dfDenominator,
     strStudyCol = "studyid",
@@ -156,11 +156,7 @@ Input_CountSiteByMonth <- function(
     strDenominatorEndDateCol = NULL,
     strDenominatorType = NULL,
     nMinDenominator = 0) {
-  # Input validation - accept data.frame or tbl (including tbl_lazy)
-  if (!inherits(dfSubjects, c("data.frame", "tbl"))) {
-    stop("dfSubjects must be a data.frame or tbl object")
-  }
-
+  # Input validation
   if (!inherits(dfNumerator, c("data.frame", "tbl"))) {
     stop("dfNumerator must be a data.frame or tbl object")
   }
@@ -169,18 +165,8 @@ Input_CountSiteByMonth <- function(
     stop("dfDenominator must be a data.frame or tbl object")
   }
 
-  # Validate required columns in dfSubjects (use colnames for lazy table compatibility)
-  required_subj_cols <- c(strStudyCol, strGroupCol, strSubjectCol)
-  missing_subj_cols <- setdiff(required_subj_cols, colnames(dfSubjects))
-  if (length(missing_subj_cols) > 0) {
-    stop(sprintf(
-      "dfSubjects missing required columns: %s",
-      paste(missing_subj_cols, collapse = ", ")
-    ))
-  }
-
-  # Validate required columns in dfNumerator (use colnames for lazy table compatibility)
-  required_num_cols <- c(strSubjectCol, strNumeratorDateCol)
+  # Validate required columns in numerator (StudyID is required)
+  required_num_cols <- c(strStudyCol, strSubjectCol, strNumeratorDateCol)
   missing_num_cols <- setdiff(required_num_cols, colnames(dfNumerator))
   if (length(missing_num_cols) > 0) {
     stop(sprintf(
@@ -189,8 +175,8 @@ Input_CountSiteByMonth <- function(
     ))
   }
 
-  # Validate required columns in dfDenominator (use colnames for lazy table compatibility)
-  required_denom_cols <- c(strSubjectCol, strDenominatorDateCol)
+  # Validate required columns in denominator (StudyID is required)
+  required_denom_cols <- c(strStudyCol, strSubjectCol, strDenominatorDateCol)
   if (!is.null(strDenominatorEndDateCol)) {
     required_denom_cols <- c(required_denom_cols, strDenominatorEndDateCol)
   }
@@ -207,13 +193,49 @@ Input_CountSiteByMonth <- function(
     stop("nMinDenominator must be a single non-negative numeric value")
   }
 
-  # Process numerator data
+  # CENTRALIZED JOIN SECTION
+  # dfSubjects is used ONLY to add GroupCol to numerator/denominator
+  if (!is.null(dfSubjects)) {
+    # Validate dfSubjects
+    if (!inherits(dfSubjects, c("data.frame", "tbl"))) {
+      stop("dfSubjects must be a data.frame or tbl object")
+    }
+
+    required_subj_cols <- c(strStudyCol, strGroupCol, strSubjectCol)
+    missing_subj_cols <- setdiff(required_subj_cols, colnames(dfSubjects))
+    if (length(missing_subj_cols) > 0) {
+      stop(sprintf(
+        "dfSubjects missing required columns: %s",
+        paste(missing_subj_cols, collapse = ", ")
+      ))
+    }
+
+    # Prepare subject lookup with GroupCol
+    dfSubjectLookup <- dfSubjects %>%
+      dplyr::select(dplyr::all_of(c(strStudyCol, strGroupCol, strSubjectCol))) %>%
+      dplyr::distinct()
+
+    # Join to numerator - ALWAYS use StudyID + SubjectID composite key
+    dfNumerator <- dfNumerator %>%
+      dplyr::select(-dplyr::any_of(.env$strGroupCol)) %>%
+      dplyr::inner_join(dfSubjectLookup, by = c(strStudyCol, strSubjectCol))
+
+    # Join to denominator - ALWAYS use StudyID + SubjectID composite key
+    dfDenominator <- dfDenominator %>%
+      dplyr::select(-dplyr::any_of(.env$strGroupCol)) %>%
+      dplyr::inner_join(dfSubjectLookup, by = c(strStudyCol, strSubjectCol))
+  }
+
+  # Verify GroupCol exists
+  if (!strGroupCol %in% colnames(dfNumerator)) {
+    stop(sprintf("GroupCol '%s' not found in dfNumerator", strGroupCol))
+  }
+  if (!strGroupCol %in% colnames(dfDenominator)) {
+    stop(sprintf("GroupCol '%s' not found in dfDenominator", strGroupCol))
+  }
+
+  # Process numerator data (group columns already added above)
   dfNum_processed <- dfNumerator %>%
-    dplyr::select(-dplyr::any_of(c(.env$strStudyCol, .env$strGroupCol))) %>%
-    dplyr::inner_join(
-      dfSubjects %>% dplyr::select(dplyr::all_of(c(strSubjectCol, strStudyCol, strGroupCol))),
-      by = stats::setNames(strSubjectCol, strSubjectCol)
-    ) %>%
     dplyr::filter(!is.na(.data[[strNumeratorDateCol]])) %>%
     dplyr::mutate(
       .date_parsed = as.Date(.data[[strNumeratorDateCol]]),
@@ -229,7 +251,6 @@ Input_CountSiteByMonth <- function(
     adjusted_data <- ApplyMinDenominatorDateAdjustment(
       dfNumerator_processed = dfNum_processed,
       dfDenominator = dfDenominator,
-      dfSubjects = dfSubjects,
       strSubjectCol = strSubjectCol,
       strStudyCol = strStudyCol,
       strGroupCol = strGroupCol,
@@ -257,13 +278,8 @@ Input_CountSiteByMonth <- function(
 
   # Process denominator data - two modes: count or days
   if (is.null(strDenominatorEndDateCol)) {
-    # Mode 1: Count denominator records by month
+    # Mode 1: Count denominator records by month (group columns already added above)
     dfDenom_processed <- dfDenominator %>%
-      dplyr::select(-dplyr::any_of(c(.env$strStudyCol, .env$strGroupCol))) %>%
-      dplyr::inner_join(
-        dfSubjects %>% dplyr::select(dplyr::all_of(c(strSubjectCol, strStudyCol, strGroupCol))),
-        by = stats::setNames(strSubjectCol, strSubjectCol)
-      ) %>%
       dplyr::filter(!is.na(.data[[strDenominatorDateCol]])) %>%
       dplyr::mutate(
         .date_parsed = as.Date(.data[[strDenominatorDateCol]]),
@@ -285,20 +301,13 @@ Input_CountSiteByMonth <- function(
         .groups = "drop"
       )
   } else {
-    # Mode 2: Calculate days between start/end dates by month
-    dfDenom_with_subjects <- dfDenominator %>%
-      dplyr::select(-dplyr::any_of(c(.env$strStudyCol, .env$strGroupCol))) %>%
-      dplyr::inner_join(
-        dfSubjects %>% dplyr::select(dplyr::all_of(c(strSubjectCol, strStudyCol, strGroupCol))),
-        by = stats::setNames(strSubjectCol, strSubjectCol)
-      )
-
+    # Mode 2: Calculate days between start/end dates by month (group columns already added above)
     # Call helper to calculate days per month
     dfDays <- CalculateDaysByMonth(
-      dfData = dfDenom_with_subjects,
+      dfData = dfDenominator,
       strStartDateCol = strDenominatorDateCol,
       strEndDateCol = strDenominatorEndDateCol,
-      vGroupCols = c(strStudyCol, strGroupCol)
+      vGroupCols = c(strStudyCol, strGroupCol, strSubjectCol)
     )
 
     # Sum days by site-month

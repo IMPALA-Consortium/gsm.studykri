@@ -66,9 +66,9 @@ test_that("CalculateStudyBounds works with no grouping (multi-study combined)", 
   expect_named(result, c("StudyMonth", "Median", "Lower", "Upper", "BootstrapCount"))
   expect_equal(nrow(result), 2) # Only 2 months, combined across studies
 
-  # Check bootstrap count (should be 20 per month: 2 studies × 10 reps)
-  expect_equal(result$BootstrapCount[1], 20)
-  expect_equal(result$BootstrapCount[2], 20)
+  # Check bootstrap count (should be 10 per month: 2 studies × 10 reps)
+  expect_equal(result$BootstrapCount[1], 10)
+  expect_equal(result$BootstrapCount[2], 10)
 })
 
 test_that("CalculateStudyBounds handles different confidence levels", {
@@ -290,6 +290,7 @@ test_that("CalculateStudyBounds integration with full workflow", {
   )
 
   dfNumerator <- data.frame(
+    studyid = c("STUDY1", "STUDY1", "STUDY1", "STUDY1", "STUDY1", "STUDY1"),
     subjid = c("S1", "S2", "S3", "S4", "S1", "S3"),
     aest_dt = as.Date(c(
       "2024-01-15", "2024-01-20", "2024-02-10",
@@ -299,6 +300,7 @@ test_that("CalculateStudyBounds integration with full workflow", {
   )
 
   dfDenominator <- data.frame(
+    studyid = rep("STUDY1", 8),
     subjid = c("S1", "S2", "S3", "S4", "S1", "S2", "S3", "S4"),
     visit_dt = as.Date(c(
       "2024-01-10", "2024-01-12", "2024-02-05",
@@ -326,7 +328,6 @@ test_that("CalculateStudyBounds integration with full workflow", {
     nBootstrapReps = 10,
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
-    seed = 123
   )
 
   # Aggregate to study level
@@ -382,7 +383,6 @@ test_that("Analyze_StudyKRI_PredictBounds works with NULL dfStudyRef (all studie
       dfStudyRef = NULL,
       nBootstrapReps = 10,
       nConfLevel = 0.95,
-      seed = 123
     ),
     "Using all 2 studies found in dfInput"
   )
@@ -421,7 +421,6 @@ test_that("Analyze_StudyKRI_PredictBounds uses first column of dfStudyRef", {
     dfStudyRef = dfStudyRef,
     nBootstrapReps = 10,
     nConfLevel = 0.95,
-    seed = 456
   )
 
   # Should only include STUDY1 and STUDY2 (from first column)
@@ -516,7 +515,6 @@ test_that("Analyze_StudyKRI_PredictBounds with dfStudyRef filters correctly", {
     dfStudyRef = dfStudyRef,
     nBootstrapReps = 10,
     nConfLevel = 0.95,
-    seed = 789
   )
 
   # Should only include STUDY1
@@ -536,5 +534,145 @@ test_that("CalculateStudyBounds errors when no Metric column found", {
   expect_error(
     CalculateStudyBounds(dfTest, vBy = "StudyID"),
     "dfInput must have at least one Metric column"
+  )
+})
+
+# Test vDbIntRandomRange parameter
+test_that("Analyze_StudyKRI_PredictBounds works with vDbIntRandomRange parameter", {
+  # Create minimal test data
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4),
+    Numerator = sample(0:5, 12, replace = TRUE),
+    Denominator = sample(10:20, 12, replace = TRUE),
+    MonthYYYYMM = rep(202301:202302, each = 6),
+    Metric = runif(12, 0.1, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Test with Snowflake range
+  result <- Analyze_StudyKRI_PredictBounds(
+    dfInput = dfTest,
+    nBootstrapReps = 10,
+    nConfLevel = 0.95,
+    vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+  )
+
+  # Verify function completes without error and returns expected structure
+  expect_s3_class(result, "data.frame")
+  expect_true("StudyID" %in% colnames(result))
+  expect_true("StudyMonth" %in% colnames(result))
+  expect_true(any(grepl("^Median", colnames(result))))
+  expect_true(any(grepl("^Lower", colnames(result))))
+  expect_true(any(grepl("^Upper", colnames(result))))
+  expect_equal(unique(result$StudyID), "STUDY1")
+  expect_true(nrow(result) > 0)
+})
+
+test_that("Analyze_StudyKRI_PredictBounds handles character vDbIntRandomRange from YAML", {
+  # Create minimal test data
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4),
+    Numerator = sample(0:5, 12, replace = TRUE),
+    Denominator = sample(10:20, 12, replace = TRUE),
+    MonthYYYYMM = rep(202301:202302, each = 6),
+    Metric = runif(12, 0.1, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Test with character vector (as YAML would provide)
+  result <- Analyze_StudyKRI_PredictBounds(
+    dfInput = dfTest,
+    nBootstrapReps = 10,
+    vDbIntRandomRange = c("-9223372036854775808", "9223372036854775807")
+  )
+
+  # Verify function completes and returns valid results
+  expect_s3_class(result, "data.frame")
+  expect_true(nrow(result) > 0)
+})
+
+test_that("Analyze_StudyKRI_PredictBounds rejects invalid character values", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4),
+    Numerator = sample(0:5, 12, replace = TRUE),
+    Denominator = sample(10:20, 12, replace = TRUE),
+    MonthYYYYMM = rep(202301:202302, each = 6),
+    Metric = runif(12, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  # Test with non-numeric character values
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      vDbIntRandomRange = c("invalid", "values")
+    ),
+    "non-numeric character values"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBounds rejects character vector with wrong length", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4),
+    Numerator = sample(0:5, 12, replace = TRUE),
+    Denominator = sample(10:20, 12, replace = TRUE),
+    MonthYYYYMM = rep(202301:202302, each = 6),
+    Metric = runif(12, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  # Test with single numeric string (wrong length)
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      vDbIntRandomRange = c("100")
+    ),
+    "vDbIntRandomRange must be NULL or a numeric vector of length 2"
+  )
+
+  # Test with three numeric strings (wrong length)
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      vDbIntRandomRange = c("1", "2", "3")
+    ),
+    "vDbIntRandomRange must be NULL or a numeric vector of length 2"
+  )
+})
+
+test_that("Analyze_StudyKRI_PredictBounds rejects NA values after conversion", {
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 12),
+    GroupID = rep(paste0("Site", 1:3), each = 4),
+    Numerator = sample(0:5, 12, replace = TRUE),
+    Denominator = sample(10:20, 12, replace = TRUE),
+    MonthYYYYMM = rep(202301:202302, each = 6),
+    Metric = runif(12, 0.1, 0.5),
+    GroupLevel = "Site"
+  )
+
+  # Test with one valid and one invalid numeric string
+  # as.numeric(c("100", "abc")) produces c(100, NA)
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      vDbIntRandomRange = c("100", "not_a_number")
+    ),
+    "contains NA values after conversion|non-numeric character values"
+  )
+
+  # Test with numeric vector containing NA
+  expect_error(
+    Analyze_StudyKRI_PredictBounds(
+      dfInput = dfTest,
+      vDbIntRandomRange = c(100, NA)
+    ),
+    "contains NA values after conversion"
   )
 })

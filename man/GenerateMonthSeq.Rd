@@ -7,9 +7,11 @@
 GenerateMonthSeq(start_yyyymm, end_yyyymm)
 }
 \arguments{
-\item{start_yyyymm}{numeric. Start month in YYYYMM format}
+\item{start_yyyymm}{numeric or character. Start month in YYYYMM format.
+Character values (e.g., from Snowflake) are automatically coerced to numeric.}
 
-\item{end_yyyymm}{numeric. End month in YYYYMM format}
+\item{end_yyyymm}{numeric or character. End month in YYYYMM format.
+Character values (e.g., from Snowflake) are automatically coerced to numeric.}
 }
 \value{
 data.frame with MonthYYYYMM column

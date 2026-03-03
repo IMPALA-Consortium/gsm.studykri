@@ -31,7 +31,6 @@ steps:
       dfStudyRef: Mapped_StudyRef
       nBootstrapReps: BootstrapReps
       nConfLevel: Threshold
-      seed: 42
 
   # Step 3: Transform bounds to long format
   - output: Reporting_Bounds

@@ -13,6 +13,17 @@
 #' This enables comparing one study's KRI against expected variation from a portfolio
 #' of similar studies.
 #'
+#' @details
+#' The `bMixStudies` parameter controls when studies are aggregated:
+#' \itemize{
+#'   \item FALSE (default): Calculate 1 timeline per reference study and bootstrap
+#'    iteration then aggeregate to calculate confidence intervals. Preserves
+#'    study variability.
+#'   \item TRUE: Mix all sampled sites from all reference studies to calculate
+#'    one common timeline per bootstrap iteration. (More efficient calculation
+#'    but inter study variability not well conserved)
+#' }
+#'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
 #'   Must contain columns: `StudyID`, `GroupID`, one or more `Numerator_*` columns,
 #'   `Denominator`, `MonthYYYYMM`.
@@ -26,7 +37,7 @@
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
 #' @param strStudyMonthCol character. Column name for sequential study month
 #'   (default: "StudyMonth").
-#' @param seed integer or NULL. Random seed for reproducibility (default: NULL).
+#' @param bMixStudies logical. Default: False, see Details
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
 #'   containing values 1 to N (where N is the desired number of replicates).
@@ -36,11 +47,23 @@
 #'   Optional pre-generated month sequence with only a `MonthYYYYMM` column
 #'   (output of `GenerateMonthSeq()`). If NULL, attempts to create temp table
 #'   (requires write privileges).
+#' @param vDbIntRandomRange Numeric vector of length 2 or NULL. When using database
+#'   backends that return large integers instead of 0-1 decimals for random numbers,
+#'   specify the min/max range as c(min, max). Accepts both numeric and character
+#'   vectors (character values are automatically converted to numeric, useful when
+#'   reading from YAML files). Common values:
+#'   - Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)
+#'   - Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+#'   Default: NULL (no normalization, assumes 0-1 decimal random values).
+#' @param nMinGroups integer or NULL. Minimum number of groups for bootstrapping.
+#'   If NULL (default), calculated as min(n_distinct(GroupID)) across vStudyFilter.
+#'   Providing this value avoids an expensive collect() operation on database backends.
+#'   This value should represent the minimum group count across all reference studies.
+#'   Default: NULL.
 #'
 #' @return A tibble (or tbl_lazy if input was lazy) with confidence intervals.
 #'   Output columns: `StudyMonth`, `Median_*`, `Lower_*`, `Upper_*` for each Metric column,
 #'   `BootstrapCount`, `GroupCount`, `StudyCount`.
-#'   Note: No `StudyID` column as studies are intentionally combined.
 #'
 #' @examples
 #' # Create example site-level data for multiple studies
@@ -60,8 +83,23 @@
 #'   dfInput = dfSiteLevel,
 #'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
 #'   nBootstrapReps = 100, # Use small number for example
-#'   nConfLevel = 0.95,
-#'   seed = 42
+#'   nConfLevel = 0.95
+#' )
+#'
+#' # Example with Snowflake backend
+#' dfGroupBounds_Snowflake <- Analyze_StudyKRI_PredictBoundsRefSet(
+#'   dfInput = dfSiteLevel,
+#'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
+#'   nBootstrapReps = 100,
+#'   vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+#' )
+#'
+#' # Example with early study mixing (faster SQL)
+#' dfGroupBounds_Mixed <- Analyze_StudyKRI_PredictBoundsRefSet(
+#'   dfInput = dfSiteLevel,
+#'   vStudyFilter = c("STUDY1", "STUDY2", "STUDY3"),
+#'   nBootstrapReps = 100,
+#'   bMixStudies = TRUE # Aggregate studies early for SQL performance
 #' )
 #'
 #' print(head(dfGroupBounds))
@@ -75,9 +113,11 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     strStudyCol = "StudyID",
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
-    seed = NULL,
+    bMixStudies = FALSE,
     tblBootstrapReps = NULL,
-    tblMonthSequence = NULL) {
+    tblMonthSequence = NULL,
+    vDbIntRandomRange = NULL,
+    nMinGroups = NULL) {
   # Input Validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfInput, c("data.frame", "tbl"))) {
     stop("dfInput must be a data.frame or tbl object")
@@ -133,41 +173,103 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
     stop("No data found for specified studies in vStudyFilter")
   }
 
-  # Count unique groups per study and find minimum
-  dfGroupCounts <- dfFiltered %>%
-    dplyr::summarise(
-      GroupCount = dplyr::n_distinct(.data[[strGroupCol]]),
-      .by = dplyr::all_of(.env$strStudyCol)
-    ) %>%
-    dplyr::collect()
+  # Count unique groups per study and find minimum (ONLY if not provided)
+  if (is.null(nMinGroups)) {
+    dfGroupCounts <- dfFiltered %>%
+      dplyr::summarise(
+        GroupCount = dplyr::n_distinct(.data[[strGroupCol]]),
+        .by = dplyr::all_of(.env$strStudyCol)
+      ) %>%
+      dplyr::collect()
 
-  nMinGroups <- min(dfGroupCounts$GroupCount)
+    nMinGroups <- min(dfGroupCounts$GroupCount)
+    message(sprintf("Calculated minimum group count: %.0f", nMinGroups))
+  } else {
+    # Validate provided nMinGroups
+    if (!is.numeric(nMinGroups) || length(nMinGroups) != 1 || nMinGroups < 1) {
+      stop("nMinGroups must be a single positive integer")
+    }
+    nMinGroups <- as.integer(nMinGroups)
+    message(sprintf("Using provided minimum group count: %.0f", nMinGroups))
+  }
 
-  # Inform user
-  message(sprintf("Resampling with minimum group count: %.0f", nMinGroups))
-
-  # Resample each study independently with nGroups = nMinGroups
+  # Sample minGroups sites from each study per bootstrap iteration
   dfBootstrapped <- BootstrapStudyKRI(
     dfInput = dfFiltered,
     nBootstrapReps = nBootstrapReps,
     nGroups = nMinGroups, # Key: use minimum to ensure fair comparison
     strStudyCol = strStudyCol,
     strGroupCol = strGroupCol,
-    seed = seed,
-    tblBootstrapReps = tblBootstrapReps
+    tblBootstrapReps = tblBootstrapReps,
+    vDbIntRandomRange = vDbIntRandomRange
   )
 
-  # Transform to study-level, but group by BootstrapRep only (not StudyID)
-  # This combines all studies into a single distribution per bootstrap replicate
-  dfStudyLevel <- Transform_CumCount(
-    dfInput = dfBootstrapped,
-    vBy = "BootstrapRep", # Critical: only group by BootstrapRep, not StudyID
-    tblMonthSequence = tblMonthSequence
-  )
 
-  # Calculate CI for the combined distribution
+  vNumeratorCols <- grep("^Numerator", colnames(dfInput), value = TRUE)
+
+  if (bMixStudies) {
+    # APPROACH 1: Mix studies early (faster SQL, no extrapolation)
+    # Step 1: Calculate StudyMonth per study+bootstrap
+    dfStudyMonth <- AggrStudyMonth(
+      dfInput = dfBootstrapped,
+      vBy = c("StudyID", "BootstrapRep"),
+      vNumeratorCols = vNumeratorCols,
+      tblMonthSequence = tblMonthSequence
+    )
+
+    # Step 2: Aggregate across studies for each StudyMonth+BootstrapRep
+    dfStudyMonthBoot <- dfStudyMonth %>%
+      dplyr::summarise(
+        dplyr::across(
+          .cols = c(dplyr::all_of(.env$vNumeratorCols), "Denominator", "GroupCount"),
+          .fns = sum
+        ),
+        .by = c("StudyMonth", "BootstrapRep")
+      )
+
+    # Step 3: Calculate cumulative counts per bootstrap replicate only
+    dfCumCountBootComplete <- CumulativeCounts(
+      dfAggregated = dfStudyMonthBoot,
+      vBy = c("BootstrapRep"),
+      vNumeratorCols = vNumeratorCols
+    )
+  } else {
+    # APPROACH 2: Keep studies separate
+    # Step 1: Calculate cumulative counts per study+bootstrap
+    dfCumCountBoot <- Transform_CumCount(
+      dfBootstrapped,
+      vBy = c("StudyID", "BootstrapRep"),
+      tblMonthSequence = tblMonthSequence
+    )
+
+    # Step 2: Extrapolate to align study timelines
+    # Study timelines will have different lengths; bring them all to the
+    # same length by extrapolating the last measurement
+    dfMiss <- dfCumCountBoot %>%
+      distinct(.data$StudyMonth, .data$BootstrapRep) %>%
+      cross_join(
+        distinct(dfCumCountBoot, .data$StudyID)
+      ) %>%
+      left_join(
+        # add the last measurement
+        dfCumCountBoot %>%
+          filter(.data$StudyMonth == max(.data$StudyMonth), .by = c("StudyID", "BootstrapRep")) %>%
+          select(-"StudyMonth"),
+        by = c("StudyID", "BootstrapRep")
+      ) %>%
+      anti_join(
+        # only keep records not in original
+        dfCumCountBoot %>%
+          select(c("StudyID", "BootstrapRep", "StudyMonth")),
+        by = c("StudyID", "BootstrapRep", "StudyMonth")
+      )
+
+    dfCumCountBootComplete <- union_all(dfCumCountBoot, dfMiss)
+  }
+
+  # Calculate CI combining data from each sample
   dfBounds <- CalculateStudyBounds(
-    dfInput = dfStudyLevel,
+    dfInput = dfCumCountBootComplete,
     vBy = character(0), # No additional grouping
     nConfLevel = nConfLevel,
     strStudyMonthCol = strStudyMonthCol
@@ -193,16 +295,34 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' reference groups. For each study in `dfStudyRef`, calculates bounds using its
 #' mapped reference studies.
 #'
+#' @details
+#' For optimal performance with database backends:
+#' - Include a MinGroups column in dfStudyRef (or specify custom name via strMinGroupsCol)
+#'   to avoid collecting the full dataset to count groups
+#' - Calculate as: min(n_distinct(GroupID)) across all reference studies per target study
+#' - This avoids materializing the entire Analysis_Input table just to count groups
+#'
 #' @param dfInput data.frame or tbl_lazy. Site-level data from `Input_CumCountSiteByMonth`.
 #'   Must contain one or more `Numerator_*` columns, `Denominator`, `MonthYYYYMM`.
 #' @param dfStudyRef data.frame or tbl_lazy. Study-to-reference mappings with at least
 #'   two columns: first column = target studies, second column = reference studies.
 #'   Can have multiple rows per target study (one row per target-reference pair).
+#'   Optional column (name specified by strMinGroupsCol): minimum group count for
+#'   performance optimization.
 #' @param nBootstrapReps integer. Number of bootstrap replicates (default: 1000).
 #' @param nConfLevel numeric. Confidence level for the bounds (default: 0.95).
 #' @param strGroupCol character. Column name for group identifier (default: "GroupID").
 #' @param strStudyMonthCol character. Column name for study month (default: "StudyMonth").
-#' @param seed integer or NULL. Random seed (default: NULL).
+#' @param strMinGroupsCol character. Column name for minimum groups in dfStudyRef (default: "MinGroups").
+#'   If this column exists in dfStudyRef, its value will be used instead of calculating
+#'   minimum group counts, improving performance with database backends.
+#' @param bMixStudies logical. If TRUE, aggregates studies at the StudyMonth level
+#'   before calculating cumulative counts (faster SQL performance, but disables
+#'   extrapolation). If FALSE (default), keeps study-level granularity through
+#'   extrapolation step, allowing studies with different timeline lengths to be
+#'   properly aligned before aggregation. Use TRUE for database backends when
+#'   SQL performance is critical and all studies have similar timeline lengths.
+#'   Default: FALSE.
 #' @param tblBootstrapReps tbl_lazy, data.frame, or NULL. For lazy table inputs:
 #'   Optional pre-generated bootstrap replicate indices with a `BootstrapRep` column
 #'   containing values 1 to N (where N is the desired number of replicates).
@@ -212,6 +332,19 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #'   Optional pre-generated month sequence with only a `MonthYYYYMM` column
 #'   (output of `GenerateMonthSeq()`). If NULL, attempts to create temp table
 #'   (requires write privileges).
+#' @param vDbIntRandomRange Numeric vector of length 2 or NULL. When using database
+#'   backends that return large integers instead of 0-1 decimals for random numbers,
+#'   specify the min/max range as c(min, max). Accepts both numeric and character
+#'   vectors (character values are automatically converted to numeric, useful when
+#'   reading from YAML files). Common values:
+#'   - Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)
+#'   - Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+#'   Default: NULL (no normalization, assumes 0-1 decimal random values).
+#' @param funCompute function or NULL. Optional function to apply to intermediate
+#'   database results for performance optimization. Typically used to cache/materialize
+#'   intermediate results using `dplyr::compute()`. Only applied when dfInput is a
+#'   database table (tbl_dbi). Requires database write permissions to create temporary
+#'   tables. Example: `funCompute = dplyr::compute`. Default: NULL.
 #'
 #' @return A tibble (or tbl_lazy if input was lazy) with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
 #'   `Median_*`, `Lower_*`, `Upper_*` for each Metric column, `BootstrapCount`,
@@ -239,8 +372,24 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #' dfBounds <- Analyze_StudyKRI_PredictBoundsRef(
 #'   dfInput = dfSiteLevel,
 #'   dfStudyRef = dfStudyRef,
+#'   nBootstrapReps = 100
+#' )
+#'
+#' # Example with Snowflake backend
+#' dfBounds_Snowflake <- Analyze_StudyKRI_PredictBoundsRef(
+#'   dfInput = dfSiteLevel,
+#'   dfStudyRef = dfStudyRef,
 #'   nBootstrapReps = 100,
-#'   seed = 42
+#'   vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+#' )
+#'
+#' # Example with database backend using funCompute to cache results
+#' # (Assumes dfSiteLevel is a tbl_dbi database table)
+#' dfBounds_Cached <- Analyze_StudyKRI_PredictBoundsRef(
+#'   dfInput = dfSiteLevel,
+#'   dfStudyRef = dfStudyRef,
+#'   nBootstrapReps = 100,
+#'   funCompute = dplyr::compute # Cache intermediate results in database
 #' )
 #'
 #' print(head(dfBounds))
@@ -253,9 +402,12 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     nConfLevel = 0.95,
     strGroupCol = "GroupID",
     strStudyMonthCol = "StudyMonth",
-    seed = NULL,
+    strMinGroupsCol = "MinGroups",
+    bMixStudies = FALSE,
     tblBootstrapReps = NULL,
-    tblMonthSequence = NULL) {
+    tblMonthSequence = NULL,
+    vDbIntRandomRange = NULL,
+    funCompute = NULL) {
   # Input validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfStudyRef, c("data.frame", "tbl"))) {
     stop("dfStudyRef must be a data.frame or tbl object")
@@ -274,6 +426,9 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
   strStudyCol <- colnames(dfStudyRefCollected)[1]
   strStudyRefCol <- colnames(dfStudyRefCollected)[2]
 
+  # Check if MinGroups column exists by name
+  bHasMinGroups <- strMinGroupsCol %in% colnames(dfStudyRefCollected)
+
   # Get unique target studies
   vTargetStudies <- unique(dfStudyRefCollected[[strStudyCol]])
 
@@ -283,9 +438,21 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
   # Loop over each target study
   for (study in vTargetStudies) {
     # Filter to get reference studies for this target study
-    vRefStudies <- dfStudyRefCollected %>%
-      dplyr::filter(.data[[strStudyCol]] == .env$study) %>%
+    studyRefRow <- dfStudyRefCollected %>%
+      dplyr::filter(.data[[strStudyCol]] == .env$study)
+
+    vRefStudies <- studyRefRow %>%
       dplyr::pull(.data[[strStudyRefCol]])
+
+    # Get nMinGroups if available (performance optimization)
+    nMinGroupsProvided <- if (bHasMinGroups) {
+      studyRefRow %>%
+        dplyr::pull(.data[[strMinGroupsCol]]) %>%
+        unique() %>%
+        as.integer()
+    } else {
+      NULL
+    }
 
     # Call the set function
     dfBounds <- Analyze_StudyKRI_PredictBoundsRefSet(
@@ -296,9 +463,11 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
       strStudyCol = "StudyID",
       strGroupCol = strGroupCol,
       strStudyMonthCol = strStudyMonthCol,
-      seed = seed,
+      bMixStudies = bMixStudies,
       tblBootstrapReps = tblBootstrapReps,
-      tblMonthSequence = tblMonthSequence
+      tblMonthSequence = tblMonthSequence,
+      vDbIntRandomRange = vDbIntRandomRange,
+      nMinGroups = nMinGroupsProvided
     )
 
     # Compute constant values outside mutate to avoid SQL translation issues
@@ -312,6 +481,11 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
         StudyID = .env$study,
         StudyRefID = .env$strStudyRefID
       )
+
+    if (inherits(dfBounds, "tbl_dbi") & !is.null(funCompute)) {
+      stopifnot("funCompute is not a function" = inherits(funCompute, "function"))
+      dfBounds <- funCompute(dfBounds)
+    }
 
     # Store in list
     lResults[[study]] <- dfBounds

@@ -1,3 +1,17 @@
+#' Generate Unique Temporary Table Name
+#'
+#' Creates a unique table name by appending process ID and random integer.
+#' This prevents conflicts when multiple function calls create temp tables
+#' in the same database session (e.g., when processing multiple KRIs via purrr::map).
+#'
+#' @param base_name character. Base name for the table (e.g., "bootstrap_reps")
+#' @return character. Unique table name (e.g., "bootstrap_reps_12345_678901")
+#' @keywords internal
+GenerateUniqueTempName <- function(base_name) {
+  suffix <- paste0(Sys.getpid(), "_", sample.int(1e6, 1))
+  paste0(base_name, "_", suffix)
+}
+
 #' Handle Lazy Table with Fallback Strategy
 #'
 #' @description
@@ -60,11 +74,14 @@ HandleLazyTable <- function(tblInput,
         stop("Cannot extract database connection from lazy table")
       }
 
+      # Generate unique name to prevent conflicts in parallel/nested execution
+      unique_name <- GenerateUniqueTempName(strTempTableName)
+
       # Attempt to write temp table
       tblResult <- dplyr::copy_to(
         con,
         dfMem,
-        name = strTempTableName,
+        name = unique_name,
         temporary = TRUE,
         overwrite = TRUE
       )
@@ -104,11 +121,17 @@ SortDf <- function(data, ...) {
 
 #' Generate Complete Month Sequence
 #'
-#' @param start_yyyymm numeric. Start month in YYYYMM format
-#' @param end_yyyymm numeric. End month in YYYYMM format
+#' @param start_yyyymm numeric or character. Start month in YYYYMM format.
+#'   Character values (e.g., from Snowflake) are automatically coerced to numeric.
+#' @param end_yyyymm numeric or character. End month in YYYYMM format.
+#'   Character values (e.g., from Snowflake) are automatically coerced to numeric.
 #' @return data.frame with MonthYYYYMM column
 #' @keywords internal
 GenerateMonthSeq <- function(start_yyyymm, end_yyyymm) {
+  # Coerce to numeric to handle database backends (e.g., Snowflake) that return character
+  start_yyyymm <- as.numeric(start_yyyymm)
+  end_yyyymm <- as.numeric(end_yyyymm)
+
   start_year <- floor(start_yyyymm / 100)
   start_month <- start_yyyymm %% 100
   end_year <- floor(end_yyyymm / 100)

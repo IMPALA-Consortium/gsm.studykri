@@ -41,7 +41,36 @@ library(gsm.studykri)
 
 ## Introduction
 
-{gsm.studykir} functions can be executed on a database back-end instead of relying on in-memory calculations
+{gsm.studykir} functions can be executed on a database back-end instead of relying on in-memory calculations. 
+
+The package supports various database backends including DuckDB, PostgreSQL, and Snowflake. For backends that use large integer values for random number generation (such as Snowflake), use the `vDbIntRandomRange` parameter in bootstrap functions to ensure proper normalization of random values.
+
+## Database Backend Compatibility
+
+### Random Number Generation
+
+Most SQL databases translate R's `runif()` to a `RANDOM()` function that returns decimal values between 0 and 1. However, some databases (notably Snowflake) return large integers instead. For these backends, you must specify the integer range using the `vDbIntRandomRange` parameter.
+
+**Common Random Number Ranges:**
+
+- **Snowflake** (signed 64-bit): `c(-9223372036854775808, 9223372036854775807)` (range: −2^63 to 2^63−1)
+- **Standard databases** (DuckDB, PostgreSQL, etc.): `NULL` (default, returns 0-1 decimals)
+
+When `vDbIntRandomRange` is specified, the package automatically normalizes the integer values to the 0-1 range using the formula:
+
+```r
+normalized_value = (random_value - min_value) / (max_value - min_value)
+```
+
+**How to determine your database's random range:**
+
+If you're unsure whether your database backend needs normalization, run this query:
+
+```sql
+SELECT RANDOM() FROM your_table LIMIT 10;
+```
+
+If the values are between 0 and 1, use the default (`vDbIntRandomRange = NULL`). If they're large integers, specify the appropriate range.
 
 
 ## Simulate Data Set and Save to DuckDb
@@ -80,7 +109,7 @@ lPortfolio <- SimulatePortfolio(
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4"),
     nSubjects = c(500, 750, 150, 200),
-    strOversamplDomain = rep("Raw_AE", 4),
+    strOversampleDomain = rep("Raw_AE", 4),
     vOversamplQuantileRange_min = c(0, 0, 0, 0),
     vOversamplQuantileRange_max = c(1, 1, 1, 0.75)
   )
@@ -299,3 +328,223 @@ lCharts <- gsm.studykri::MakeCharts_StudyKRI(
 
 lCharts
 ```
+
+
+## Using Snowflake or Other Integer Random Backends
+
+If you're using Snowflake or another database that returns large integers for `RANDOM()`, add the `vDbIntRandomRange` parameter to your bootstrap function calls:
+
+```{r eval=FALSE}
+# For Snowflake: specify signed 64-bit integer range
+Bounds_Wide_Snowflake <- purrr::map(
+  lJoined, ~ Analyze_StudyKRI_PredictBounds(
+    .,
+    dfStudyRef = tblStudyRef,
+    tblBootstrapReps = tblRep,
+    tblMonthSequence = tblMonths,
+    vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+  )
+)
+
+BoundsRef_Wide_Snowflake <- purrr::map(
+  lJoined, ~ Analyze_StudyKRI_PredictBoundsRef(
+    .,
+    dfStudyRef = tblStudyRef,
+    tblBootstrapReps = tblRep,
+    tblMonthSequence = tblMonths,
+    vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+  )
+)
+```
+
+The `vDbIntRandomRange` parameter should be added to:
+
+- `Analyze_StudyKRI_PredictBounds()`
+- `Analyze_StudyKRI_PredictBoundsRef()`
+- `Analyze_StudyKRI_PredictBoundsRefSet()`
+
+This ensures that random values are properly normalized regardless of the database backend's random number generation method.
+
+## Performance Optimization for Database Backends
+
+
+
+### Optimization Strategy 1: Pass nMinGroups via StudyRef
+
+The most impactful optimization is avoiding the collection of the full dataset to calculate minimum group counts. By pre-calculating and including a MinGroups column in your StudyRef table, you can avoid materializing potentially millions of rows.
+
+**How to calculate MinGroups:**
+
+For each target study in your StudyRef mapping, calculate the minimum group count across all its reference studies:
+
+```sql
+-- Example: Calculate MinGroups for each target-reference set
+WITH GroupCounts AS (
+  SELECT 
+    StudyID,
+    COUNT(DISTINCT GroupID) AS group_count
+  FROM Analysis_Input
+  WHERE StudyID IN ('REF_STUDY_1', 'REF_STUDY_2', 'REF_STUDY_3')
+  GROUP BY StudyID
+)
+SELECT 
+  'TARGET_STUDY' AS studyid,
+  'REF_STUDY_1' AS studyrefid,  -- repeat for each reference
+  MIN(group_count) AS MinGroups
+FROM GroupCounts;
+```
+
+**Then include it in your StudyRef table:**
+
+The StudyRef.yaml workflow selects only the required `studyid` and `studyrefid` columns. To use the MinGroups optimization, you have two options:
+
+**Option 1: Add MinGroups directly to your StudyRef data**
+
+```{r eval=FALSE}
+# Create Raw_StudyRef with MinGroups column
+dfStudyRef <- tibble(
+  studyid = "AA-1",
+  studyrefid = c("AA-2", "AA-3", "AA-4"),
+  MinGroups = 8 # Pre-calculated minimum across reference studies
+)
+
+# Write to database
+DBI::dbWriteTable(con, "StudyRef", dfStudyRef, overwrite = TRUE)
+tblStudyRef <- tbl(con, "StudyRef")
+
+# Use in analysis - MinGroups will be automatically detected and used
+BoundsRef_Optimized <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = tblInput,
+  dfStudyRef = tblStudyRef,
+  tblBootstrapReps = tblRep,
+  tblMonthSequence = tblMonths
+)
+```
+
+**Option 2: Use a custom mapping query**
+
+If you need to transform the column name, create a custom StudyRef.yaml workflow:
+
+```yaml
+steps:
+  - output: Mapped_StudyRef
+    name: gsm.core::RunQuery
+    params:
+      df: Raw_StudyRef
+      strQuery: "SELECT studyid AS study, studyrefid AS studyref, mingroups AS MinGroups FROM df"
+```
+
+**Option 3: Use a custom column name**
+
+```{r eval=FALSE}
+dfStudyRef_Custom <- tibble(
+  studyid = "AA-1",
+  studyrefid = c("AA-2", "AA-3", "AA-4"),
+  min_grp_cnt = 8
+)
+
+BoundsRef_Custom <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = tblInput,
+  dfStudyRef = tblStudyRef_Custom,
+  strMinGroupsCol = "min_grp_cnt", # Specify custom column name
+  tblBootstrapReps = tblRep,
+  tblMonthSequence = tblMonths
+)
+```
+
+
+### Optimization Strategy 2: Skip Validation Checks
+
+The `JoinKRIByDenominator()` function performs several validation checks that require `collect()` operations. When confident in data quality, skip these:
+
+```{r eval=FALSE}
+lJoined <- JoinKRIByDenominator(
+  tblInput,
+  dfMetrics,
+  bSkipValidation = TRUE # Disable validation collect() operations
+)
+```
+
+### Optimization Strategy 3: Pre-generate Temporary Tables
+
+Provide pre-generated bootstrap replicates and month sequences to avoid repeated temp table creation:
+
+```{r eval=FALSE}
+# Create once, reuse many times
+dfRep <- tibble(BootstrapRep = seq(1, 1000))
+dfMonths <- tibble(
+  YYYY = seq(2003, 2020)
+) %>%
+  cross_join(tibble(MM = seq(1, 12))) %>%
+  mutate(MonthYYYYMM = YYYY * 100 + MM) %>%
+  select(MonthYYYYMM)
+
+DBI::dbWriteTable(con, "Rep", dfRep)
+DBI::dbWriteTable(con, "Months", dfMonths)
+
+tblRep <- tbl(con, "Rep")
+tblMonths <- tbl(con, "Months")
+
+# Pass to all functions
+Bounds <- Analyze_StudyKRI_PredictBounds(
+  dfInput,
+  tblBootstrapReps = tblRep,
+  tblMonthSequence = tblMonths
+)
+```
+
+### Optimization Strategy 4: Use funCompute to Cache Intermediate Results
+
+When working with large database queries, you can use the `funCompute` parameter to cache intermediate results in the database. This can significantly improve performance by materializing temporary tables rather than re-executing complex queries.
+
+The `funCompute` parameter accepts a function that will be applied to intermediate database results. The most common use case is `dplyr::compute()`:
+
+```{r eval=FALSE}
+# Cache intermediate results during bootstrap calculations
+BoundsRef_Cached <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = tblInput,
+  dfStudyRef = tblStudyRef,
+  nBootstrapReps = 1000,
+  tblBootstrapReps = tblRep,
+  tblMonthSequence = tblMonths,
+  funCompute = dplyr::compute # Cache intermediate results
+)
+```
+
+You can also provide a custom function for more control:
+
+```{r eval=FALSE}
+# Custom compute function - let dplyr auto-generate unique names
+# (Important: don't specify fixed names as funCompute may be called multiple times)
+custom_cache <- function(x) {
+  dplyr::compute(x, temporary = TRUE)
+}
+
+BoundsRef_Custom <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = tblInput,
+  dfStudyRef = tblStudyRef,
+  nBootstrapReps = 1000,
+  funCompute = custom_cache
+)
+```
+
+**When to use `funCompute`:**
+
+- Complex queries that are re-used multiple times
+- Very large datasets where materialization is faster than re-computation
+- When database query optimizer struggles with complex lazy query plans
+
+**Performance trade-offs:**
+
+- **Benefit**: Avoids re-executing expensive queries; can reduce query complexity
+- **Cost**: Requires database write permissions; creates temporary tables that use storage
+
+**Note**: `funCompute` is primarily beneficial for large datasets (millions of rows), complex multi-study portfolios, or queries that are re-executed multiple times. For small datasets or simple queries, the overhead of creating temporary tables may outweigh benefits.
+
+### Best Practices Summary
+
+1. **Add MinGroups column to StudyRef** (or use `strMinGroupsCol` parameter for custom names) for the biggest performance gain
+2. **Use `bSkipValidation = TRUE`** in `JoinKRIByDenominator()` when data quality is assured
+3. **Pre-generate temp tables** (`tblBootstrapReps`, `tblMonthSequence`) to avoid repeated creation
+4. **Use `funCompute`** to cache intermediate results when working with large datasets or complex queries
+

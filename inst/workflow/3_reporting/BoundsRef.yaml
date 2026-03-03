@@ -6,6 +6,7 @@ meta:
   Threshold: 0.95
   AccrualThreshold: 25
   Priority: 3
+  bMixStudies: False
 spec:
   Reporting_Join:
     _all:
@@ -31,7 +32,7 @@ steps:
       dfStudyRef: Mapped_StudyRef
       nBootstrapReps: BootstrapReps
       nConfLevel: Threshold
-      seed: 42
+      bMixStudies: bMixStudies
 
   # Step 3: Transform reference bounds to long format
   - output: Reporting_BoundsRef

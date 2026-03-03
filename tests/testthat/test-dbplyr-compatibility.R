@@ -16,11 +16,13 @@ create_minimal_test_data <- function() {
       stringsAsFactors = FALSE
     ),
     dfNumerator = data.frame(
+      studyid = c("STUDY1", "STUDY1", "STUDY1"),
       subjid = c("S1", "S2", "S3"),
       aest_dt = as.Date(c("2024-01-15", "2024-01-20", "2024-02-10")),
       stringsAsFactors = FALSE
     ),
     dfDenominator = data.frame(
+      studyid = c("STUDY1", "STUDY1", "STUDY1"),
       subjid = c("S1", "S2", "S3"),
       visit_dt = as.Date(c("2024-01-10", "2024-01-12", "2024-02-05")),
       stringsAsFactors = FALSE
@@ -111,6 +113,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet returns lazy table with lazy inp
       stringsAsFactors = FALSE
     ),
     dfNumerator = data.frame(
+      studyid = rep(c("STUDY1", "STUDY2"), each = 3),
       subjid = c("S1", "S2", "S3", "S4", "S5", "S6"),
       aest_dt = as.Date(c(
         "2024-01-15", "2024-01-20", "2024-02-10",
@@ -119,6 +122,7 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet returns lazy table with lazy inp
       stringsAsFactors = FALSE
     ),
     dfDenominator = data.frame(
+      studyid = rep(c("STUDY1", "STUDY2"), each = 3),
       subjid = c("S1", "S2", "S3", "S4", "S5", "S6"),
       visit_dt = as.Date(c(
         "2024-01-10", "2024-01-12", "2024-02-05",
@@ -149,7 +153,6 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet returns lazy table with lazy inp
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 5,
       nConfLevel = 0.95,
-      seed = 123
     )
   })
 
@@ -223,11 +226,13 @@ test_that("Input_CountSiteByMonth with nMinDenominator returns lazy table and ad
       stringsAsFactors = FALSE
     ),
     dfNumerator = data.frame(
+      studyid = rep("STUDY1", 5),
       subjid = c("S1", "S2", "S3", "S4", "S5"),
       aest_dt = as.Date(c("2024-01-15", "2024-01-20", "2024-02-10", "2024-01-18", "2024-01-25")),
       stringsAsFactors = FALSE
     ),
     dfDenominator = data.frame(
+      studyid = rep("STUDY1", 5),
       subjid = c("S1", "S2", "S3", "S4", "S5"),
       visit_dt = as.Date(c("2024-01-10", "2024-01-12", "2024-02-05", "2024-01-11", "2024-01-15")),
       stringsAsFactors = FALSE
@@ -294,7 +299,6 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet works with lazy tables", {
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 888
     )
   })
 
@@ -343,7 +347,6 @@ test_that("Analyze_StudyKRI_PredictBoundsRefSet with lazy table and NULL vStudyF
       vStudyFilter = NULL,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 777
     ),
     "No vStudyFilter specified. Using all 3 studies."
   )
@@ -377,12 +380,14 @@ test_that("Input_CountSiteByMonth works with lazy tables", {
   )
 
   dfNumerator <- data.frame(
+    studyid = rep("STUDY001", 3),
     subjid = c("SUBJ001", "SUBJ002", "SUBJ003"),
     aest_dt = as.Date(c("2024-01-15", "2024-01-20", "2024-02-10")),
     stringsAsFactors = FALSE
   )
 
   dfDenominator <- data.frame(
+    studyid = rep("STUDY001", 3),
     subjid = c("SUBJ001", "SUBJ002", "SUBJ003"),
     visit_dt = as.Date(c("2024-01-10", "2024-01-15", "2024-02-05")),
     stringsAsFactors = FALSE
@@ -437,12 +442,14 @@ test_that("calculate_days_by_month works with lazy tables", {
   )
 
   dfNumerator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     aest_dt = as.Date("2024-01-15"),
     stringsAsFactors = FALSE
   )
 
   dfDenominator <- data.frame(
+    studyid = "STUDY001",
     subjid = "SUBJ001",
     start_date = as.Date("2024-01-01"),
     end_date = as.Date("2024-02-29"),
@@ -513,7 +520,6 @@ test_that("Analyze_StudyKRI_PredictBounds returns lazy table with lazy input", {
       dfStudyRef = NULL,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 999
     )
   })
 
@@ -573,7 +579,6 @@ test_that("Analyze_StudyKRI_PredictBounds works with lazy dfStudyRef", {
       dfStudyRef = dfStudyRefLazy,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 888
     )
   })
 
@@ -636,7 +641,6 @@ test_that("Analyze_StudyKRI_PredictBoundsRef returns lazy table with lazy input"
       dfStudyRef = dfStudyRefLazy,
       nBootstrapReps = 20,
       nConfLevel = 0.95,
-      seed = 555
     )
   })
 
@@ -648,6 +652,94 @@ test_that("Analyze_StudyKRI_PredictBoundsRef returns lazy table with lazy input"
   expect_true(nrow(result_collected) > 0)
   expect_true(all(c("StudyID", "StudyRefID", "StudyMonth", "Median") %in% names(result_collected)))
   expect_equal(length(unique(result_collected$StudyID)), 2)
+
+  # Clean up
+  DBI::dbDisconnect(con, shutdown = TRUE)
+})
+
+# Test: Analyze_StudyKRI_PredictBoundsRef with funCompute parameter
+test_that("Analyze_StudyKRI_PredictBoundsRef funCompute parameter works with lazy tables", {
+  skip_if_not_installed("dbplyr")
+  skip_if_not_installed("duckdb")
+
+  # Create in-memory database
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+
+  # Create test data with 3 studies
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2", "STUDY3"), each = 24),
+    GroupID = rep(paste0("Site", 1:4), each = 6, times = 3),
+    Numerator = rep(1:6, times = 12),
+    Denominator = rep(10:15, times = 12),
+    MonthYYYYMM = rep(202301:202306, times = 12),
+    Metric = runif(72, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # Write to database
+  DBI::dbWriteTable(con, "site_data", dfTest)
+  dfLazy <- dplyr::tbl(con, "site_data")
+
+  # Create study reference mapping
+  dfStudyRef <- data.frame(
+    study = c("STUDY1", "STUDY2"),
+    studyref = c("STUDY2", "STUDY3"),
+    stringsAsFactors = FALSE
+  )
+
+  # Test with funCompute = dplyr::compute
+  suppressMessages({
+    result <- Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfLazy,
+      dfStudyRef = dfStudyRef,
+      nBootstrapReps = 10,
+      nConfLevel = 0.95,
+      funCompute = dplyr::compute
+    )
+  })
+
+  # Should still return lazy table (compute creates temp table in DB)
+  expect_s3_class(result, "tbl_lazy")
+
+  # Collect and verify correctness
+  result_collected <- dplyr::collect(result)
+  expect_true(nrow(result_collected) > 0)
+  expect_true(all(c("StudyID", "StudyRefID", "StudyMonth", "Median") %in% names(result_collected)))
+  expect_equal(length(unique(result_collected$StudyID)), 2)
+
+  # Test with custom compute function that doesn't specify name
+  # (lets dplyr auto-generate unique names for each call)
+  custom_compute <- function(x) {
+    dplyr::compute(x, temporary = TRUE)
+  }
+
+  suppressMessages({
+    result2 <- Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfLazy,
+      dfStudyRef = dfStudyRef,
+      nBootstrapReps = 10,
+      nConfLevel = 0.95,
+      funCompute = custom_compute
+    )
+  })
+
+  expect_s3_class(result2, "tbl_lazy")
+  result2_collected <- dplyr::collect(result2)
+  expect_equal(nrow(result2_collected), nrow(result_collected))
+
+  # Test error handling: funCompute must be a function
+  expect_error(
+    suppressMessages(
+      Analyze_StudyKRI_PredictBoundsRef(
+        dfInput = dfLazy,
+        dfStudyRef = dfStudyRef,
+        nBootstrapReps = 10,
+        funCompute = "not a function"
+      )
+    ),
+    "funCompute is not a function"
+  )
 
   # Clean up
   DBI::dbDisconnect(con, shutdown = TRUE)
@@ -789,7 +881,6 @@ test_that("User-supplied tblBootstrapReps controls bootstrap count", {
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 100, # This should be overridden by tblBootstrapReps
       nConfLevel = 0.95,
-      seed = 42,
       tblBootstrapReps = tblBootstrapRepsLazy
     )
   })
@@ -842,7 +933,6 @@ test_that("User-supplied tblMonthSequence controls output months", {
       vStudyFilter = c("STUDY1", "STUDY2"),
       nBootstrapReps = 10,
       nConfLevel = 0.95,
-      seed = 42,
       tblMonthSequence = tblMonthSeqLazy
     )
   })
@@ -902,7 +992,6 @@ test_that("Analyze_StudyKRI_PredictBoundsRef works with user-supplied tblBootstr
       dfStudyRef = dfStudyRef,
       nBootstrapReps = 50, # Should be overridden by tblBootstrapReps
       nConfLevel = 0.95,
-      seed = 42,
       tblBootstrapReps = tblBootstrapRepsLazy
     )
   })
@@ -957,7 +1046,6 @@ test_that("Analyze_StudyKRI_PredictBounds works with user-supplied tblBootstrapR
       dfStudyRef = NULL, # All studies
       nBootstrapReps = 200, # Should be overridden by tblBootstrapReps
       nConfLevel = 0.95,
-      seed = 42,
       tblBootstrapReps = tblBootstrapRepsLazy
     )
   })

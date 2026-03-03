@@ -7,7 +7,6 @@
 #'
 #' @param dfNumerator_processed Data frame with processed numerator data (with MonthYYYYMM)
 #' @param dfDenominator Data frame with original denominator data
-#' @param dfSubjects Data frame with subject-level data for joining
 #' @param strSubjectCol Name of subject ID column
 #' @param strStudyCol Name of study ID column
 #' @param strGroupCol Name of group ID column (e.g., site)
@@ -24,7 +23,6 @@
 ApplyMinDenominatorDateAdjustment <- function(
     dfNumerator_processed,
     dfDenominator,
-    dfSubjects,
     strSubjectCol,
     strStudyCol,
     strGroupCol,
@@ -32,13 +30,8 @@ ApplyMinDenominatorDateAdjustment <- function(
     strDenominatorDateCol,
     strDenominatorEndDateCol,
     nMinDenominator) {
-  # Step 1: Join denominator with subjects to get study information
+  # Step 1: Filter denominator to valid dates (study columns already present)
   dfDenom_with_study <- dfDenominator %>%
-    dplyr::select(-dplyr::any_of(c(.env$strStudyCol, .env$strGroupCol))) %>%
-    dplyr::inner_join(
-      dfSubjects %>% dplyr::select(dplyr::all_of(c(strSubjectCol, strStudyCol, strGroupCol))),
-      by = stats::setNames(strSubjectCol, strSubjectCol)
-    ) %>%
     dplyr::filter(!is.na(.data[[strDenominatorDateCol]]))
 
   # Step 2: Rank denominator events by start date within each study

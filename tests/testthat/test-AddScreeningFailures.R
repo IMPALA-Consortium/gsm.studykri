@@ -31,7 +31,6 @@ test_that("AddScreeningFailures basic functionality works", {
     dfSource = dfSource,
     strSiteCol = "siteid",
     strStudyCol = "studyid",
-    seed = 123
   )
 
   # Basic checks
@@ -55,17 +54,20 @@ test_that("AddScreeningFailures basic functionality works", {
   # Check that study from dfEnrolled is maintained
   expect_true(all(result$studyid == "Study1"))
 
-  # Test reproducibility
+  # Test reproducibility - should be similar ranges but may not be exact due to sampling variability
+  set.seed(123)
   result2 <- AddScreeningFailures(
     dfEnrolled = dfEnrolled,
     dfSource = dfSource,
     strSiteCol = "siteid",
-    strStudyCol = "studyid",
-    seed = 123
+    strStudyCol = "studyid"
   )
 
-  expect_equal(nrow(result), nrow(result2))
-  expect_equal(sum(result$enrollyn == "N"), sum(result2$enrollyn == "N"))
+  # Both should have added screening failures
+  expect_true(nrow(result) > nrow(dfEnrolled))
+  expect_true(nrow(result2) > nrow(dfEnrolled))
+  expect_true(sum(result$enrollyn == "N") > 0)
+  expect_true(sum(result2$enrollyn == "N") > 0)
 })
 
 test_that("AddScreeningFailures works without seed", {
@@ -98,6 +100,51 @@ test_that("AddScreeningFailures works without seed", {
   expect_true(nrow(result) >= nrow(dfEnrolled))
 })
 
+test_that("AddScreeningFailures seed parameter produces reproducible results", {
+  # Test that explicitly passing seed produces reproducible results
+  dfEnrolled <- data.frame(
+    subjid = paste0("S", 1:20),
+    studyid = "Study1",
+    siteid = rep(c("Site1", "Site2"), each = 10),
+    enrollyn = "Y",
+    stringsAsFactors = FALSE
+  )
+
+  dfSource <- data.frame(
+    subjid = paste0("SRC", 1:50),
+    studyid = "SourceStudy",
+    siteid = rep(c("SiteA", "SiteB"), each = 25),
+    enrollyn = c(
+      rep("Y", 20), rep("N", 5),
+      rep("Y", 15), rep("N", 10)
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  # Call with seed = 123
+  result1 <- AddScreeningFailures(
+    dfEnrolled = dfEnrolled,
+    dfSource = dfSource,
+    strSiteCol = "siteid",
+    strStudyCol = "studyid",
+    seed = 123
+  )
+
+  # Call with same seed
+  result2 <- AddScreeningFailures(
+    dfEnrolled = dfEnrolled,
+    dfSource = dfSource,
+    strSiteCol = "siteid",
+    strStudyCol = "studyid",
+    seed = 123
+  )
+
+  # Should produce identical results
+  expect_equal(nrow(result1), nrow(result2))
+  expect_equal(sum(result1$enrollyn == "N"), sum(result2$enrollyn == "N"))
+  expect_equal(result1$subjid, result2$subjid)
+})
+
 test_that("AddScreeningFailures handles edge case with zero screening failures calculated", {
   # Create scenario where ratio might result in very few or zero screening failures
   dfEnrolled <- data.frame(
@@ -122,7 +169,6 @@ test_that("AddScreeningFailures handles edge case with zero screening failures c
     dfSource = dfSource,
     strSiteCol = "siteid",
     strStudyCol = "studyid",
-    seed = 456
   )
 
   # Should still return a valid dataframe
@@ -158,7 +204,6 @@ test_that("AddScreeningFailures handles sites with zero enrolled patients in sou
     dfSource = dfSource,
     strSiteCol = "siteid",
     strStudyCol = "studyid",
-    seed = 789
   )
 
   # Should return valid results
@@ -196,12 +241,12 @@ test_that("AddScreeningFailures handles multi-study scenarios", {
     stringsAsFactors = FALSE
   )
 
+  set.seed(123)
   result <- AddScreeningFailures(
     dfEnrolled = dfEnrolled,
     dfSource = dfSource,
     strSiteCol = "siteid",
-    strStudyCol = "studyid",
-    seed = 999
+    strStudyCol = "studyid"
   )
 
   # Basic checks
@@ -271,7 +316,6 @@ test_that("AddScreeningFailures handles overlapping site names across studies", 
     dfSource = dfSource,
     strSiteCol = "siteid",
     strStudyCol = "studyid",
-    seed = 111
   )
 
   # Check that we have 4 distinct study-site combinations
@@ -327,7 +371,6 @@ test_that("AddScreeningFailures handles studies with different numbers of sites"
     dfSource = dfSource,
     strSiteCol = "siteid",
     strStudyCol = "studyid",
-    seed = 222
   )
 
   # Should have 7 study-site combinations total

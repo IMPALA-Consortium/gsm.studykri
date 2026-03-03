@@ -7,7 +7,6 @@
 ApplyMinDenominatorDateAdjustment(
   dfNumerator_processed,
   dfDenominator,
-  dfSubjects,
   strSubjectCol,
   strStudyCol,
   strGroupCol,
@@ -21,8 +20,6 @@ ApplyMinDenominatorDateAdjustment(
 \item{dfNumerator_processed}{Data frame with processed numerator data (with MonthYYYYMM)}
 
 \item{dfDenominator}{Data frame with original denominator data}
-
-\item{dfSubjects}{Data frame with subject-level data for joining}
 
 \item{strSubjectCol}{Name of subject ID column}
 

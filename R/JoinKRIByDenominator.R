@@ -15,6 +15,11 @@
 #'   StudyID, MonthYYYYMM, and DenominatorType.
 #' @param dfMetrics data.frame. Metrics metadata from MakeMetric.
 #'   Must contain columns: MetricID and AccrualThreshold.
+#' @param bSkipValidation logical. If TRUE, skips validation checks that require
+#'   collect() operations (AccrualThreshold consistency, GroupLevel consistency,
+#'   and Denominator value matching). Use this to improve performance with large
+#'   database tables when you are confident your workflow configuration is correct.
+#'   Default: FALSE.
 #'
 #' @return Named list with one tibble per denominator type. Each tibble
 #'   has common columns plus Numerator columns renamed by MetricID.
@@ -51,8 +56,18 @@
 #' lJoined <- JoinKRIByDenominator(dfInput, dfMetrics_mismatched)
 #' }
 #'
+#' # Example 3: Skip validation for performance with large database tables
+#' \dontrun{
+#' # When working with lazy tables and confident about data quality:
+#' lJoined <- JoinKRIByDenominator(
+#'   dfInput = tbl_lazy_input,
+#'   dfMetrics = dfMetrics,
+#'   bSkipValidation = TRUE
+#' )
+#' }
+#'
 #' @export
-JoinKRIByDenominator <- function(dfInput, dfMetrics) {
+JoinKRIByDenominator <- function(dfInput, dfMetrics, bSkipValidation = FALSE) {
   # Validate DenominatorType column exists in dfInput
   if (!"DenominatorType" %in% colnames(dfInput)) {
     stop("dfInput must contain a 'DenominatorType' column. Use strDenominatorType parameter in Input_CountSiteByMonth.")
@@ -64,73 +79,75 @@ JoinKRIByDenominator <- function(dfInput, dfMetrics) {
     dplyr::collect() %>%
     dplyr::pull(.data$DenominatorType)
 
-  # Validate that all metrics within each DenominatorType have the same AccrualThreshold
-  for (strDenomType in vDenomTypes) {
-    # Get MetricIDs for this denominator type
-    vMetricIDs <- dfInput %>%
-      dplyr::filter(.data$DenominatorType == .env$strDenomType) %>%
-      dplyr::distinct(.data$MetricID) %>%
-      dplyr::collect() %>%
-      dplyr::pull(.data$MetricID)
-
-    # Get AccrualThreshold values from dfMetrics
-    vThresholds <- dfMetrics %>%
-      dplyr::filter(.data$MetricID %in% .env$vMetricIDs) %>%
-      dplyr::pull(.data$AccrualThreshold)
-
-    # Check if all thresholds are identical
-    if (length(unique(vThresholds)) > 1) {
-      vMetricDetails <- dfMetrics %>%
-        dplyr::filter(.data$MetricID %in% .env$vMetricIDs) %>%
-        dplyr::select("MetricID", "AccrualThreshold") %>%
-        SortDf(.data$AccrualThreshold)
-
-      stop(sprintf(
-        "Cannot join KRIs with DenominatorType '%s' because they have different AccrualThreshold values:\n%s\n\nKRIs sharing the same DenominatorType must have identical AccrualThreshold (nMinDenominator) values because this parameter affects the Denominator calculation through date adjustment.",
-        strDenomType,
-        paste(capture.output(print(vMetricDetails)), collapse = "\n")
-      ))
-    }
-  }
-
-  # Validate that all metrics within each DenominatorType have the same GroupLevel
-  for (strDenomType in vDenomTypes) {
-    # Get unique GroupLevel values for this denominator type
-    vGroupLevels <- dfInput %>%
-      dplyr::filter(.data$DenominatorType == .env$strDenomType) %>%
-      dplyr::distinct(.data$GroupLevel) %>%
-      dplyr::collect() %>%
-      dplyr::pull(.data$GroupLevel)
-
-    # Check for NA or empty GroupLevel FIRST (before checking for differences)
-    if (any(is.na(vGroupLevels)) || any(vGroupLevels == "")) {
+  if (!bSkipValidation) {
+    # Validate that all metrics within each DenominatorType have the same AccrualThreshold
+    for (strDenomType in vDenomTypes) {
+      # Get MetricIDs for this denominator type
       vMetricIDs <- dfInput %>%
         dplyr::filter(.data$DenominatorType == .env$strDenomType) %>%
-        dplyr::filter(is.na(.data$GroupLevel) | .data$GroupLevel == "") %>%
         dplyr::distinct(.data$MetricID) %>%
         dplyr::collect() %>%
         dplyr::pull(.data$MetricID)
 
-      stop(sprintf(
-        "KRIs with DenominatorType '%s' have missing or empty GroupLevel values: %s\n\nEnsure all KRI YAML files have 'GroupLevel' defined in the meta section (e.g., 'GroupLevel: Site').",
-        strDenomType,
-        paste(vMetricIDs, collapse = ", ")
-      ))
+      # Get AccrualThreshold values from dfMetrics
+      vThresholds <- dfMetrics %>%
+        dplyr::filter(.data$MetricID %in% .env$vMetricIDs) %>%
+        dplyr::pull(.data$AccrualThreshold)
+
+      # Check if all thresholds are identical
+      if (length(unique(vThresholds)) > 1) {
+        vMetricDetails <- dfMetrics %>%
+          dplyr::filter(.data$MetricID %in% .env$vMetricIDs) %>%
+          dplyr::select("MetricID", "AccrualThreshold") %>%
+          SortDf(.data$AccrualThreshold)
+
+        stop(sprintf(
+          "Cannot join KRIs with DenominatorType '%s' because they have different AccrualThreshold values:\n%s\n\nKRIs sharing the same DenominatorType must have identical AccrualThreshold (nMinDenominator) values because this parameter affects the Denominator calculation through date adjustment.",
+          strDenomType,
+          paste(capture.output(print(vMetricDetails)), collapse = "\n")
+        ))
+      }
     }
 
-    # Check if all GroupLevel values are identical
-    if (length(unique(vGroupLevels)) > 1) {
-      # Get MetricIDs for this denominator type to show in error
-      vMetricIDs <- dfInput %>%
+    # Validate that all metrics within each DenominatorType have the same GroupLevel
+    for (strDenomType in vDenomTypes) {
+      # Get unique GroupLevel values for this denominator type
+      vGroupLevels <- dfInput %>%
         dplyr::filter(.data$DenominatorType == .env$strDenomType) %>%
-        dplyr::distinct(.data$MetricID, .data$GroupLevel) %>%
-        dplyr::collect()
+        dplyr::distinct(.data$GroupLevel) %>%
+        dplyr::collect() %>%
+        dplyr::pull(.data$GroupLevel)
 
-      stop(sprintf(
-        "Cannot join KRIs with DenominatorType '%s' because they have different GroupLevel values:\n%s\n\nKRIs sharing the same DenominatorType must have identical GroupLevel values for proper data alignment during pivot operations.",
-        strDenomType,
-        paste(capture.output(print(vMetricIDs)), collapse = "\n")
-      ))
+      # Check for NA or empty GroupLevel FIRST (before checking for differences)
+      if (any(is.na(vGroupLevels)) || any(vGroupLevels == "")) {
+        vMetricIDs <- dfInput %>%
+          dplyr::filter(.data$DenominatorType == .env$strDenomType) %>%
+          dplyr::filter(is.na(.data$GroupLevel) | .data$GroupLevel == "") %>%
+          dplyr::distinct(.data$MetricID) %>%
+          dplyr::collect() %>%
+          dplyr::pull(.data$MetricID)
+
+        stop(sprintf(
+          "KRIs with DenominatorType '%s' have missing or empty GroupLevel values: %s\n\nEnsure all KRI YAML files have 'GroupLevel' defined in the meta section (e.g., 'GroupLevel: Site').",
+          strDenomType,
+          paste(vMetricIDs, collapse = ", ")
+        ))
+      }
+
+      # Check if all GroupLevel values are identical
+      if (length(unique(vGroupLevels)) > 1) {
+        # Get MetricIDs for this denominator type to show in error
+        vMetricIDs <- dfInput %>%
+          dplyr::filter(.data$DenominatorType == .env$strDenomType) %>%
+          dplyr::distinct(.data$MetricID, .data$GroupLevel) %>%
+          dplyr::collect()
+
+        stop(sprintf(
+          "Cannot join KRIs with DenominatorType '%s' because they have different GroupLevel values:\n%s\n\nKRIs sharing the same DenominatorType must have identical GroupLevel values for proper data alignment during pivot operations.",
+          strDenomType,
+          paste(capture.output(print(vMetricIDs)), collapse = "\n")
+        ))
+      }
     }
   }
 
@@ -139,37 +156,39 @@ JoinKRIByDenominator <- function(dfInput, dfMetrics) {
     dfFiltered <- dfInput %>%
       dplyr::filter(.data$DenominatorType == .env$strDenomType)
 
-    # Validate that all metrics have identical Denominator values for matching id_cols
-    # This ensures the pivot_wider operation works correctly
-    dfDenomCheck <- dfFiltered %>%
-      dplyr::group_by(.data$StudyID, .data$GroupID, .data$MonthYYYYMM) %>%
-      dplyr::summarise(
-        n_unique_denoms = dplyr::n_distinct(.data$Denominator),
-        n_metrics = dplyr::n(),
-        .groups = "drop"
-      ) %>%
-      dplyr::filter(.data$n_unique_denoms > 1) %>%
-      dplyr::collect()
-
-    if (nrow(dfDenomCheck) > 0) {
-      # Get details about the mismatched denominators for error message
-      dfDenomDetails <- dfFiltered %>%
-        dplyr::semi_join(
-          dfDenomCheck,
-          by = c("StudyID", "GroupID", "MonthYYYYMM")
+    if (!bSkipValidation) {
+      # Validate that all metrics have identical Denominator values for matching id_cols
+      # This ensures the pivot_wider operation works correctly
+      dfDenomCheck <- dfFiltered %>%
+        dplyr::group_by(.data$StudyID, .data$GroupID, .data$MonthYYYYMM) %>%
+        dplyr::summarise(
+          n_unique_denoms = dplyr::n_distinct(.data$Denominator),
+          n_metrics = dplyr::n(),
+          .groups = "drop"
         ) %>%
-        dplyr::select(
-          "MetricID", "StudyID", "GroupID",
-          "MonthYYYYMM", "Denominator"
-        ) %>%
-        SortDf(.data$StudyID, .data$GroupID, .data$MonthYYYYMM, .data$MetricID) %>%
+        dplyr::filter(.data$n_unique_denoms > 1) %>%
         dplyr::collect()
 
-      stop(sprintf(
-        "Cannot join KRIs with DenominatorType '%s' because they have different Denominator values for the same (StudyID, GroupID, MonthYYYYMM) combinations:\n%s\n\nThis indicates the KRIs are using different denominator calculation methods (e.g., one with strDenominatorEndDateCol, one without) or have mismatched data. Ensure all KRIs with the same DenominatorType use identical Input_CountSiteByMonth parameters.",
-        strDenomType,
-        paste(capture.output(print(head(dfDenomDetails, 20))), collapse = "\n")
-      ))
+      if (nrow(dfDenomCheck) > 0) {
+        # Get details about the mismatched denominators for error message
+        dfDenomDetails <- dfFiltered %>%
+          dplyr::semi_join(
+            dfDenomCheck,
+            by = c("StudyID", "GroupID", "MonthYYYYMM")
+          ) %>%
+          dplyr::select(
+            "MetricID", "StudyID", "GroupID",
+            "MonthYYYYMM", "Denominator"
+          ) %>%
+          SortDf(.data$StudyID, .data$GroupID, .data$MonthYYYYMM, .data$MetricID) %>%
+          dplyr::collect()
+
+        stop(sprintf(
+          "Cannot join KRIs with DenominatorType '%s' because they have different Denominator values for the same (StudyID, GroupID, MonthYYYYMM) combinations:\n%s\n\nThis indicates the KRIs are using different denominator calculation methods (e.g., one with strDenominatorEndDateCol, one without) or have mismatched data. Ensure all KRIs with the same DenominatorType use identical Input_CountSiteByMonth parameters.",
+          strDenomType,
+          paste(capture.output(print(head(dfDenomDetails, 20))), collapse = "\n")
+        ))
+      }
     }
 
     # Pivot wider: Numerator becomes Numerator_<MetricID>

@@ -9,7 +9,7 @@ test_that("SimulatePortfolio creates multiple studies", {
   lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
   lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
 
-  result <- SimulatePortfolio(lRaw, nStudies = 3, seed = 999)
+  result <- SimulatePortfolio(lRaw, nStudies = 3, )
 
   # Check structure
   expect_type(result, "list")
@@ -37,7 +37,7 @@ test_that("SimulatePortfolio respects custom configuration", {
     TargetSiteCount = c(10, 15)
   )
 
-  result <- SimulatePortfolio(lRaw, dfConfig = dfConfig, seed = 888)
+  result <- SimulatePortfolio(lRaw, dfConfig = dfConfig, )
 
   study_ids <- unique(result$Raw_SUBJ$studyid)
   expect_setequal(study_ids, c("CUSTOM001", "CUSTOM002"))
@@ -60,7 +60,7 @@ test_that("SimulatePortfolio output works with mapping workflows", {
   lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
   lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
 
-  lPortfolio <- SimulatePortfolio(lRaw, nStudies = 2, seed = 777)
+  lPortfolio <- SimulatePortfolio(lRaw, nStudies = 2, )
 
   # Should work with Ingest (basic smoke test)
   expect_no_error({
@@ -122,7 +122,7 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
     replacement = c(TRUE, FALSE)
   )
 
-  result <- SimulatePortfolio(lRaw, dfConfig = dfConfig, seed = 123)
+  result <- SimulatePortfolio(lRaw, dfConfig = dfConfig, )
   expect_equal(length(unique(result$Raw_SUBJ$studyid)), 2)
 
   # Test with strOversampleDomain parameter
@@ -135,7 +135,7 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
   )
 
   result2 <- suppressMessages(
-    SimulatePortfolio(lRaw, dfConfig = dfConfig2, seed = 456)
+    SimulatePortfolio(lRaw, dfConfig = dfConfig2, )
   )
   expect_equal(length(unique(result2$Raw_SUBJ$studyid)), 2)
 
@@ -149,7 +149,7 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
   )
 
   result3 <- suppressMessages(
-    SimulatePortfolio(lRaw, dfConfig = dfConfig3, seed = 789)
+    SimulatePortfolio(lRaw, dfConfig = dfConfig3, )
   )
   expect_true(nrow(result3$Raw_SUBJ) > 0)
 
@@ -163,9 +163,55 @@ test_that("SimulatePortfolio handles optional dfConfig parameters", {
   )
 
   result4 <- suppressMessages(
-    SimulatePortfolio(lRaw, dfConfig = dfConfig4, seed = 101)
+    SimulatePortfolio(lRaw, dfConfig = dfConfig4, )
   )
   expect_true(nrow(result4$Raw_SUBJ) > 0)
+})
+
+test_that("SimulatePortfolio seed parameter produces reproducible results", {
+  # Test explicit seed parameter (covers line 643)
+  lRaw <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_AE = clindata::rawplus_ae,
+    Raw_SITE = clindata::ctms_site
+  )
+
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
+
+  # Call with seed parameter
+  result1 <- SimulatePortfolio(lRaw, nStudies = 2, seed = 456)
+  result2 <- SimulatePortfolio(lRaw, nStudies = 2, seed = 456)
+
+  # Should produce identical study IDs and structure
+  expect_equal(unique(result1$Raw_SUBJ$studyid), unique(result2$Raw_SUBJ$studyid))
+  expect_equal(nrow(result1$Raw_SUBJ), nrow(result2$Raw_SUBJ))
+  expect_equal(result1$Raw_SUBJ$subjid, result2$Raw_SUBJ$subjid)
+})
+
+test_that("SimulatePortfolio without dfConfig generates default config with seed", {
+  # Test generate_default_config function with seed (covers line 545)
+  lRaw <- list(
+    Raw_SUBJ = clindata::rawplus_dm,
+    Raw_SITE = clindata::ctms_site
+  )
+
+  # Add required vSubjectID columns
+  lRaw$Raw_SUBJ$subjectname <- lRaw$Raw_SUBJ$subject_nsv
+  lRaw$Raw_SUBJ$subjectenrollmentnumber <- lRaw$Raw_SUBJ$subjectid
+
+  # When dfConfig is NULL, generate_default_config is called with seed
+  result1 <- SimulatePortfolio(lRaw, nStudies = 3, seed = 789)
+  result2 <- SimulatePortfolio(lRaw, nStudies = 3, seed = 789)
+
+  # Should produce same study IDs and subject counts
+  expect_equal(unique(result1$Raw_SUBJ$studyid), unique(result2$Raw_SUBJ$studyid))
+
+  # Count subjects per study
+  counts1 <- table(result1$Raw_SUBJ$studyid)
+  counts2 <- table(result2$Raw_SUBJ$studyid)
+  expect_equal(counts1, counts2)
 })
 
 # Tests for ResampleStudy function ----
@@ -240,7 +286,6 @@ test_that("ResampleStudy handles invalid mapping in find_subject_id_column", {
       "TEST001",
       nSubjects = 2,
       strOversampleDomain = "Raw_AE",
-      seed = 123,
       vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
     )
   )
@@ -276,7 +321,6 @@ test_that("ResampleStudy handles siteid updates correctly", {
     lRaw,
     "TEST001",
     nSubjects = 2,
-    seed = 999,
     vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
 
@@ -310,7 +354,6 @@ test_that("ResampleStudy with TargetSiteCount generates sites correctly", {
     "TEST001",
     nSubjects = 30,
     TargetSiteCount = 5,
-    seed = 777,
     vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
 
@@ -347,7 +390,6 @@ test_that("ResampleStudy processes domain without subject or site columns", {
     lRaw,
     "TEST001",
     nSubjects = 2,
-    seed = 555,
     vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
 
@@ -378,7 +420,6 @@ test_that("ResampleStudy process_site_domain with invid column", {
     lRaw,
     "TEST001",
     nSubjects = 2,
-    seed = 333,
     vSubjectIDs = c("subjid", "subjectenrollmentnumber", "subject_nsv", "subjectname", "subjectid")
   )
 

@@ -8,3 +8,9 @@
 ^README\.Rmd$
 ^docs$
 ^\.Rproj\.user$
+^.+\.parquet
+^report_studykri\.html$
+^.*_studykri\.html$
+^vignettes/.tmp$
+^doc$
+^Meta$

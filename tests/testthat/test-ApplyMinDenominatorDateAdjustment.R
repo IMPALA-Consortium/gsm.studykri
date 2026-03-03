@@ -22,6 +22,8 @@ test_that("ApplyMinDenominatorDateAdjustment adjusts dates correctly with end da
   # Denominator with start AND end dates (e.g., study participation periods)
   dfDenominator <- data.frame(
     subjid = c("S1", "S2", "S3", "S4", "S5"),
+    studyid = rep("STUDY1", 5),
+    invid = c("SITE1", "SITE1", "SITE2", "SITE2", "SITE2"),
     start_dt = as.Date(c("2024-01-01", "2024-01-03", "2024-01-05", "2024-01-10", "2024-01-15")),
     end_dt = as.Date(c("2024-02-01", "2024-02-05", "2024-02-10", "2024-02-15", "2024-02-20")),
     stringsAsFactors = FALSE
@@ -32,7 +34,6 @@ test_that("ApplyMinDenominatorDateAdjustment adjusts dates correctly with end da
   result <- gsm.studykri:::ApplyMinDenominatorDateAdjustment(
     dfNumerator_processed = dfNumerator_processed,
     dfDenominator = dfDenominator,
-    dfSubjects = dfSubjects,
     strSubjectCol = "subjid",
     strStudyCol = "studyid",
     strGroupCol = "invid",
@@ -101,6 +102,8 @@ test_that("ApplyMinDenominatorDateAdjustment works without end dates", {
 
   dfDenominator <- data.frame(
     subjid = c("S1", "S2", "S3"),
+    studyid = rep("STUDY1", 3),
+    invid = c("SITE1", "SITE1", "SITE2"),
     visit_dt = as.Date(c("2024-01-01", "2024-01-03", "2024-01-05")),
     stringsAsFactors = FALSE
   )
@@ -109,7 +112,6 @@ test_that("ApplyMinDenominatorDateAdjustment works without end dates", {
   result <- gsm.studykri:::ApplyMinDenominatorDateAdjustment(
     dfNumerator_processed = dfNumerator_processed,
     dfDenominator = dfDenominator,
-    dfSubjects = dfSubjects,
     strSubjectCol = "subjid",
     strStudyCol = "studyid",
     strGroupCol = "invid",
@@ -153,6 +155,8 @@ test_that("ApplyMinDenominatorDateAdjustment works with multiple studies", {
 
   dfDenominator <- data.frame(
     subjid = c("S1", "S2", "S3", "S4", "S5", "S6"),
+    studyid = c("STUDY1", "STUDY1", "STUDY1", "STUDY2", "STUDY2", "STUDY2"),
+    invid = c("SITE1", "SITE1", "SITE2", "SITE3", "SITE3", "SITE4"),
     start_dt = as.Date(c("2024-01-01", "2024-01-03", "2024-01-05", "2024-02-01", "2024-02-03", "2024-02-05")),
     end_dt = as.Date(c("2024-03-01", "2024-03-03", "2024-03-05", "2024-04-01", "2024-04-03", "2024-04-05")),
     stringsAsFactors = FALSE
@@ -162,7 +166,6 @@ test_that("ApplyMinDenominatorDateAdjustment works with multiple studies", {
   result <- gsm.studykri:::ApplyMinDenominatorDateAdjustment(
     dfNumerator_processed = dfNumerator_processed,
     dfDenominator = dfDenominator,
-    dfSubjects = dfSubjects,
     strSubjectCol = "subjid",
     strStudyCol = "studyid",
     strGroupCol = "invid",
@@ -215,6 +218,8 @@ test_that("ApplyMinDenominatorDateAdjustment works with lazy tables (dbplyr)", {
 
   dfDenominator <- data.frame(
     subjid = c("S1", "S2", "S3"),
+    studyid = rep("STUDY1", 3),
+    invid = c("SITE1", "SITE1", "SITE2"),
     start_dt = as.Date(c("2024-01-01", "2024-01-03", "2024-01-05")),
     end_dt = as.Date(c("2024-02-01", "2024-02-03", "2024-02-05")),
     stringsAsFactors = FALSE
@@ -223,11 +228,9 @@ test_that("ApplyMinDenominatorDateAdjustment works with lazy tables (dbplyr)", {
   # Create DuckDB connection and lazy tables
   con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
 
-  DBI::dbWriteTable(con, "subjects", dfSubjects)
   DBI::dbWriteTable(con, "numerator", dfNumerator_processed)
   DBI::dbWriteTable(con, "denominator", dfDenominator)
 
-  tblSubjects <- dplyr::tbl(con, "subjects")
   tblNumerator <- dplyr::tbl(con, "numerator")
   tblDenominator <- dplyr::tbl(con, "denominator")
 
@@ -235,7 +238,6 @@ test_that("ApplyMinDenominatorDateAdjustment works with lazy tables (dbplyr)", {
   result <- gsm.studykri:::ApplyMinDenominatorDateAdjustment(
     dfNumerator_processed = tblNumerator,
     dfDenominator = tblDenominator,
-    dfSubjects = tblSubjects,
     strSubjectCol = "subjid",
     strStudyCol = "studyid",
     strGroupCol = "invid",
