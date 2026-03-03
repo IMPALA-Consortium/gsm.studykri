@@ -12,3 +12,5 @@
 ^report_studykri\.html$
 ^.*_studykri\.html$
 ^vignettes/.tmp$
+^doc$
+^Meta$

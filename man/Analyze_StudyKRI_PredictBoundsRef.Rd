@@ -15,7 +15,8 @@ Analyze_StudyKRI_PredictBoundsRef(
   bMixStudies = FALSE,
   tblBootstrapReps = NULL,
   tblMonthSequence = NULL,
-  vDbIntRandomRange = NULL
+  vDbIntRandomRange = NULL,
+  funCompute = NULL
 )
 }
 \arguments{
@@ -69,6 +70,12 @@ reading from YAML files). Common values:
 \item Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
 Default: NULL (no normalization, assumes 0-1 decimal random values).
 }}
+
+\item{funCompute}{function or NULL. Optional function to apply to intermediate
+database results for performance optimization. Typically used to cache/materialize
+intermediate results using \code{dplyr::compute()}. Only applied when dfInput is a
+database table (tbl_dbi). Requires database write permissions to create temporary
+tables. Example: \code{funCompute = dplyr::compute}. Default: NULL.}
 }
 \value{
 A tibble (or tbl_lazy if input was lazy) with columns: \code{StudyID}, \code{StudyRefID}, \code{StudyMonth},
@@ -120,6 +127,15 @@ dfBounds_Snowflake <- Analyze_StudyKRI_PredictBoundsRef(
   dfStudyRef = dfStudyRef,
   nBootstrapReps = 100,
   vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+)
+
+# Example with database backend using funCompute to cache results
+# (Assumes dfSiteLevel is a tbl_dbi database table)
+dfBounds_Cached <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = dfSiteLevel,
+  dfStudyRef = dfStudyRef,
+  nBootstrapReps = 100,
+  funCompute = dplyr::compute  # Cache intermediate results in database
 )
 
 print(head(dfBounds))

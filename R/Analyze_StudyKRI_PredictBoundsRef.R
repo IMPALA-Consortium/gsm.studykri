@@ -340,6 +340,11 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #'   - Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)
 #'   - Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
 #'   Default: NULL (no normalization, assumes 0-1 decimal random values).
+#' @param funCompute function or NULL. Optional function to apply to intermediate
+#'   database results for performance optimization. Typically used to cache/materialize
+#'   intermediate results using `dplyr::compute()`. Only applied when dfInput is a
+#'   database table (tbl_dbi). Requires database write permissions to create temporary
+#'   tables. Example: `funCompute = dplyr::compute`. Default: NULL.
 #'
 #' @return A tibble (or tbl_lazy if input was lazy) with columns: `StudyID`, `StudyRefID`, `StudyMonth`,
 #'   `Median_*`, `Lower_*`, `Upper_*` for each Metric column, `BootstrapCount`,
@@ -378,6 +383,15 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #'   vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
 #' )
 #'
+#' # Example with database backend using funCompute to cache results
+#' # (Assumes dfSiteLevel is a tbl_dbi database table)
+#' dfBounds_Cached <- Analyze_StudyKRI_PredictBoundsRef(
+#'   dfInput = dfSiteLevel,
+#'   dfStudyRef = dfStudyRef,
+#'   nBootstrapReps = 100,
+#'   funCompute = dplyr::compute  # Cache intermediate results in database
+#' )
+#'
 #' print(head(dfBounds))
 #'
 #' @export
@@ -392,7 +406,8 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
     bMixStudies = FALSE,
     tblBootstrapReps = NULL,
     tblMonthSequence = NULL,
-    vDbIntRandomRange = NULL) {
+    vDbIntRandomRange = NULL,
+    funCompute = NULL) {
   # Input validation - accept data.frame or tbl (including tbl_lazy)
   if (!inherits(dfStudyRef, c("data.frame", "tbl"))) {
     stop("dfStudyRef must be a data.frame or tbl object")
@@ -466,6 +481,11 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
         StudyID = .env$study,
         StudyRefID = .env$strStudyRefID
       )
+
+    if (inherits(dfBounds, "tbl_dbi") & ! is.null(funCompute)) {
+      stopifnot("funCompute is not a function" = inherits(funCompute, "function"))
+      dfBounds <- funCompute(dfBounds)
+    }
 
     # Store in list
     lResults[[study]] <- dfBounds

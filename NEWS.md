@@ -12,6 +12,7 @@
 - dfSubjects from Input_CountSiteByMonth() is optional when strGroupCol already in dfNumerator and dfDenominator
 - HandleLazyTables will use unique names for temp tables using random integers
 - remove seed parameter for bootstrap functions
+- add funCompute paramter to `Analyze_StudyKRI_PredictBoundsRef` which allows to create temporary tables for each reference set to solve backend issues
 
 
 # gsm.studykri 0.2.0

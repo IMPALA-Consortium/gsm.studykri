@@ -251,6 +251,85 @@ tblBoundsRef
 tblTransformed
 ```
 
+Finally before plotting we need to collect the results into memory.
+
+```{r}
+metrics_wf <- gsm.core::MakeWorkflowList(
+  strNames = NULL,
+  strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
+  strPackage = NULL
+)
+
+dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
+
+
+lCharts <- gsm.studykri::MakeCharts_StudyKRI(
+  dfResults = collect(tblTransformed),
+  dfBounds = collect(tblBounds),
+  dfBoundsRef = collect(tblBoundsRef),
+  dfMetrics = dfMetrics
+)
+
+lCharts
+```
+
+## Using workflows
+
+Unfortunately the data specfication checks from gsm.core will not work on lazy tables. We therefore need to skip the 
+mapping workflow and ignore the warnings for the missing specifications.
+
+We might also scrub some of the specifications from the yaml files to begin with.
+
+```{r}
+lMapped <- list(
+  Mapped_AE = dbPortfolio$Raw_AE,
+  Mapped_Visit = dbPortfolio$Raw_VISIT,
+  Mapped_SUBJ = dbPortfolio$Raw_SUBJ %>%
+    filter(enrollyn == "Y"),
+  Mapped_StudyRef = tbl(con, "StudyRef")
+)
+
+metrics_wf <- gsm.core::MakeWorkflowList(
+  strNames = "kri0001.yaml",
+  strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
+  strPackage = NULL
+)
+
+lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
+
+reporting_wf <- gsm.core::MakeWorkflowList(
+  strNames = c("Bounds", "BoundsRef", "Input", "Join", "Metrics", "Results"),
+  strPath = system.file("workflow/3_reporting", package = "gsm.studykri")
+)
+
+lReporting <- gsm.core::RunWorkflows(
+  lWorkflows = reporting_wf,
+  lData = c(
+    lMapped,
+    list(
+      lAnalyzed = lAnalyzed,
+      lWorkflows = metrics_wf
+    )
+  )
+)
+
+lReporting
+```
+
+Next we collect the data and create the charts.
+
+```{r}
+lCharts <- gsm.studykri::MakeCharts_StudyKRI(
+  dfResults = collect(lReporting$Reporting_Results),
+  dfBounds = collect(lReporting$Reporting_Bounds),
+  dfBoundsRef = collect(lReporting$Reporting_BoundsRef),
+  dfMetrics = lReporting$Reporting_Metrics
+)
+
+lCharts
+```
+
+
 ## Using Snowflake or Other Integer Random Backends
 
 If you're using Snowflake or another database that returns large integers for `RANDOM()`, add the `vDbIntRandomRange` parameter to your bootstrap function calls:
@@ -288,17 +367,7 @@ This ensures that random values are properly normalized regardless of the databa
 
 ## Performance Optimization for Database Backends
 
-### Overview of Collect Operations
 
-When working with database backends, certain operations require materializing data from the database into R memory using `collect()`. Understanding these operations helps optimize performance:
-
-| Location | Purpose | Data Size | Avoidable? | How to Avoid |
-|----------|---------|-----------|------------|--------------|
-| **`Analyze_StudyKRI_PredictBoundsRefSet`** | Calculate min group count | Full filtered dataset | **Yes** | Add MinGroups column to StudyRef |
-| `Analyze_StudyKRI_PredictBoundsRef` | Extract study mappings | Small (< 100 rows) | No - needed for R loop | N/A |
-| `Transform_CumCount` | Get min/max MonthYYYYMM | 2 numeric values | No - minimal impact | N/A |
-| `JoinKRIByDenominator` | Validation checks | Varies | Yes | Use `bSkipValidation = TRUE` |
-| Final reporting | Create charts | Full result set | No - required | N/A |
 
 ### Optimization Strategy 1: Pass nMinGroups via StudyRef
 
@@ -383,11 +452,6 @@ BoundsRef_Custom <- Analyze_StudyKRI_PredictBoundsRef(
 )
 ```
 
-**Performance Impact:**
-
-- **Before**: Collects full filtered dataset → groups by StudyID and GroupID → calculates minimum
-- **After**: Reads single integer value from StudyRef (no collect on main dataset)
-- **Savings**: Can avoid collecting millions of rows for large studies
 
 ### Optimization Strategy 2: Skip Validation Checks
 
@@ -429,88 +493,58 @@ Bounds <- Analyze_StudyKRI_PredictBounds(
 )
 ```
 
+### Optimization Strategy 4: Use funCompute to Cache Intermediate Results
+
+When working with large database queries, you can use the `funCompute` parameter to cache intermediate results in the database. This can significantly improve performance by materializing temporary tables rather than re-executing complex queries.
+
+The `funCompute` parameter accepts a function that will be applied to intermediate database results. The most common use case is `dplyr::compute()`:
+
+```{r eval=FALSE}
+# Cache intermediate results during bootstrap calculations
+BoundsRef_Cached <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = tblInput,
+  dfStudyRef = tblStudyRef,
+  nBootstrapReps = 1000,
+  tblBootstrapReps = tblRep,
+  tblMonthSequence = tblMonths,
+  funCompute = dplyr::compute  # Cache intermediate results
+)
+```
+
+You can also provide a custom function for more control:
+
+```{r eval=FALSE}
+# Custom compute function - let dplyr auto-generate unique names
+# (Important: don't specify fixed names as funCompute may be called multiple times)
+custom_cache <- function(x) {
+  dplyr::compute(x, temporary = TRUE)
+}
+
+BoundsRef_Custom <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = tblInput,
+  dfStudyRef = tblStudyRef,
+  nBootstrapReps = 1000,
+  funCompute = custom_cache
+)
+```
+
+**When to use `funCompute`:**
+
+- Complex queries that are re-used multiple times
+- Very large datasets where materialization is faster than re-computation
+- When database query optimizer struggles with complex lazy query plans
+
+**Performance trade-offs:**
+
+- **Benefit**: Avoids re-executing expensive queries; can reduce query complexity
+- **Cost**: Requires database write permissions; creates temporary tables that use storage
+
+**Note**: `funCompute` is primarily beneficial for large datasets (millions of rows), complex multi-study portfolios, or queries that are re-executed multiple times. For small datasets or simple queries, the overhead of creating temporary tables may outweigh benefits.
+
 ### Best Practices Summary
 
 1. **Add MinGroups column to StudyRef** (or use `strMinGroupsCol` parameter for custom names) for the biggest performance gain
 2. **Use `bSkipValidation = TRUE`** in `JoinKRIByDenominator()` when data quality is assured
 3. **Pre-generate temp tables** (`tblBootstrapReps`, `tblMonthSequence`) to avoid repeated creation
-4. **Ensure proper indexing** on StudyID, GroupID, and MonthYYYYMM columns in your database
-5. **Collect only at the end** - keep data as lazy tables until final visualization/reporting
+4. **Use `funCompute`** to cache intermediate results when working with large datasets or complex queries
 
-Finally before plotting we need to collect the results into memory.
-
-```{r}
-metrics_wf <- gsm.core::MakeWorkflowList(
-  strNames = NULL,
-  strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
-  strPackage = NULL
-)
-
-dfMetrics <- gsm.reporting::MakeMetric(metrics_wf)
-
-
-lCharts <- gsm.studykri::MakeCharts_StudyKRI(
-  dfResults = collect(tblTransformed),
-  dfBounds = collect(tblBounds),
-  dfBoundsRef = collect(tblBoundsRef),
-  dfMetrics = dfMetrics
-)
-
-lCharts
-```
-
-## Using workflows
-
-Unfortunately the data specfication checks from gsm.core will not work on lazy tables. We therefore need to skip the 
-mapping workflow and ignore the warnings for the missing specifications.
-
-We might also scrub some of the specifications from the yaml files to begin with.
-
-```{r}
-lMapped <- list(
-  Mapped_AE = dbPortfolio$Raw_AE,
-  Mapped_Visit = dbPortfolio$Raw_VISIT,
-  Mapped_SUBJ = dbPortfolio$Raw_SUBJ %>%
-    filter(enrollyn == "Y"),
-  Mapped_StudyRef = tbl(con, "StudyRef")
-)
-
-metrics_wf <- gsm.core::MakeWorkflowList(
-  strNames = "kri0001.yaml",
-  strPath = system.file("workflow/2_metrics", package = "gsm.studykri"),
-  strPackage = NULL
-)
-
-lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
-
-reporting_wf <- gsm.core::MakeWorkflowList(
-  strNames = c("Bounds", "BoundsRef", "Input", "Join", "Metrics", "Results"),
-  strPath = system.file("workflow/3_reporting", package = "gsm.studykri")
-)
-
-lReporting <- gsm.core::RunWorkflows(
-  lWorkflows = reporting_wf,
-  lData = c(
-    lMapped,
-    list(
-      lAnalyzed = lAnalyzed,
-      lWorkflows = metrics_wf
-    )
-  )
-)
-
-lReporting
-```
-
-Next we collect the data and create the charts.
-
-```{r}
-lCharts <- gsm.studykri::MakeCharts_StudyKRI(
-  dfResults = collect(lReporting$Reporting_Results),
-  dfBounds = collect(lReporting$Reporting_Bounds),
-  dfBoundsRef = collect(lReporting$Reporting_BoundsRef),
-  dfMetrics = lReporting$Reporting_Metrics
-)
-
-lCharts
-```

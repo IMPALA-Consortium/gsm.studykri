@@ -657,6 +657,94 @@ test_that("Analyze_StudyKRI_PredictBoundsRef returns lazy table with lazy input"
   DBI::dbDisconnect(con, shutdown = TRUE)
 })
 
+# Test: Analyze_StudyKRI_PredictBoundsRef with funCompute parameter
+test_that("Analyze_StudyKRI_PredictBoundsRef funCompute parameter works with lazy tables", {
+  skip_if_not_installed("dbplyr")
+  skip_if_not_installed("duckdb")
+  
+  # Create in-memory database
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  
+  # Create test data with 3 studies
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "STUDY2", "STUDY3"), each = 24),
+    GroupID = rep(paste0("Site", 1:4), each = 6, times = 3),
+    Numerator = rep(1:6, times = 12),
+    Denominator = rep(10:15, times = 12),
+    MonthYYYYMM = rep(202301:202306, times = 12),
+    Metric = runif(72, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+  
+  # Write to database
+  DBI::dbWriteTable(con, "site_data", dfTest)
+  dfLazy <- dplyr::tbl(con, "site_data")
+  
+  # Create study reference mapping
+  dfStudyRef <- data.frame(
+    study = c("STUDY1", "STUDY2"),
+    studyref = c("STUDY2", "STUDY3"),
+    stringsAsFactors = FALSE
+  )
+  
+  # Test with funCompute = dplyr::compute
+  suppressMessages({
+    result <- Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfLazy,
+      dfStudyRef = dfStudyRef,
+      nBootstrapReps = 10,
+      nConfLevel = 0.95,
+      funCompute = dplyr::compute
+    )
+  })
+  
+  # Should still return lazy table (compute creates temp table in DB)
+  expect_s3_class(result, "tbl_lazy")
+  
+  # Collect and verify correctness
+  result_collected <- dplyr::collect(result)
+  expect_true(nrow(result_collected) > 0)
+  expect_true(all(c("StudyID", "StudyRefID", "StudyMonth", "Median") %in% names(result_collected)))
+  expect_equal(length(unique(result_collected$StudyID)), 2)
+  
+  # Test with custom compute function that doesn't specify name
+  # (lets dplyr auto-generate unique names for each call)
+  custom_compute <- function(x) {
+    dplyr::compute(x, temporary = TRUE)
+  }
+  
+  suppressMessages({
+    result2 <- Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfLazy,
+      dfStudyRef = dfStudyRef,
+      nBootstrapReps = 10,
+      nConfLevel = 0.95,
+      funCompute = custom_compute
+    )
+  })
+  
+  expect_s3_class(result2, "tbl_lazy")
+  result2_collected <- dplyr::collect(result2)
+  expect_equal(nrow(result2_collected), nrow(result_collected))
+  
+  # Test error handling: funCompute must be a function
+  expect_error(
+    suppressMessages(
+      Analyze_StudyKRI_PredictBoundsRef(
+        dfInput = dfLazy,
+        dfStudyRef = dfStudyRef,
+        nBootstrapReps = 10,
+        funCompute = "not a function"
+      )
+    ),
+    "funCompute is not a function"
+  )
+  
+  # Clean up
+  DBI::dbDisconnect(con, shutdown = TRUE)
+})
+
 # Test 11: JoinKRIByDenominator with lazy tables
 test_that("JoinKRIByDenominator works with lazy tables", {
   skip_if_not_installed("dbplyr")
