@@ -507,7 +507,7 @@ BoundsRef_Cached <- Analyze_StudyKRI_PredictBoundsRef(
   nBootstrapReps = 1000,
   tblBootstrapReps = tblRep,
   tblMonthSequence = tblMonths,
-  funCompute = dplyr::compute  # Cache intermediate results
+  funCompute = dplyr::compute # Cache intermediate results
 )
 ```
 

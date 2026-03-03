@@ -389,7 +389,7 @@ Analyze_StudyKRI_PredictBoundsRefSet <- function(
 #'   dfInput = dfSiteLevel,
 #'   dfStudyRef = dfStudyRef,
 #'   nBootstrapReps = 100,
-#'   funCompute = dplyr::compute  # Cache intermediate results in database
+#'   funCompute = dplyr::compute # Cache intermediate results in database
 #' )
 #'
 #' print(head(dfBounds))
@@ -482,7 +482,7 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
         StudyRefID = .env$strStudyRefID
       )
 
-    if (inherits(dfBounds, "tbl_dbi") & ! is.null(funCompute)) {
+    if (inherits(dfBounds, "tbl_dbi") & !is.null(funCompute)) {
       stopifnot("funCompute is not a function" = inherits(funCompute, "function"))
       dfBounds <- funCompute(dfBounds)
     }
