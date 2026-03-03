@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,7 +105,47 @@
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>{gsm.studykir} functions can be executed on a database back-end
-instead of relying on in-memory calculations</p>
+instead of relying on in-memory calculations.</p>
+<p>The package supports various database backends including DuckDB,
+PostgreSQL, and Snowflake. For backends that use large integer values
+for random number generation (such as Snowflake), use the
+<code>vDbIntRandomRange</code> parameter in bootstrap functions to
+ensure proper normalization of random values.</p>
+</div>
+<div class="section level2">
+<h2 id="database-backend-compatibility">Database Backend Compatibility<a class="anchor" aria-label="anchor" href="#database-backend-compatibility"></a>
+</h2>
+<div class="section level3">
+<h3 id="random-number-generation">Random Number Generation<a class="anchor" aria-label="anchor" href="#random-number-generation"></a>
+</h3>
+<p>Most SQL databases translate R’s <code><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif()</a></code> to a
+<code>RANDOM()</code> function that returns decimal values between 0 and
+1. However, some databases (notably Snowflake) return large integers
+instead. For these backends, you must specify the integer range using
+the <code>vDbIntRandomRange</code> parameter.</p>
+<p><strong>Common Random Number Ranges:</strong></p>
+<ul>
+<li>
+<strong>Snowflake</strong> (signed 64-bit):
+<code>c(-9223372036854775808, 9223372036854775807)</code> (range: −2^63
+to 2^63−1)</li>
+<li>
+<strong>Standard databases</strong> (DuckDB, PostgreSQL, etc.):
+<code>NULL</code> (default, returns 0-1 decimals)</li>
+</ul>
+<p>When <code>vDbIntRandomRange</code> is specified, the package
+automatically normalizes the integer values to the 0-1 range using the
+formula:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">normalized_value</span> <span class="op">=</span> <span class="op">(</span><span class="va">random_value</span> <span class="op">-</span> <span class="va">min_value</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">max_value</span> <span class="op">-</span> <span class="va">min_value</span><span class="op">)</span></span></code></pre></div>
+<p><strong>How to determine your database’s random range:</strong></p>
+<p>If you’re unsure whether your database backend needs normalization,
+run this query:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="kw">SELECT</span> <span class="kw">RANDOM</span>() <span class="kw">FROM</span> your_table <span class="kw">LIMIT</span> <span class="dv">10</span>;</span></code></pre></div>
+<p>If the values are between 0 and 1, use the default
+(<code>vDbIntRandomRange = NULL</code>). If they’re large integers,
+specify the appropriate range.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="simulate-data-set-and-save-to-duckdb">Simulate Data Set and Save to DuckDb<a class="anchor" aria-label="anchor" href="#simulate-data-set-and-save-to-duckdb"></a>
@@ -113,7 +153,7 @@ instead of relying on in-memory calculations</p>
 <p>We use the clindata package which includes data from one clinical
 study to simulate new study data. We create a portfolio with study AA-4
 oversampling patients with low AE counts.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lRaw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  Raw_SITE <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/ctms_site.html" class="external-link">ctms_site</a></span>,</span>
 <span>  Raw_STUDY <span class="op">=</span> <span class="fu">clindata</span><span class="fu">::</span><span class="va"><a href="https://gilead-biostats.github.io/clindata/reference/ctms_study.html" class="external-link">ctms_study</a></span>,</span>
@@ -144,11 +184,15 @@ oversampling patients with low AE counts.</p>
 <span>  dfConfig <span class="op">=</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>    studyid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-1"</span>, <span class="st">"AA-2"</span>, <span class="st">"AA-3"</span>, <span class="st">"AA-4"</span><span class="op">)</span>,</span>
 <span>    nSubjects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">750</span>, <span class="fl">150</span>, <span class="fl">200</span><span class="op">)</span>,</span>
-<span>    strOversamplDomain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Raw_AE"</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>    strOversampleDomain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Raw_AE"</span>, <span class="fl">4</span><span class="op">)</span>,</span>
 <span>    vOversamplQuantileRange_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
 <span>    vOversamplQuantileRange_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0.75</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 773 subjects with Raw_AE records in 0.00-0.75 quantile range (1-6 records)</span></span>
 <span></span>
 <span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu">duckdb</span><span class="fu">::</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">":memory:"</span><span class="op">)</span></span>
 <span></span>
@@ -157,7 +201,7 @@ oversampling patients with low AE counts.</p>
 <span><span class="va">dbPortfolio</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">lPortfolio</span><span class="op">)</span>, <span class="op">~</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">.x</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">dbPortfolio</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">lPortfolio</span><span class="op">)</span></span></code></pre></div>
 <p>Here we create our data set.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tblInput1</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Input_CountSiteByMonth.html">Input_CountSiteByMonth</a></span><span class="op">(</span></span>
 <span>  dfSubjects <span class="op">=</span> <span class="va">dbPortfolio</span><span class="op">$</span><span class="va">Raw_SUBJ</span>,</span>
 <span>  dfNumerator <span class="op">=</span> <span class="va">dbPortfolio</span><span class="op">$</span><span class="va">Raw_AE</span>,</span>
@@ -206,28 +250,28 @@ oversampling patients with low AE counts.</p>
 <span><span class="va">lJoined</span></span>
 <span><span class="co">#&gt; $Visit</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:   SQL [?? x 7]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]</span></span></span>
-<span><span class="co">#&gt;    GroupID    GroupLevel Denominator StudyID MonthYYYYMM Numerator_kri0001</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span></span>
+<span><span class="co">#&gt;    GroupID    GroupLevel Denominator StudyID MonthYYYYMM Numerator_kri0002</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X140 Site                 1 AA-1         <span style="text-decoration: underline;">200</span>907                 1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X013 Site                 2 AA-1         <span style="text-decoration: underline;">201</span>508                 0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X076 Site                 3 AA-1         <span style="text-decoration: underline;">200</span>408                 0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X045 Site                 2 AA-1         <span style="text-decoration: underline;">201</span>105                 0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X045 Site                 2 AA-1         <span style="text-decoration: underline;">201</span>204                 0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X163 Site                 2 AA-1         <span style="text-decoration: underline;">200</span>401                 0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X163 Site                 2 AA-1         <span style="text-decoration: underline;">200</span>606                 0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X124 Site                 1 AA-1         <span style="text-decoration: underline;">200</span>702                 0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X124 Site                 1 AA-1         <span style="text-decoration: underline;">201</span>607                 0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X124 Site                 1 AA-1         <span style="text-decoration: underline;">201</span>609                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X035 Site                 1 AA-1         <span style="text-decoration: underline;">200</span>508                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X023 Site                 3 AA-1         <span style="text-decoration: underline;">201</span>107                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X161 Site                 3 AA-1         <span style="text-decoration: underline;">200</span>910                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X161 Site                 3 AA-1         <span style="text-decoration: underline;">200</span>912                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X096 Site                 2 AA-1         <span style="text-decoration: underline;">200</span>707                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X086 Site                 2 AA-1         <span style="text-decoration: underline;">201</span>708                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X086 Site                 2 AA-1         <span style="text-decoration: underline;">201</span>711                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X093 Site                 1 AA-1         <span style="text-decoration: underline;">201</span>210                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X093 Site                 1 AA-1         <span style="text-decoration: underline;">201</span>302                 0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X093 Site                 1 AA-1         <span style="text-decoration: underline;">201</span>303                 0</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: Numerator_kri0002 &lt;dbl&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: Numerator_kri0001 &lt;dbl&gt;</span></span></span></code></pre></div>
 <p>Next we prepare for the actual bootstrap simulation. For this we need
 to perform multiple cross joins that require the creation of temporary
 tables in the backend. {gsm.studykri} will attempt to create them using
 the connection attached to the lazy tables. However if write priveleges
 are not sufficient we can also create the tables manually and pass them
 to the relevant functions.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dfStudyRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  StudyID <span class="op">=</span> <span class="st">"AA-1"</span>,</span>
 <span>  StudyRef <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-2"</span>, <span class="st">"AA-3"</span>, <span class="st">"AA-4"</span><span class="op">)</span></span>
@@ -277,7 +321,7 @@ to the relevant functions.</p>
 <span>    tblMonthSequence <span class="op">=</span> <span class="va">tblMonths</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 78</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 73</span></span>
 <span></span>
 <span><span class="va">tblBounds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Transform_long.html">Transform_Long</a></span><span class="op">(</span><span class="va">Bounds_Wide</span><span class="op">)</span></span>
 <span></span>
@@ -295,64 +339,67 @@ to the relevant functions.</p>
 <span></span>
 <span><span class="va">tblBounds</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:     SQL [?? x 8]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Ordered by: StudyID, StudyMonth</span></span></span>
-<span><span class="co">#&gt;    MetricID DenominatorType StudyID StudyMonth BootstrapCount Median  Lower</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> kri0001  Visit           AA-1             2           <span style="text-decoration: underline;">1</span>000  0     0     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> kri0001  Visit           AA-1            10           <span style="text-decoration: underline;">1</span>000  0.141 0.056<span style="text-decoration: underline;">2</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> kri0001  Visit           AA-1            18           <span style="text-decoration: underline;">1</span>000  0.154 0.068<span style="text-decoration: underline;">8</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> kri0001  Visit           AA-1            28           <span style="text-decoration: underline;">1</span>000  0.163 0.118 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> kri0001  Visit           AA-1            29           <span style="text-decoration: underline;">1</span>000  0.166 0.119 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> kri0001  Visit           AA-1            34           <span style="text-decoration: underline;">1</span>000  0.160 0.120 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> kri0001  Visit           AA-1            39           <span style="text-decoration: underline;">1</span>000  0.150 0.115 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> kri0001  Visit           AA-1            42           <span style="text-decoration: underline;">1</span>000  0.150 0.117 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> kri0001  Visit           AA-1            47           <span style="text-decoration: underline;">1</span>000  0.146 0.117 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> kri0001  Visit           AA-1            49           <span style="text-decoration: underline;">1</span>000  0.147 0.117 </span></span>
+<span><span class="co">#&gt;    MetricID DenominatorType StudyID StudyMonth BootstrapCount  Median    Lower</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> kri0002  Visit           AA-1            46           <span style="text-decoration: underline;">1</span>000 0.003<span style="text-decoration: underline;">72</span> 0.000<span style="text-decoration: underline;">588</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> kri0002  Visit           AA-1            48           <span style="text-decoration: underline;">1</span>000 0.003<span style="text-decoration: underline;">47</span> 0.000<span style="text-decoration: underline;">555</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> kri0002  Visit           AA-1            57           <span style="text-decoration: underline;">1</span>000 0.003<span style="text-decoration: underline;">16</span> 0.000<span style="text-decoration: underline;">767</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> kri0002  Visit           AA-1            59           <span style="text-decoration: underline;">1</span>000 0.003<span style="text-decoration: underline;">07</span> 0.000<span style="text-decoration: underline;">759</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> kri0002  Visit           AA-1            61           <span style="text-decoration: underline;">1</span>000 0.003<span style="text-decoration: underline;">05</span> 0.000<span style="text-decoration: underline;">764</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> kri0002  Visit           AA-1            66           <span style="text-decoration: underline;">1</span>000 0.003<span style="text-decoration: underline;">00</span> 0.000<span style="text-decoration: underline;">943</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> kri0002  Visit           AA-1            77           <span style="text-decoration: underline;">1</span>000 0.002<span style="text-decoration: underline;">93</span> 0.001<span style="text-decoration: underline;">06</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> kri0002  Visit           AA-1            78           <span style="text-decoration: underline;">1</span>000 0.003<span style="text-decoration: underline;">24</span> 0.001<span style="text-decoration: underline;">49</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> kri0002  Visit           AA-1            80           <span style="text-decoration: underline;">1</span>000 0.003<span style="text-decoration: underline;">20</span> 0.001<span style="text-decoration: underline;">47</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> kri0002  Visit           AA-1            84           <span style="text-decoration: underline;">1</span>000 0.003<span style="text-decoration: underline;">15</span> 0.001<span style="text-decoration: underline;">56</span> </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: Upper &lt;dbl&gt;</span></span></span>
 <span></span>
 <span><span class="va">tblBoundsRef</span></span>
+<span><span class="co">#&gt; Warning: Missing values are always removed in SQL aggregation functions.</span></span>
+<span><span class="co">#&gt; Use `na.rm = TRUE` to silence this warning</span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:     SQL [?? x 11]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Ordered by: StudyMonth</span></span></span>
 <span><span class="co">#&gt;    MetricID DenominatorType StudyMonth BootstrapCount GroupCount StudyCount</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> kri0001  Visit                    5           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> kri0001  Visit                    9           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> kri0001  Visit                   11           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> kri0001  Visit                   14           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> kri0001  Visit                   15           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> kri0001  Visit                   16           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> kri0001  Visit                   17           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> kri0001  Visit                   22           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> kri0001  Visit                   26           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> kri0001  Visit                   30           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> kri0002  Visit                  157           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> kri0002  Visit                  169           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> kri0002  Visit                  175           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> kri0002  Visit                  187           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> kri0002  Visit                    1           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> kri0002  Visit                    7           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> kri0002  Visit                    8           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> kri0002  Visit                   13           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> kri0002  Visit                   19           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> kri0002  Visit                   21           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 5 more variables: StudyID &lt;chr&gt;, StudyRefID &lt;chr&gt;, Median &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   Lower &lt;dbl&gt;, Upper &lt;dbl&gt;</span></span></span>
 <span></span>
 <span><span class="va">tblTransformed</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:     SQL [?? x 8]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Ordered by: StudyID, StudyMonth</span></span></span>
 <span><span class="co">#&gt;    StudyID MonthYYYYMM StudyMonth Numerator Denominator Metric GroupCount</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-3         <span style="text-decoration: underline;">200</span>402          1         0           1 0               1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-3         <span style="text-decoration: underline;">200</span>403          2         0           2 0               1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-3         <span style="text-decoration: underline;">200</span>404          3         0           6 0               4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-3         <span style="text-decoration: underline;">200</span>405          4         0          11 0               4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-3         <span style="text-decoration: underline;">200</span>406          5         2          15 0.133           4</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-3         <span style="text-decoration: underline;">200</span>407          6         2          21 0.095<span style="text-decoration: underline;">2</span>          5</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-3         <span style="text-decoration: underline;">200</span>408          7         2          29 0.069<span style="text-decoration: underline;">0</span>          5</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-3         <span style="text-decoration: underline;">200</span>409          8         5          36 0.139           5</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-3         <span style="text-decoration: underline;">200</span>410          9         6          43 0.140           5</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-3         <span style="text-decoration: underline;">200</span>411         10         7          50 0.14            5</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-3         <span style="text-decoration: underline;">200</span>311          1         0           1 0               1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-3         <span style="text-decoration: underline;">200</span>312          2         0           2 0               1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-3         <span style="text-decoration: underline;">200</span>401          3         1           5 0.2             3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-3         <span style="text-decoration: underline;">200</span>402          4         1          10 0.1             4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-3         <span style="text-decoration: underline;">200</span>403          5         1          13 0.076<span style="text-decoration: underline;">9</span>          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-3         <span style="text-decoration: underline;">200</span>404          6         6          16 0.375           3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-3         <span style="text-decoration: underline;">200</span>405          7         7          20 0.35            3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-3         <span style="text-decoration: underline;">200</span>406          8         7          23 0.304           3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-3         <span style="text-decoration: underline;">200</span>407          9        12          26 0.462           3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-3         <span style="text-decoration: underline;">200</span>408         10        17          29 0.586           3</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: MetricID &lt;chr&gt;</span></span></span></code></pre></div>
 <p>Finally before plotting we need to collect the results into
 memory.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">metrics_wf</span> <span class="op">&lt;-</span> <span class="fu">gsm.core</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.core/reference/MakeWorkflowList.html" class="external-link">MakeWorkflowList</a></span><span class="op">(</span></span>
 <span>  strNames <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  strPath <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"workflow/2_metrics"</span>, package <span class="op">=</span> <span class="st">"gsm.studykri"</span><span class="op">)</span>,</span>
@@ -384,7 +431,7 @@ work on lazy tables. We therefore need to skip the mapping workflow and
 ignore the warnings for the missing specifications.</p>
 <p>We might also scrub some of the specifications from the yaml files to
 begin with.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lMapped</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  Mapped_AE <span class="op">=</span> <span class="va">dbPortfolio</span><span class="op">$</span><span class="va">Raw_AE</span>,</span>
 <span>  Mapped_Visit <span class="op">=</span> <span class="va">dbPortfolio</span><span class="op">$</span><span class="va">Raw_VISIT</span>,</span>
@@ -620,13 +667,12 @@ begin with.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 3: `purrr::map`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 6 parameter(s) for `purrr::map`</span></span>
+<span><span class="co">#&gt; ── Evaluating 5 parameter(s) for `purrr::map`</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> .x = Reporting_Join: Passing lData$Reporting_Join.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> .f = PredictBounds_Func: Passing lData$PredictBounds_Func.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nConfLevel = Threshold: Passing lMeta$Threshold.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> seed = 42: No matching data found. Passing '42' as a string.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `purrr::map`</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -672,10 +718,10 @@ begin with.</p>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nConfLevel = Threshold: Passing lMeta$Threshold.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> seed = 42: No matching data found. Passing '42' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> bMixStudies = bMixStudies: Passing lMeta$bMixStudies.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `purrr::map`</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 78</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 73</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── list of length 1 saved as `lData$Analysis_BoundsRef_Wide`.</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -695,38 +741,38 @@ begin with.</p>
 <span><span class="va">lReporting</span></span>
 <span><span class="co">#&gt; $Reporting_Results</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:     SQL [?? x 9]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Ordered by: StudyID, StudyMonth</span></span></span>
-<span><span class="co">#&gt;    StudyID MonthYYYYMM StudyMonth Numerator Denominator  Metric GroupCount</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-4         <span style="text-decoration: underline;">200</span>405          1         1          25 0.04             5</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-4         <span style="text-decoration: underline;">200</span>406          2         1         175 0.005<span style="text-decoration: underline;">71</span>          5</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-4         <span style="text-decoration: underline;">200</span>407          3         2         394 0.005<span style="text-decoration: underline;">08</span>          8</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-4         <span style="text-decoration: underline;">200</span>408          4         2         699 0.002<span style="text-decoration: underline;">86</span>         10</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-4         <span style="text-decoration: underline;">200</span>409          5         4        <span style="text-decoration: underline;">1</span>029 0.003<span style="text-decoration: underline;">89</span>         10</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-4         <span style="text-decoration: underline;">200</span>410          6         5        <span style="text-decoration: underline;">1</span>402 0.003<span style="text-decoration: underline;">57</span>         11</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-4         <span style="text-decoration: underline;">200</span>411          7         7        <span style="text-decoration: underline;">1</span>804 0.003<span style="text-decoration: underline;">88</span>         12</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-4         <span style="text-decoration: underline;">200</span>412          8         8        <span style="text-decoration: underline;">2</span>238 0.003<span style="text-decoration: underline;">57</span>         12</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-4         <span style="text-decoration: underline;">200</span>501          9        12        <span style="text-decoration: underline;">2</span>672 0.004<span style="text-decoration: underline;">49</span>         12</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-4         <span style="text-decoration: underline;">200</span>502         10        13        <span style="text-decoration: underline;">3</span>084 0.004<span style="text-decoration: underline;">22</span>         13</span></span>
+<span><span class="co">#&gt;    StudyID MonthYYYYMM StudyMonth Numerator Denominator Metric GroupCount</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-3         <span style="text-decoration: underline;">200</span>410          1        22          65 0.338           5</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-3         <span style="text-decoration: underline;">200</span>411          2        22         209 0.105           5</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-3         <span style="text-decoration: underline;">200</span>412          3        25         333 0.075<span style="text-decoration: underline;">1</span>          4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-3         <span style="text-decoration: underline;">200</span>501          4        26         457 0.056<span style="text-decoration: underline;">9</span>          4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-3         <span style="text-decoration: underline;">200</span>502          5        26         581 0.044<span style="text-decoration: underline;">8</span>          7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-3         <span style="text-decoration: underline;">200</span>503          6        27         873 0.030<span style="text-decoration: underline;">9</span>         10</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-3         <span style="text-decoration: underline;">200</span>504          7        32        <span style="text-decoration: underline;">1</span>259 0.025<span style="text-decoration: underline;">4</span>         13</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-3         <span style="text-decoration: underline;">200</span>505          8        35        <span style="text-decoration: underline;">1</span>693 0.020<span style="text-decoration: underline;">7</span>         13</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-3         <span style="text-decoration: underline;">200</span>506          9        39        <span style="text-decoration: underline;">2</span>113 0.018<span style="text-decoration: underline;">5</span>         13</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-3         <span style="text-decoration: underline;">200</span>507         10        41        <span style="text-decoration: underline;">2</span>559 0.016<span style="text-decoration: underline;">0</span>         14</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: MetricID &lt;chr&gt;, SnapshotDate &lt;date&gt;</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $Reporting_Input</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:   SQL [?? x 10]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span></span>
 <span><span class="co">#&gt;    GroupID    GroupLevel Numerator Denominator  Metric StudyID MonthYYYYMM</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X140 Site               5          60 0.083<span style="text-decoration: underline;">3</span>  AA-1         <span style="text-decoration: underline;">200</span>711</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X163 Site               1          31 0.032<span style="text-decoration: underline;">3</span>  AA-1         <span style="text-decoration: underline;">200</span>407</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X163 Site               1          30 0.033<span style="text-decoration: underline;">3</span>  AA-1         <span style="text-decoration: underline;">200</span>404</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X163 Site               1          62 0.016<span style="text-decoration: underline;">1</span>  AA-1         <span style="text-decoration: underline;">200</span>512</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X163 Site               1          31 0.032<span style="text-decoration: underline;">3</span>  AA-1         <span style="text-decoration: underline;">200</span>408</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X124 Site               1          90 0.011<span style="text-decoration: underline;">1</span>  AA-1         <span style="text-decoration: underline;">200</span>704</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X124 Site               2          93 0.021<span style="text-decoration: underline;">5</span>  AA-1         <span style="text-decoration: underline;">200</span>603</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X102 Site               3          60 0.05    AA-1         <span style="text-decoration: underline;">200</span>504</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X052 Site               1         124 0.008<span style="text-decoration: underline;">06</span> AA-1         <span style="text-decoration: underline;">201</span>010</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X052 Site               2         120 0.016<span style="text-decoration: underline;">7</span>  AA-1         <span style="text-decoration: underline;">201</span>011</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X041 Site               1          62 0.016<span style="text-decoration: underline;">1</span>  AA-1         <span style="text-decoration: underline;">200</span>907</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X052 Site               5         124 0.040<span style="text-decoration: underline;">3</span>  AA-1         <span style="text-decoration: underline;">200</span>607</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X162 Site               1          31 0.032<span style="text-decoration: underline;">3</span>  AA-1         <span style="text-decoration: underline;">201</span>805</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X069 Site               3          30 0.1     AA-1         <span style="text-decoration: underline;">200</span>606</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X069 Site               2          31 0.064<span style="text-decoration: underline;">5</span>  AA-1         <span style="text-decoration: underline;">200</span>601</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X023 Site               1         101 0.009<span style="text-decoration: underline;">90</span> AA-1         <span style="text-decoration: underline;">201</span>204</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X023 Site               3          90 0.033<span style="text-decoration: underline;">3</span>  AA-1         <span style="text-decoration: underline;">201</span>111</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X161 Site               1          30 0.033<span style="text-decoration: underline;">3</span>  AA-1         <span style="text-decoration: underline;">201</span>106</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X161 Site               1          62 0.016<span style="text-decoration: underline;">1</span>  AA-1         <span style="text-decoration: underline;">201</span>010</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X161 Site               2          93 0.021<span style="text-decoration: underline;">5</span>  AA-1         <span style="text-decoration: underline;">200</span>910</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: DenominatorType &lt;chr&gt;, MetricID &lt;chr&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   SnapshotDate &lt;date&gt;</span></span></span>
@@ -743,63 +789,63 @@ begin with.</p>
 <span><span class="co">#&gt; $Reporting_Join</span></span>
 <span><span class="co">#&gt; $Reporting_Join$`Days on Study`</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:   SQL [?? x 6]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span></span>
 <span><span class="co">#&gt;    GroupID    GroupLevel Denominator StudyID MonthYYYYMM Numerator_Analysis_kr…¹</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X140 Site                62 AA-1         <span style="text-decoration: underline;">200</span>907                       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X163 Site                10 AA-1         <span style="text-decoration: underline;">200</span>402                       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X163 Site                56 AA-1         <span style="text-decoration: underline;">200</span>602                       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X163 Site                31 AA-1         <span style="text-decoration: underline;">200</span>403                       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X156 Site                31 AA-1         <span style="text-decoration: underline;">200</span>905                       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X156 Site                31 AA-1         <span style="text-decoration: underline;">201</span>003                       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X035 Site                31 AA-1         <span style="text-decoration: underline;">201</span>503                       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X151 Site                60 AA-1         <span style="text-decoration: underline;">201</span>004                       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X188 Site                31 AA-1         <span style="text-decoration: underline;">200</span>508                       1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X167 Site               120 AA-1         <span style="text-decoration: underline;">201</span>711                       2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X023 Site               101 AA-1         <span style="text-decoration: underline;">201</span>204                       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X161 Site                62 AA-1         <span style="text-decoration: underline;">201</span>010                       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X161 Site                93 AA-1         <span style="text-decoration: underline;">200</span>910                       2</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X153 Site                31 AA-1         <span style="text-decoration: underline;">201</span>508                       3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X016 Site                30 AA-1         <span style="text-decoration: underline;">201</span>804                       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X154 Site                29 AA-1         <span style="text-decoration: underline;">201</span>602                       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X093 Site               120 AA-1         <span style="text-decoration: underline;">201</span>604                       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X093 Site                31 AA-1         <span style="text-decoration: underline;">201</span>410                       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X125 Site                28 AA-1         <span style="text-decoration: underline;">201</span>702                       1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X154 Site                30 AA-1         <span style="text-decoration: underline;">201</span>409                       4</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ abbreviated name: ¹​Numerator_Analysis_kri0001</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $Reporting_Bounds</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:     SQL [?? x 8]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Ordered by: StudyID, StudyMonth</span></span></span>
 <span><span class="co">#&gt;    MetricID    DenominatorType StudyID StudyMonth BootstrapCount  Median   Lower</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Analysis_k… Days on Study   AA-1             2           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">35</span> 0      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Analysis_k… Days on Study   AA-1            10           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">95</span> 0.002<span style="text-decoration: underline;">77</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Analysis_k… Days on Study   AA-1            18           <span style="text-decoration: underline;">1</span>000 0.006<span style="text-decoration: underline;">39</span> 0.004<span style="text-decoration: underline;">18</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Analysis_k… Days on Study   AA-1            28           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">14</span> 0.003<span style="text-decoration: underline;">87</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Analysis_k… Days on Study   AA-1            29           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">15</span> 0.003<span style="text-decoration: underline;">89</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Analysis_k… Days on Study   AA-1            34           <span style="text-decoration: underline;">1</span>000 0.004<span style="text-decoration: underline;">76</span> 0.003<span style="text-decoration: underline;">61</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Analysis_k… Days on Study   AA-1            39           <span style="text-decoration: underline;">1</span>000 0.004<span style="text-decoration: underline;">57</span> 0.003<span style="text-decoration: underline;">55</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Analysis_k… Days on Study   AA-1            42           <span style="text-decoration: underline;">1</span>000 0.004<span style="text-decoration: underline;">52</span> 0.003<span style="text-decoration: underline;">52</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Analysis_k… Days on Study   AA-1            47           <span style="text-decoration: underline;">1</span>000 0.004<span style="text-decoration: underline;">59</span> 0.003<span style="text-decoration: underline;">63</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Analysis_k… Days on Study   AA-1            49           <span style="text-decoration: underline;">1</span>000 0.004<span style="text-decoration: underline;">62</span> 0.003<span style="text-decoration: underline;">67</span></span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Analysis_k… Days on Study   AA-1           117           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">81</span> 0.005<span style="text-decoration: underline;">34</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Analysis_k… Days on Study   AA-1           124           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">84</span> 0.005<span style="text-decoration: underline;">35</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Analysis_k… Days on Study   AA-1           125           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">84</span> 0.005<span style="text-decoration: underline;">37</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Analysis_k… Days on Study   AA-1           128           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">84</span> 0.005<span style="text-decoration: underline;">35</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Analysis_k… Days on Study   AA-1           129           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">83</span> 0.005<span style="text-decoration: underline;">34</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Analysis_k… Days on Study   AA-1           130           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">82</span> 0.005<span style="text-decoration: underline;">34</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Analysis_k… Days on Study   AA-1           131           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">84</span> 0.005<span style="text-decoration: underline;">36</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Analysis_k… Days on Study   AA-1           137           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">87</span> 0.005<span style="text-decoration: underline;">39</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Analysis_k… Days on Study   AA-1           139           <span style="text-decoration: underline;">1</span>000 0.005<span style="text-decoration: underline;">91</span> 0.005<span style="text-decoration: underline;">43</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Analysis_k… Days on Study   AA-1           145           <span style="text-decoration: underline;">1</span>000 0.006<span style="text-decoration: underline;">01</span> 0.005<span style="text-decoration: underline;">48</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: Upper &lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $Reporting_BoundsRef</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Source:     SQL [?? x 11]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.3 [unknown@Linux 6.11.0-1018-azure:R 4.5.2/:memory:]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database:   DuckDB 1.4.4 [unknown@Linux 6.14.0-1017-azure:R 4.5.2/:memory:]</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># Ordered by: StudyMonth</span></span></span>
 <span><span class="co">#&gt;    MetricID      DenominatorType StudyMonth BootstrapCount GroupCount StudyCount</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Analysis_kri… Days on Study            2           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Analysis_kri… Days on Study           10           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Analysis_kri… Days on Study           18           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Analysis_kri… Days on Study           28           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Analysis_kri… Days on Study           29           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Analysis_kri… Days on Study           34           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Analysis_kri… Days on Study           39           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Analysis_kri… Days on Study           42           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Analysis_kri… Days on Study           47           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Analysis_kri… Days on Study           49           <span style="text-decoration: underline;">1</span>000         78          3</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Analysis_kri… Days on Study          101           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Analysis_kri… Days on Study          103           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Analysis_kri… Days on Study          107           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Analysis_kri… Days on Study          108           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Analysis_kri… Days on Study          117           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Analysis_kri… Days on Study          124           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Analysis_kri… Days on Study          125           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Analysis_kri… Days on Study          128           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Analysis_kri… Days on Study          129           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Analysis_kri… Days on Study          130           <span style="text-decoration: underline;">1</span>000         73          3</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 5 more variables: StudyID &lt;chr&gt;, StudyRefID &lt;chr&gt;, Median &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   Lower &lt;dbl&gt;, Upper &lt;dbl&gt;</span></span></span></code></pre></div>
 <p>Next we collect the data and create the charts.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lCharts</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/MakeCharts_StudyKRI.html">MakeCharts_StudyKRI</a></span><span class="op">(</span></span>
 <span>  dfResults <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="va">lReporting</span><span class="op">$</span><span class="va">Reporting_Results</span><span class="op">)</span>,</span>
 <span>  dfBounds <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="va">lReporting</span><span class="op">$</span><span class="va">Reporting_Bounds</span><span class="op">)</span>,</span>
@@ -810,6 +856,240 @@ begin with.</p>
 <span><span class="va">lCharts</span></span>
 <span><span class="co">#&gt; $`AA-1_Analysis_kri0001`</span></span></code></pre></div>
 <p><img src="db_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
+</div>
+<div class="section level2">
+<h2 id="using-snowflake-or-other-integer-random-backends">Using Snowflake or Other Integer Random Backends<a class="anchor" aria-label="anchor" href="#using-snowflake-or-other-integer-random-backends"></a>
+</h2>
+<p>If you’re using Snowflake or another database that returns large
+integers for <code>RANDOM()</code>, add the
+<code>vDbIntRandomRange</code> parameter to your bootstrap function
+calls:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># For Snowflake: specify signed 64-bit integer range</span></span>
+<span><span class="va">Bounds_Wide_Snowflake</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
+<span>  <span class="va">lJoined</span>, <span class="op">~</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds</a></span><span class="op">(</span></span>
+<span>    <span class="va">.</span>,</span>
+<span>    dfStudyRef <span class="op">=</span> <span class="va">tblStudyRef</span>,</span>
+<span>    tblBootstrapReps <span class="op">=</span> <span class="va">tblRep</span>,</span>
+<span>    tblMonthSequence <span class="op">=</span> <span class="va">tblMonths</span>,</span>
+<span>    vDbIntRandomRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">9223372036854775808</span>, <span class="fl">9223372036854775807</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">BoundsRef_Wide_Snowflake</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
+<span>  <span class="va">lJoined</span>, <span class="op">~</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span></span>
+<span>    <span class="va">.</span>,</span>
+<span>    dfStudyRef <span class="op">=</span> <span class="va">tblStudyRef</span>,</span>
+<span>    tblBootstrapReps <span class="op">=</span> <span class="va">tblRep</span>,</span>
+<span>    tblMonthSequence <span class="op">=</span> <span class="va">tblMonths</span>,</span>
+<span>    vDbIntRandomRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">9223372036854775808</span>, <span class="fl">9223372036854775807</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>The <code>vDbIntRandomRange</code> parameter should be added to:</p>
+<ul>
+<li><code><a href="../reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds()</a></code></li>
+<li><code><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef()</a></code></li>
+<li><code><a href="../reference/Analyze_StudyKRI_PredictBoundsRefSet.html">Analyze_StudyKRI_PredictBoundsRefSet()</a></code></li>
+</ul>
+<p>This ensures that random values are properly normalized regardless of
+the database backend’s random number generation method.</p>
+</div>
+<div class="section level2">
+<h2 id="performance-optimization-for-database-backends">Performance Optimization for Database Backends<a class="anchor" aria-label="anchor" href="#performance-optimization-for-database-backends"></a>
+</h2>
+<div class="section level3">
+<h3 id="optimization-strategy-1-pass-nmingroups-via-studyref">Optimization Strategy 1: Pass nMinGroups via StudyRef<a class="anchor" aria-label="anchor" href="#optimization-strategy-1-pass-nmingroups-via-studyref"></a>
+</h3>
+<p>The most impactful optimization is avoiding the collection of the
+full dataset to calculate minimum group counts. By pre-calculating and
+including a MinGroups column in your StudyRef table, you can avoid
+materializing potentially millions of rows.</p>
+<p><strong>How to calculate MinGroups:</strong></p>
+<p>For each target study in your StudyRef mapping, calculate the minimum
+group count across all its reference studies:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode sql"><code class="sourceCode sql"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co">-- Example: Calculate MinGroups for each target-reference set</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="kw">WITH</span> GroupCounts <span class="kw">AS</span> (</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="kw">SELECT</span> </span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>    StudyID,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>    <span class="fu">COUNT</span>(<span class="kw">DISTINCT</span> GroupID) <span class="kw">AS</span> group_count</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="kw">FROM</span> Analysis_Input</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="kw">WHERE</span> StudyID <span class="kw">IN</span> (<span class="st">'REF_STUDY_1'</span>, <span class="st">'REF_STUDY_2'</span>, <span class="st">'REF_STUDY_3'</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="kw">GROUP</span> <span class="kw">BY</span> StudyID</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>)</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="kw">SELECT</span> </span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="st">'TARGET_STUDY'</span> <span class="kw">AS</span> studyid,</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>  <span class="st">'REF_STUDY_1'</span> <span class="kw">AS</span> studyrefid,  <span class="co">-- repeat for each reference</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="fu">MIN</span>(group_count) <span class="kw">AS</span> MinGroups</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="kw">FROM</span> GroupCounts;</span></code></pre></div>
+<p><strong>Then include it in your StudyRef table:</strong></p>
+<p>The StudyRef.yaml workflow selects only the required
+<code>studyid</code> and <code>studyrefid</code> columns. To use the
+MinGroups optimization, you have two options:</p>
+<p><strong>Option 1: Add MinGroups directly to your StudyRef
+data</strong></p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create Raw_StudyRef with MinGroups column</span></span>
+<span><span class="va">dfStudyRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  studyid <span class="op">=</span> <span class="st">"AA-1"</span>,</span>
+<span>  studyrefid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-2"</span>, <span class="st">"AA-3"</span>, <span class="st">"AA-4"</span><span class="op">)</span>,</span>
+<span>  MinGroups <span class="op">=</span> <span class="fl">8</span> <span class="co"># Pre-calculated minimum across reference studies</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Write to database</span></span>
+<span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbWriteTable.html" class="external-link">dbWriteTable</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"StudyRef"</span>, <span class="va">dfStudyRef</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">tblStudyRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"StudyRef"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Use in analysis - MinGroups will be automatically detected and used</span></span>
+<span><span class="va">BoundsRef_Optimized</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span></span>
+<span>  dfInput <span class="op">=</span> <span class="va">tblInput</span>,</span>
+<span>  dfStudyRef <span class="op">=</span> <span class="va">tblStudyRef</span>,</span>
+<span>  tblBootstrapReps <span class="op">=</span> <span class="va">tblRep</span>,</span>
+<span>  tblMonthSequence <span class="op">=</span> <span class="va">tblMonths</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><strong>Option 2: Use a custom mapping query</strong></p>
+<p>If you need to transform the column name, create a custom
+StudyRef.yaml workflow:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">output</span><span class="kw">:</span><span class="at"> Mapped_StudyRef</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> gsm.core::RunQuery</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="at">    </span><span class="fu">params</span><span class="kw">:</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="at">      </span><span class="fu">df</span><span class="kw">:</span><span class="at"> Raw_StudyRef</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="at">      </span><span class="fu">strQuery</span><span class="kw">:</span><span class="at"> </span><span class="st">"SELECT studyid AS study, studyrefid AS studyref, mingroups AS MinGroups FROM df"</span></span></code></pre></div>
+<p><strong>Option 3: Use a custom column name</strong></p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dfStudyRef_Custom</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  studyid <span class="op">=</span> <span class="st">"AA-1"</span>,</span>
+<span>  studyrefid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-2"</span>, <span class="st">"AA-3"</span>, <span class="st">"AA-4"</span><span class="op">)</span>,</span>
+<span>  min_grp_cnt <span class="op">=</span> <span class="fl">8</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">BoundsRef_Custom</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span></span>
+<span>  dfInput <span class="op">=</span> <span class="va">tblInput</span>,</span>
+<span>  dfStudyRef <span class="op">=</span> <span class="va">tblStudyRef_Custom</span>,</span>
+<span>  strMinGroupsCol <span class="op">=</span> <span class="st">"min_grp_cnt"</span>, <span class="co"># Specify custom column name</span></span>
+<span>  tblBootstrapReps <span class="op">=</span> <span class="va">tblRep</span>,</span>
+<span>  tblMonthSequence <span class="op">=</span> <span class="va">tblMonths</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="optimization-strategy-2-skip-validation-checks">Optimization Strategy 2: Skip Validation Checks<a class="anchor" aria-label="anchor" href="#optimization-strategy-2-skip-validation-checks"></a>
+</h3>
+<p>The <code><a href="../reference/JoinKRIByDenominator.html">JoinKRIByDenominator()</a></code> function performs several
+validation checks that require <code><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect()</a></code> operations. When
+confident in data quality, skip these:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lJoined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/JoinKRIByDenominator.html">JoinKRIByDenominator</a></span><span class="op">(</span></span>
+<span>  <span class="va">tblInput</span>,</span>
+<span>  <span class="va">dfMetrics</span>,</span>
+<span>  bSkipValidation <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># Disable validation collect() operations</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="optimization-strategy-3-pre-generate-temporary-tables">Optimization Strategy 3: Pre-generate Temporary Tables<a class="anchor" aria-label="anchor" href="#optimization-strategy-3-pre-generate-temporary-tables"></a>
+</h3>
+<p>Provide pre-generated bootstrap replicates and month sequences to
+avoid repeated temp table creation:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create once, reuse many times</span></span>
+<span><span class="va">dfRep</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>BootstrapRep <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1000</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">dfMonths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  YYYY <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2003</span>, <span class="fl">2020</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/cross_join.html" class="external-link">cross_join</a></span><span class="op">(</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>MM <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>MonthYYYYMM <span class="op">=</span> <span class="va">YYYY</span> <span class="op">*</span> <span class="fl">100</span> <span class="op">+</span> <span class="va">MM</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">MonthYYYYMM</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbWriteTable.html" class="external-link">dbWriteTable</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"Rep"</span>, <span class="va">dfRep</span><span class="op">)</span></span>
+<span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbWriteTable.html" class="external-link">dbWriteTable</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"Months"</span>, <span class="va">dfMonths</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">tblRep</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"Rep"</span><span class="op">)</span></span>
+<span><span class="va">tblMonths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"Months"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Pass to all functions</span></span>
+<span><span class="va">Bounds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds</a></span><span class="op">(</span></span>
+<span>  <span class="va">dfInput</span>,</span>
+<span>  tblBootstrapReps <span class="op">=</span> <span class="va">tblRep</span>,</span>
+<span>  tblMonthSequence <span class="op">=</span> <span class="va">tblMonths</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="optimization-strategy-4-use-funcompute-to-cache-intermediate-results">Optimization Strategy 4: Use funCompute to Cache Intermediate
+Results<a class="anchor" aria-label="anchor" href="#optimization-strategy-4-use-funcompute-to-cache-intermediate-results"></a>
+</h3>
+<p>When working with large database queries, you can use the
+<code>funCompute</code> parameter to cache intermediate results in the
+database. This can significantly improve performance by materializing
+temporary tables rather than re-executing complex queries.</p>
+<p>The <code>funCompute</code> parameter accepts a function that will be
+applied to intermediate database results. The most common use case is
+<code><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">dplyr::compute()</a></code>:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Cache intermediate results during bootstrap calculations</span></span>
+<span><span class="va">BoundsRef_Cached</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span></span>
+<span>  dfInput <span class="op">=</span> <span class="va">tblInput</span>,</span>
+<span>  dfStudyRef <span class="op">=</span> <span class="va">tblStudyRef</span>,</span>
+<span>  nBootstrapReps <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  tblBootstrapReps <span class="op">=</span> <span class="va">tblRep</span>,</span>
+<span>  tblMonthSequence <span class="op">=</span> <span class="va">tblMonths</span>,</span>
+<span>  funCompute <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="va"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">compute</a></span> <span class="co"># Cache intermediate results</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>You can also provide a custom function for more control:</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Custom compute function - let dplyr auto-generate unique names</span></span>
+<span><span class="co"># (Important: don't specify fixed names as funCompute may be called multiple times)</span></span>
+<span><span class="va">custom_cache</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">compute</a></span><span class="op">(</span><span class="va">x</span>, temporary <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">BoundsRef_Custom</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span></span>
+<span>  dfInput <span class="op">=</span> <span class="va">tblInput</span>,</span>
+<span>  dfStudyRef <span class="op">=</span> <span class="va">tblStudyRef</span>,</span>
+<span>  nBootstrapReps <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  funCompute <span class="op">=</span> <span class="va">custom_cache</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><strong>When to use <code>funCompute</code>:</strong></p>
+<ul>
+<li>Complex queries that are re-used multiple times</li>
+<li>Very large datasets where materialization is faster than
+re-computation</li>
+<li>When database query optimizer struggles with complex lazy query
+plans</li>
+</ul>
+<p><strong>Performance trade-offs:</strong></p>
+<ul>
+<li>
+<strong>Benefit</strong>: Avoids re-executing expensive queries; can
+reduce query complexity</li>
+<li>
+<strong>Cost</strong>: Requires database write permissions; creates
+temporary tables that use storage</li>
+</ul>
+<p><strong>Note</strong>: <code>funCompute</code> is primarily
+beneficial for large datasets (millions of rows), complex multi-study
+portfolios, or queries that are re-executed multiple times. For small
+datasets or simple queries, the overhead of creating temporary tables
+may outweigh benefits.</p>
+</div>
+<div class="section level3">
+<h3 id="best-practices-summary">Best Practices Summary<a class="anchor" aria-label="anchor" href="#best-practices-summary"></a>
+</h3>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Add MinGroups column to StudyRef</strong> (or use
+<code>strMinGroupsCol</code> parameter for custom names) for the biggest
+performance gain</li>
+<li>
+<strong>Use <code>bSkipValidation = TRUE</code></strong> in
+<code><a href="../reference/JoinKRIByDenominator.html">JoinKRIByDenominator()</a></code> when data quality is assured</li>
+<li>
+<strong>Pre-generate temp tables</strong>
+(<code>tblBootstrapReps</code>, <code>tblMonthSequence</code>) to avoid
+repeated creation</li>
+<li>
+<strong>Use <code>funCompute</code></strong> to cache intermediate
+results when working with large datasets or complex queries</li>
+</ol>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,20 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="gsmstudykri-030">gsm.studykri 0.3.0<a class="anchor" aria-label="anchor" href="#gsmstudykri-030"></a></h2>
+<ul><li>Established compatibility with snowflake backend by:</li>
+<li>Added <code>vDbIntRandomRange</code> parameter to bootstrap functions (<code><a href="../reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds()</a></code>, <code><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef()</a></code>, <code><a href="../reference/Analyze_StudyKRI_PredictBoundsRefSet.html">Analyze_StudyKRI_PredictBoundsRefSet()</a></code>) to support database backends that use large integer values for random number generation (e.g., Snowflake) (#7)</li>
+<li>Added <code>nMinGroups</code> parameter to <code><a href="../reference/Analyze_StudyKRI_PredictBoundsRefSet.html">Analyze_StudyKRI_PredictBoundsRefSet()</a></code> to allow passing pre-calculated minimum group counts, avoiding expensive <code><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect()</a></code> operations on database backends</li>
+<li>Added <code>strMinGroupsCol</code> parameter to <code><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef()</a></code> to specify custom column name for minimum group counts in StudyRef tables (default: “MinGroups”)</li>
+<li>Added <code>bSkipValidation</code> parameter to <code><a href="../reference/JoinKRIByDenominator.html">JoinKRIByDenominator()</a></code> to disable validation checks that require <code><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect()</a></code> operations for improved performance with database backends</li>
+<li>Revised reference calculation now creating study-level timelines for each bootstrap iteration before calculating confidcence intervalls. introduced bMixStudies: FALSE this better conserves inter-study variability leading to wider reference confidence intervalls.</li>
+<li>Fixed Bug that mixed patients with identical subject ids between studies in Input_CountSiteByMonth</li>
+<li>dfSubjects from Input_CountSiteByMonth() is optional when strGroupCol already in dfNumerator and dfDenominator</li>
+<li>HandleLazyTables will use unique names for temp tables using random integers</li>
+<li>remove seed parameter for bootstrap functions</li>
+<li>add funCompute paramter to <code>Analyze_StudyKRI_PredictBoundsRef</code> which allows to create temporary tables for each reference set to solve backend issues</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="gsmstudykri-020">gsm.studykri 0.2.0<a class="anchor" aria-label="anchor" href="#gsmstudykri-020"></a></h2>
 <ul><li>Added 10 additional KRI workflows (kri0005-kri0014) covering lab abnormalities, discontinuations, queries, data quality, screening failures, and I/E violations</li>

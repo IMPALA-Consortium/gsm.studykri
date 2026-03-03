@@ -30,6 +30,7 @@ the script-based approach without YAML workflows.
 
 ``` r
 library(dplyr)
+#> Warning: package 'dplyr' was built under R version 4.4.3
 #> 
 #> Attaching package: 'dplyr'
 #> The following objects are masked from 'package:stats':
@@ -60,11 +61,15 @@ lPortfolio <- SimulatePortfolio(
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4"),
     nSubjects = c(500, 750, 150, 200),
-    strOversamplDomain = rep("Raw_AE", 4),
+    strOversampleDomain = rep("Raw_AE", 4),
     vOversamplQuantileRange_min = c(0, 0, 0, 0),
     vOversamplQuantileRange_max = c(1, 1, 1, 0.75)
   )
 )
+#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
+#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
+#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
+#> Filtered to 773 subjects with Raw_AE records in 0.00-0.75 quantile range (1-6 records)
 
 # Calculate site-level counts by month for AE per visit
 dfInput <- Input_CountSiteByMonth(
@@ -78,7 +83,7 @@ dfInput <- Input_CountSiteByMonth(
   strSubjectCol = "subjid",
   strNumeratorDateCol = "aest_dt",
   strDenominatorDateCol = "visit_dt",
-  nMinDenominator = 25  # Normalize dates at the threshold
+  nMinDenominator = 25 # Normalize dates at the threshold
 )
 
 # Aggregate to study-level cumulative counts
@@ -99,7 +104,7 @@ dfStudyRef <- tibble(
 )
 
 dfBoundsRef <- Analyze_StudyKRI_PredictBoundsRef(dfInput, dfStudyRef)
-#> Resampling with minimum group count: 76
+#> Calculated minimum group count: 69
 
 # Plot AA-1 vs reference portfolio
 Visualize_StudyKRI(

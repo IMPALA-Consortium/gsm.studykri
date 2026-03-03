@@ -11,7 +11,6 @@ maintain temporal relationships.
 ApplyMinDenominatorDateAdjustment(
   dfNumerator_processed,
   dfDenominator,
-  dfSubjects,
   strSubjectCol,
   strStudyCol,
   strGroupCol,
@@ -31,10 +30,6 @@ ApplyMinDenominatorDateAdjustment(
 - dfDenominator:
 
   Data frame with original denominator data
-
-- dfSubjects:
-
-  Data frame with subject-level data for joining
 
 - strSubjectCol:
 

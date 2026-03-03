@@ -12,7 +12,7 @@ which would lead to incorrect results when pivoting the data.
 ## Usage
 
 ``` r
-JoinKRIByDenominator(dfInput, dfMetrics)
+JoinKRIByDenominator(dfInput, dfMetrics, bSkipValidation = FALSE)
 ```
 
 ## Arguments
@@ -27,6 +27,14 @@ JoinKRIByDenominator(dfInput, dfMetrics)
 
   data.frame. Metrics metadata from MakeMetric. Must contain columns:
   MetricID and AccrualThreshold.
+
+- bSkipValidation:
+
+  logical. If TRUE, skips validation checks that require collect()
+  operations (AccrualThreshold consistency, GroupLevel consistency, and
+  Denominator value matching). Use this to improve performance with
+  large database tables when you are confident your workflow
+  configuration is correct. Default: FALSE.
 
 ## Value
 
@@ -61,10 +69,20 @@ names(lJoined)
 if (FALSE) { # \dontrun{
 dfMetrics_mismatched <- data.frame(
   MetricID = c("kri0001", "kri0003"),
-  AccrualThreshold = c(180, 25)  # Different values!
+  AccrualThreshold = c(180, 25) # Different values!
 )
 
 # This will throw an error:
 lJoined <- JoinKRIByDenominator(dfInput, dfMetrics_mismatched)
+} # }
+
+# Example 3: Skip validation for performance with large database tables
+if (FALSE) { # \dontrun{
+# When working with lazy tables and confident about data quality:
+lJoined <- JoinKRIByDenominator(
+  dfInput = tbl_lazy_input,
+  dfMetrics = dfMetrics,
+  bSkipValidation = TRUE
+)
 } # }
 ```

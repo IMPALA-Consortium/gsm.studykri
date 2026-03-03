@@ -134,11 +134,11 @@ dfAugmented <- AddScreeningFailures(
 )
 
 # Check results
-table(dfAugmented$enrollyn)  # Should show both Y and N
+table(dfAugmented$enrollyn) # Should show both Y and N
 #> 
 #>    N    Y 
 #> 1822 1301 
-nrow(dfAugmented) > nrow(dfEnrolled)  # Should be TRUE
+nrow(dfAugmented) > nrow(dfEnrolled) # Should be TRUE
 #> [1] TRUE
 
 # Multi-study example

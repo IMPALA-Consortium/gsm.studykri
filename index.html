@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,6 +88,7 @@
 <p>This example demonstrates calculating a single KRI (AE per visit) using the script-based approach without YAML workflows.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: package 'dplyr' was built under R version 4.4.3</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
 <span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
@@ -118,11 +119,15 @@
 <span>  dfConfig <span class="op">=</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>    studyid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-1"</span>, <span class="st">"AA-2"</span>, <span class="st">"AA-3"</span>, <span class="st">"AA-4"</span><span class="op">)</span>,</span>
 <span>    nSubjects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">750</span>, <span class="fl">150</span>, <span class="fl">200</span><span class="op">)</span>,</span>
-<span>    strOversamplDomain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Raw_AE"</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>    strOversampleDomain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Raw_AE"</span>, <span class="fl">4</span><span class="op">)</span>,</span>
 <span>    vOversamplQuantileRange_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
 <span>    vOversamplQuantileRange_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0.75</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 773 subjects with Raw_AE records in 0.00-0.75 quantile range (1-6 records)</span></span>
 <span></span>
 <span><span class="co"># Calculate site-level counts by month for AE per visit</span></span>
 <span><span class="va">dfInput</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Input_CountSiteByMonth.html">Input_CountSiteByMonth</a></span><span class="op">(</span></span>
@@ -136,7 +141,7 @@
 <span>  strSubjectCol <span class="op">=</span> <span class="st">"subjid"</span>,</span>
 <span>  strNumeratorDateCol <span class="op">=</span> <span class="st">"aest_dt"</span>,</span>
 <span>  strDenominatorDateCol <span class="op">=</span> <span class="st">"visit_dt"</span>,</span>
-<span>  nMinDenominator <span class="op">=</span> <span class="fl">25</span>  <span class="co"># Normalize dates at the threshold</span></span>
+<span>  nMinDenominator <span class="op">=</span> <span class="fl">25</span> <span class="co"># Normalize dates at the threshold</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Aggregate to study-level cumulative counts</span></span>
@@ -157,7 +162,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dfBoundsRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span><span class="va">dfInput</span>, <span class="va">dfStudyRef</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 76</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
 <span></span>
 <span><span class="co"># Plot AA-1 vs reference portfolio</span></span>
 <span><span class="fu"><a href="reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>

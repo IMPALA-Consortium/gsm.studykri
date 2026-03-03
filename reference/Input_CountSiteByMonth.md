@@ -12,7 +12,7 @@ Supports both in-memory data frames and dbplyr lazy tables.
 
 ``` r
 Input_CountSiteByMonth(
-  dfSubjects,
+  dfSubjects = NULL,
   dfNumerator,
   dfDenominator,
   strStudyCol = "studyid",
@@ -86,8 +86,8 @@ Input_CountSiteByMonth(
 ## Value
 
 data.frame with columns: GroupID, GroupLevel, Numerator, Denominator,
-Metric, StudyID, MonthYYYYMM, StudyMonth. If strDenominatorType is
-provided, also includes DenominatorType column.
+Metric, StudyID, MonthYYYYMM If strDenominatorType is provided, also
+includes DenominatorType column.
 
 ## Examples
 

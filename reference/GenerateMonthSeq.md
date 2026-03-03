@@ -12,11 +12,13 @@ GenerateMonthSeq(start_yyyymm, end_yyyymm)
 
 - start_yyyymm:
 
-  numeric. Start month in YYYYMM format
+  numeric or character. Start month in YYYYMM format. Character values
+  (e.g., from Snowflake) are automatically coerced to numeric.
 
 - end_yyyymm:
 
-  numeric. End month in YYYYMM format
+  numeric or character. End month in YYYYMM format. Character values
+  (e.g., from Snowflake) are automatically coerced to numeric.
 
 ## Value
 

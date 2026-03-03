@@ -14,9 +14,12 @@ Analyze_StudyKRI_PredictBoundsRef(
   nConfLevel = 0.95,
   strGroupCol = "GroupID",
   strStudyMonthCol = "StudyMonth",
-  seed = NULL,
+  strMinGroupsCol = "MinGroups",
+  bMixStudies = FALSE,
   tblBootstrapReps = NULL,
-  tblMonthSequence = NULL
+  tblMonthSequence = NULL,
+  vDbIntRandomRange = NULL,
+  funCompute = NULL
 )
 ```
 
@@ -33,7 +36,8 @@ Analyze_StudyKRI_PredictBoundsRef(
   data.frame or tbl_lazy. Study-to-reference mappings with at least two
   columns: first column = target studies, second column = reference
   studies. Can have multiple rows per target study (one row per
-  target-reference pair).
+  target-reference pair). Optional column (name specified by
+  strMinGroupsCol): minimum group count for performance optimization.
 
 - nBootstrapReps:
 
@@ -51,9 +55,22 @@ Analyze_StudyKRI_PredictBoundsRef(
 
   character. Column name for study month (default: "StudyMonth").
 
-- seed:
+- strMinGroupsCol:
 
-  integer or NULL. Random seed (default: NULL).
+  character. Column name for minimum groups in dfStudyRef (default:
+  "MinGroups"). If this column exists in dfStudyRef, its value will be
+  used instead of calculating minimum group counts, improving
+  performance with database backends.
+
+- bMixStudies:
+
+  logical. If TRUE, aggregates studies at the StudyMonth level before
+  calculating cumulative counts (faster SQL performance, but disables
+  extrapolation). If FALSE (default), keeps study-level granularity
+  through extrapolation step, allowing studies with different timeline
+  lengths to be properly aligned before aggregation. Use TRUE for
+  database backends when SQL performance is critical and all studies
+  have similar timeline lengths. Default: FALSE.
 
 - tblBootstrapReps:
 
@@ -71,11 +88,48 @@ Analyze_StudyKRI_PredictBoundsRef(
   [`GenerateMonthSeq()`](https://impala-consortium.github.io/gsm.studykri/reference/GenerateMonthSeq.md)).
   If NULL, attempts to create temp table (requires write privileges).
 
+- vDbIntRandomRange:
+
+  Numeric vector of length 2 or NULL. When using database backends that
+  return large integers instead of 0-1 decimals for random numbers,
+  specify the min/max range as c(min, max). Accepts both numeric and
+  character vectors (character values are automatically converted to
+  numeric, useful when reading from YAML files). Common values:
+
+  - Snowflake: c(-9223372036854775808, 9223372036854775807) (signed
+    64-bit)
+
+  - Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+    Default: NULL (no normalization, assumes 0-1 decimal random values).
+
+- funCompute:
+
+  function or NULL. Optional function to apply to intermediate database
+  results for performance optimization. Typically used to
+  cache/materialize intermediate results using
+  [`dplyr::compute()`](https://dplyr.tidyverse.org/reference/compute.html).
+  Only applied when dfInput is a database table (tbl_dbi). Requires
+  database write permissions to create temporary tables. Example:
+  `funCompute = dplyr::compute`. Default: NULL.
+
 ## Value
 
 A tibble (or tbl_lazy if input was lazy) with columns: `StudyID`,
 `StudyRefID`, `StudyMonth`, `Median_*`, `Lower_*`, `Upper_*` for each
 Metric column, `BootstrapCount`, `GroupCount`, `StudyCount`.
+
+## Details
+
+For optimal performance with database backends:
+
+- Include a MinGroups column in dfStudyRef (or specify custom name via
+  strMinGroupsCol) to avoid collecting the full dataset to count groups
+
+- Calculate as: min(n_distinct(GroupID)) across all reference studies
+  per target study
+
+- This avoids materializing the entire Analysis_Input table just to
+  count groups
 
 ## Examples
 
@@ -101,21 +155,41 @@ dfSiteLevel <- data.frame(
 dfBounds <- Analyze_StudyKRI_PredictBoundsRef(
   dfInput = dfSiteLevel,
   dfStudyRef = dfStudyRef,
-  nBootstrapReps = 100,
-  seed = 42
+  nBootstrapReps = 100
 )
-#> Resampling with minimum group count: 10
-#> Resampling with minimum group count: 10
+#> Calculated minimum group count: 10
+#> Calculated minimum group count: 10
+
+# Example with Snowflake backend
+dfBounds_Snowflake <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = dfSiteLevel,
+  dfStudyRef = dfStudyRef,
+  nBootstrapReps = 100,
+  vDbIntRandomRange = c(-9223372036854775808, 9223372036854775807)
+)
+#> Calculated minimum group count: 10
+#> Calculated minimum group count: 10
+
+# Example with database backend using funCompute to cache results
+# (Assumes dfSiteLevel is a tbl_dbi database table)
+dfBounds_Cached <- Analyze_StudyKRI_PredictBoundsRef(
+  dfInput = dfSiteLevel,
+  dfStudyRef = dfStudyRef,
+  nBootstrapReps = 100,
+  funCompute = dplyr::compute  # Cache intermediate results in database
+)
+#> Calculated minimum group count: 10
+#> Calculated minimum group count: 10
 
 print(head(dfBounds))
 #> # A tibble: 6 × 9
 #>   StudyMonth Median Lower Upper BootstrapCount GroupCount StudyCount StudyID
 #>        <int>  <dbl> <dbl> <dbl>          <int>      <int>      <int> <chr>  
-#> 1          1  0.144 0.110 0.160            100         10          2 STUDY1 
-#> 2          2  0.156 0.133 0.172            100         10          2 STUDY1 
-#> 3          3  0.148 0.126 0.166            100         10          2 STUDY1 
-#> 4          4  0.140 0.124 0.158            100         10          2 STUDY1 
-#> 5          5  0.147 0.131 0.160            100         10          2 STUDY1 
-#> 6          6  0.147 0.134 0.159             98         10          2 STUDY1 
+#> 1          1  0.144 0.103 0.194            100         10          2 STUDY1 
+#> 2          2  0.156 0.112 0.178            100         10          2 STUDY1 
+#> 3          3  0.150 0.104 0.175            100         10          2 STUDY1 
+#> 4          4  0.142 0.113 0.166            100         10          2 STUDY1 
+#> 5          5  0.146 0.121 0.167            100         10          2 STUDY1 
+#> 6          6  0.148 0.122 0.168            100         10          2 STUDY1 
 #> # ℹ 1 more variable: StudyRefID <chr>
 ```

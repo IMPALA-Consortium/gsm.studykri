@@ -25,7 +25,7 @@ Input_CountSiteByMonth with nMinDenominator parameter."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,12 +78,12 @@ Input_CountSiteByMonth with nMinDenominator parameter.</p>
 <span>  dfStudyRef <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  nBootstrapReps <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  nConfLevel <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tblBootstrapReps <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tblMonthSequence <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  strStudyCol <span class="op">=</span> <span class="st">"StudyID"</span>,</span>
 <span>  strGroupCol <span class="op">=</span> <span class="st">"GroupID"</span>,</span>
-<span>  strStudyMonthCol <span class="op">=</span> <span class="st">"StudyMonth"</span></span>
+<span>  strStudyMonthCol <span class="op">=</span> <span class="st">"StudyMonth"</span>,</span>
+<span>  vDbIntRandomRange <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -114,10 +114,6 @@ Default: 1000.</p></dd>
 (95% confidence interval).</p></dd>
 
 
-<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>integer or NULL. Random seed for reproducibility. Default: NULL.</p></dd>
-
-
 <dt id="arg-tblbootstrapreps">tblBootstrapReps<a class="anchor" aria-label="anchor" href="#arg-tblbootstrapreps"></a></dt>
 <dd><p>tbl_lazy, data.frame, or NULL. For lazy table inputs:
 Optional pre-generated bootstrap replicate indices. Default: NULL.</p></dd>
@@ -140,6 +136,17 @@ Default: "StudyID".</p></dd>
 <dt id="arg-strstudymonthcol">strStudyMonthCol<a class="anchor" aria-label="anchor" href="#arg-strstudymonthcol"></a></dt>
 <dd><p>character. Name of study month column. Default: "StudyMonth".</p></dd>
 
+
+<dt id="arg-vdbintrandomrange">vDbIntRandomRange<a class="anchor" aria-label="anchor" href="#arg-vdbintrandomrange"></a></dt>
+<dd><p>Numeric vector of length 2 or NULL. When using database
+backends that return large integers instead of 0-1 decimals for random numbers,
+specify the min/max range as c(min, max). Accepts both numeric and character
+vectors (character values are automatically converted to numeric, useful when
+reading from YAML files). Common values:</p><ul><li><p>Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)</p></li>
+<li><p>Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+Default: NULL (no normalization, assumes 0-1 decimal random values).</p></li>
+</ul></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -154,7 +161,7 @@ Default: "StudyID".</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="co"># Example 1: Calculate bounds for all studies in dfInput</span></span></span>
 <span class="r-in"><span><span class="va">Bounds_Wide</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">lJoined</span>, </span></span>
+<span class="r-in"><span>  <span class="va">lJoined</span>,</span></span>
 <span class="r-in"><span>  <span class="op">~</span> <span class="fu">Analyze_StudyKRI_PredictBounds</span><span class="op">(</span><span class="va">.</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -166,8 +173,17 @@ Default: "StudyID".</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Calculate bounds for target studies (AA-1 and AA-2) specified in first column</span></span></span>
 <span class="r-in"><span><span class="va">Bounds_Wide</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">lJoined</span>, </span></span>
+<span class="r-in"><span>  <span class="va">lJoined</span>,</span></span>
 <span class="r-in"><span>  <span class="op">~</span> <span class="fu">Analyze_StudyKRI_PredictBounds</span><span class="op">(</span><span class="va">.</span>, dfStudyRef <span class="op">=</span> <span class="va">dfStudyRef</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example 3: Using Snowflake backend with integer random values</span></span></span>
+<span class="r-in"><span><span class="va">Bounds_Wide_Snowflake</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">lJoined</span>,</span></span>
+<span class="r-in"><span>  <span class="op">~</span> <span class="fu">Analyze_StudyKRI_PredictBounds</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="va">.</span>,</span></span>
+<span class="r-in"><span>    vDbIntRandomRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">9223372036854775808</span>, <span class="fl">9223372036854775807</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -149,11 +149,15 @@ oversampling patients with low AE counts.</p>
 <span>  dfConfig <span class="op">=</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>    studyid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-1"</span>, <span class="st">"AA-2"</span>, <span class="st">"AA-3"</span>, <span class="st">"AA-4"</span><span class="op">)</span>,</span>
 <span>    nSubjects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">750</span>, <span class="fl">150</span>, <span class="fl">200</span><span class="op">)</span>,</span>
-<span>    strOversamplDomain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Raw_AE"</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>    strOversampleDomain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Raw_AE"</span>, <span class="fl">4</span><span class="op">)</span>,</span>
 <span>    vOversamplQuantileRange_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
-<span>    vOversamplQuantileRange_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0.75</span><span class="op">)</span></span>
+<span>    vOversamplQuantileRange_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Filtered to 521 subjects with Raw_AE records in 0.00-0.50 quantile range (1-3 records)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="calculate-kri">Calculate KRI<a class="anchor" aria-label="anchor" href="#calculate-kri"></a>
@@ -186,20 +190,20 @@ denominator per month</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dfInput</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 19,811 × 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 18,252 × 7</span></span></span>
 <span><span class="co">#&gt;    GroupID    GroupLevel Numerator Denominator Metric StudyID MonthYYYYMM</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X001 Site               1           1    1   AA-1         <span style="text-decoration: underline;">201</span>610</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X001 Site               1           1    1   AA-1         <span style="text-decoration: underline;">201</span>611</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X001 Site               1           1    1   AA-1         <span style="text-decoration: underline;">201</span>803</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X001 Site               1           0   <span style="color: #BB0000;">NA</span>   AA-1         <span style="text-decoration: underline;">201</span>806</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X003 Site               3           1    3   AA-1         <span style="text-decoration: underline;">200</span>410</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X003 Site               2           1    2   AA-1         <span style="text-decoration: underline;">200</span>504</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X003 Site               1           0   <span style="color: #BB0000;">NA</span>   AA-1         <span style="text-decoration: underline;">200</span>506</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X003 Site               1           1    1   AA-1         <span style="text-decoration: underline;">200</span>602</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X003 Site               1           2    0.5 AA-1         <span style="text-decoration: underline;">200</span>605</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X003 Site               1           1    1   AA-1         <span style="text-decoration: underline;">200</span>907</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 19,801 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X004 Site               1           1  1     AA-1         <span style="text-decoration: underline;">201</span>105</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X005 Site               1           1  1     AA-1         <span style="text-decoration: underline;">200</span>811</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X005 Site               1           0 <span style="color: #BB0000;">NA</span>     AA-1         <span style="text-decoration: underline;">200</span>906</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X005 Site               1           1  1     AA-1         <span style="text-decoration: underline;">201</span>105</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X005 Site               1           1  1     AA-1         <span style="text-decoration: underline;">201</span>204</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X011 Site               1           1  1     AA-1         <span style="text-decoration: underline;">200</span>411</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X011 Site               1           1  1     AA-1         <span style="text-decoration: underline;">201</span>107</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X011 Site               2           3  0.667 AA-1         <span style="text-decoration: underline;">201</span>306</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X011 Site               1           0 <span style="color: #BB0000;">NA</span>     AA-1         <span style="text-decoration: underline;">201</span>506</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X011 Site               1           2  0.5   AA-1         <span style="text-decoration: underline;">201</span>601</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 18,242 more rows</span></span></span></code></pre></div>
 <p>Alternatively we can also use days on study as a denominator by
 passing subjects as denominator and an end date.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -218,20 +222,20 @@ passing subjects as denominator and an end date.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dfInputDays</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 24,266 × 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 22,473 × 7</span></span></span>
 <span><span class="co">#&gt;    GroupID    GroupLevel Numerator Denominator Metric StudyID MonthYYYYMM</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X001 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>610</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X001 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>611</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X001 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>803</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X001 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>806</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X003 Site               3          31 0.096<span style="text-decoration: underline;">8</span> AA-1         <span style="text-decoration: underline;">200</span>410</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X003 Site               2          30 0.066<span style="text-decoration: underline;">7</span> AA-1         <span style="text-decoration: underline;">200</span>504</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X003 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">200</span>506</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X003 Site               1          56 0.017<span style="text-decoration: underline;">9</span> AA-1         <span style="text-decoration: underline;">200</span>602</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X003 Site               1          62 0.016<span style="text-decoration: underline;">1</span> AA-1         <span style="text-decoration: underline;">200</span>605</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X003 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">200</span>907</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 24,256 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1_0X004 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>105</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1_0X005 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">200</span>811</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1_0X005 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">200</span>906</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1_0X005 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>105</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1_0X005 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>204</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1_0X011 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">200</span>411</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1_0X011 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>107</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1_0X011 Site               2          53 0.037<span style="text-decoration: underline;">7</span> AA-1         <span style="text-decoration: underline;">201</span>306</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1_0X011 Site               1          30 0.033<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>506</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1_0X011 Site               1          31 0.032<span style="text-decoration: underline;">3</span> AA-1         <span style="text-decoration: underline;">201</span>601</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 22,463 more rows</span></span></span></code></pre></div>
 <p>Next we transform the data to return the cumulated event counts on
 study-level by study month. Date normalization is now done at the input
 level, so Transform_CumCount performs pure aggregation.</p>
@@ -242,20 +246,20 @@ level, so Transform_CumCount performs pure aggregation.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dfTransformed</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 742 × 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 745 × 7</span></span></span>
 <span><span class="co">#&gt;    StudyID MonthYYYYMM StudyMonth Numerator Denominator Metric GroupCount</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1         <span style="text-decoration: underline;">200</span>403          1         2          25  0.08          10</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1         <span style="text-decoration: underline;">200</span>404          2         6          39  0.154         13</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1         <span style="text-decoration: underline;">200</span>405          3        12          60  0.2           16</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1         <span style="text-decoration: underline;">200</span>406          4        12          80  0.15          16</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1         <span style="text-decoration: underline;">200</span>407          5        16         106  0.151         18</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1         <span style="text-decoration: underline;">200</span>408          6        19         137  0.139         22</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1         <span style="text-decoration: underline;">200</span>409          7        26         168  0.155         23</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1         <span style="text-decoration: underline;">200</span>410          8        31         200  0.155         24</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1         <span style="text-decoration: underline;">200</span>411          9        34         233  0.146         24</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1         <span style="text-decoration: underline;">200</span>412         10        36         268  0.134         22</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 732 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1         <span style="text-decoration: underline;">200</span>404          1         6          28 0.214           9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1         <span style="text-decoration: underline;">200</span>405          2         8          45 0.178          12</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1         <span style="text-decoration: underline;">200</span>406          3         8          61 0.131          13</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1         <span style="text-decoration: underline;">200</span>407          4        10          85 0.118          16</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1         <span style="text-decoration: underline;">200</span>408          5        12         115 0.104          18</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1         <span style="text-decoration: underline;">200</span>409          6        17         142 0.120          17</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1         <span style="text-decoration: underline;">200</span>410          7        18         176 0.102          19</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1         <span style="text-decoration: underline;">200</span>411          8        20         208 0.096<span style="text-decoration: underline;">2</span>         19</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1         <span style="text-decoration: underline;">200</span>412          9        23         238 0.096<span style="text-decoration: underline;">6</span>         18</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1         <span style="text-decoration: underline;">200</span>501         10        26         276 0.094<span style="text-decoration: underline;">2</span>         21</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 735 more rows</span></span></span></code></pre></div>
 <p>Analyze_StudyKRI_PredictBounds calculates upper and lower confidence
 intervals of the study metrics KRI using a bootstrap technique.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -264,20 +268,20 @@ intervals of the study metrics KRI using a bootstrap technique.</p>
 <span><span class="co">#&gt; Using all 4 studies found in dfInput</span></span>
 <span></span>
 <span><span class="va">dfBounds</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 742 × 6</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 745 × 6</span></span></span>
 <span><span class="co">#&gt;    StudyID StudyMonth Median  Lower Upper BootstrapCount</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1             1 0.074<span style="text-decoration: underline;">1</span> 0      0.211           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1             2 0.15   0      0.308           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1             3 0.194  0.055<span style="text-decoration: underline;">6</span> 0.343           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1             4 0.144  0.038<span style="text-decoration: underline;">5</span> 0.269           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1             5 0.146  0.054<span style="text-decoration: underline;">7</span> 0.261           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1             6 0.135  0.055<span style="text-decoration: underline;">2</span> 0.234           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1             7 0.152  0.068<span style="text-decoration: underline;">4</span> 0.242           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1             8 0.152  0.073<span style="text-decoration: underline;">2</span> 0.242           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1             9 0.143  0.064<span style="text-decoration: underline;">7</span> 0.227           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1            10 0.132  0.059<span style="text-decoration: underline;">6</span> 0.209           <span style="text-decoration: underline;">1</span>000</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 732 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> AA-1             1 0.214  0.071<span style="text-decoration: underline;">3</span> 0.333           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AA-1             2 0.172  0.047<span style="text-decoration: underline;">6</span> 0.322           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AA-1             3 0.127  0.034<span style="text-decoration: underline;">5</span> 0.237           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> AA-1             4 0.115  0.035<span style="text-decoration: underline;">7</span> 0.197           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> AA-1             5 0.104  0.040<span style="text-decoration: underline;">4</span> 0.164           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> AA-1             6 0.120  0.064<span style="text-decoration: underline;">2</span> 0.175           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AA-1             7 0.102  0.059<span style="text-decoration: underline;">7</span> 0.147           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> AA-1             8 0.095<span style="text-decoration: underline;">2</span> 0.062<span style="text-decoration: underline;">1</span> 0.134           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> AA-1             9 0.097<span style="text-decoration: underline;">3</span> 0.057<span style="text-decoration: underline;">4</span> 0.130           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AA-1            10 0.094<span style="text-decoration: underline;">5</span> 0.061<span style="text-decoration: underline;">3</span> 0.124           <span style="text-decoration: underline;">1</span>000</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 735 more rows</span></span></span></code></pre></div>
 <p>We can plot the preliminary results.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Visualize_StudyKRI.html">Visualize_StudyKRI</a></span><span class="op">(</span></span>
@@ -295,23 +299,23 @@ reference studies.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dfBoundsRef</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span><span class="va">dfInput</span>, <span class="va">dfStudyRef</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 78</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 74</span></span>
 <span></span>
 <span><span class="va">dfBoundsRef</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 189 × 9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 187 × 9</span></span></span>
 <span><span class="co">#&gt;    StudyMonth Median  Lower Upper BootstrapCount GroupCount StudyCount StudyID</span></span>
 <span><span class="co">#&gt;         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          1  0.125 0      0.25            <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>          2  0.179 0      0.429           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>          3  0.182 0      0.421           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>          4  0.172 0.017<span style="text-decoration: underline;">1</span> 0.407           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          5  0.185 0.045<span style="text-decoration: underline;">5</span> 0.353           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>          6  0.156 0.048<span style="text-decoration: underline;">2</span> 0.286           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>          7  0.118 0.039<span style="text-decoration: underline;">2</span> 0.206           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          8  0.133 0.065<span style="text-decoration: underline;">0</span> 0.211           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          9  0.143 0.075<span style="text-decoration: underline;">9</span> 0.220           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>         10  0.136 0.078<span style="text-decoration: underline;">2</span> 0.203           <span style="text-decoration: underline;">1</span>000         78          3 AA-1   </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 179 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          1  0.154 0      0.722           <span style="text-decoration: underline;">1</span>000         74          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>          2  0.143 0      0.519           <span style="text-decoration: underline;">1</span>000         74          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>          3  0.143 0      0.6             <span style="text-decoration: underline;">1</span>000         74          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>          4  0.120 0      0.654           <span style="text-decoration: underline;">1</span>000         74          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          5  0.146 0.029<span style="text-decoration: underline;">4</span> 0.651           <span style="text-decoration: underline;">1</span>000         74          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>          6  0.161 0.052<span style="text-decoration: underline;">6</span> 0.663           <span style="text-decoration: underline;">1</span>000         74          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>          7  0.149 0.047<span style="text-decoration: underline;">6</span> 0.607           <span style="text-decoration: underline;">1</span>000         74          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          8  0.157 0.054<span style="text-decoration: underline;">1</span> 0.611           <span style="text-decoration: underline;">1</span>000         74          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          9  0.151 0.057<span style="text-decoration: underline;">1</span> 0.577           <span style="text-decoration: underline;">1</span>000         74          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>         10  0.149 0.057<span style="text-decoration: underline;">5</span> 0.527           <span style="text-decoration: underline;">1</span>000         74          3 AA-1   </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 177 more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: StudyRefID &lt;chr&gt;</span></span></span></code></pre></div>
 <p>And add the reference confidence interval to our plot</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -319,8 +323,11 @@ reference studies.</p>
 <span>  dfStudyKRI <span class="op">=</span> <span class="va">dfTransformed</span>,</span>
 <span>  dfBounds <span class="op">=</span> <span class="va">dfBounds</span>,</span>
 <span>  dfBoundsRef <span class="op">=</span> <span class="va">dfBoundsRef</span>,</span>
-<span>  strStudyID <span class="op">=</span> <span class="st">"AA-1"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span>  strStudyID <span class="op">=</span> <span class="st">"AA-1"</span>,</span>
+<span>  bLogY <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in ggplot2::scale_y_log10(): <span style="color: #00BB00;">log-10</span> transformation</span></span>
+<span><span class="co">#&gt; introduced infinite values.</span></span></code></pre></div>
 <p><img src="Cookbook_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
 <p>Bringing it together for Days on Study</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -334,7 +341,7 @@ reference studies.</p>
 <span><span class="co">#&gt; Using all 4 studies found in dfInput</span></span>
 <span></span>
 <span><span class="va">dfBoundsRef</span> <span class="op">&lt;-</span> <span class="fu">gsm.studykri</span><span class="fu">::</span><span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span><span class="va">dfInputDays</span>, <span class="va">dfStudyRef</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 78</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 74</span></span>
 <span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
@@ -384,12 +391,18 @@ will be built, while the others serve as reference.</p>
 <span>  dfConfig <span class="op">=</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>    studyid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AA-1"</span>, <span class="st">"AA-2"</span>, <span class="st">"AA-3"</span>, <span class="st">"AA-4"</span>, <span class="st">"AA-5"</span>, <span class="st">"AA-6"</span><span class="op">)</span>,</span>
 <span>    nSubjects <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">750</span>, <span class="fl">150</span>, <span class="fl">200</span>, <span class="fl">250</span>, <span class="fl">300</span><span class="op">)</span>,</span>
-<span>    strOversamplDomain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Raw_AE"</span>, <span class="fl">6</span><span class="op">)</span>,</span>
+<span>    strOversampleDomain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Raw_AE"</span>, <span class="fl">6</span><span class="op">)</span>,</span>
 <span>    vOversamplQuantileRange_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
 <span>    vOversamplQuantileRange_max <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.75</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0.95</span>, <span class="fl">0.9</span><span class="op">)</span>,</span>
 <span>    nScreeningFailureRatio <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">0.2</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 773 subjects with Raw_AE records in 0.00-0.75 quantile range (1-6 records)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)</span></span>
+<span><span class="co">#&gt; Filtered to 969 subjects with Raw_AE records in 0.00-0.95 quantile range (1-13 records)</span></span>
+<span><span class="co">#&gt; Filtered to 914 subjects with Raw_AE records in 0.00-0.90 quantile range (1-10 records)</span></span>
 <span></span>
 <span><span class="va">lRaw</span><span class="op">$</span><span class="va">Raw_StudyRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  studyid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"AA-1"</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"AA-2"</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -413,35 +426,35 @@ will be built, while the others serve as reference.</p>
 <span><span class="va">lIngest</span> <span class="op">&lt;-</span> <span class="fu">gsm.mapping</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.mapping/reference/Ingest.html" class="external-link">Ingest</a></span><span class="op">(</span><span class="va">lRaw</span>, <span class="fu">gsm.mapping</span><span class="fu">::</span><span class="fu"><a href="https://gilead-biostats.github.io/gsm.mapping/reference/CombineSpecs.html" class="external-link">CombineSpecs</a></span><span class="op">(</span><span class="va">mapping_wf</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for AE.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 6688 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 6545 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for ENROLL.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 3909 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 3641 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for IE.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 42143 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 38626 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for LB.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1585395 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1457497 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for PD.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 6314 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 5720 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for Randomization.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for SDRGCOMP.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 964 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 876 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for STUDCOMP.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 193 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 154 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for StudyRef.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
@@ -449,44 +462,44 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for SUBJ.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for VISIT.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; Warning: Field `visit_dt`: 27 unparsable Date(s) set to NA</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 39431 rows returned.</span></span>
+<span><span class="co">#&gt; Warning: Field `visit_dt`: 13 unparsable Date(s) set to NA</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 36113 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for DATACHG.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 2968624 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 2719904 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for DATAENT.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 347360 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 318256 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for SUBJ.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for IE.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 42143 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 38626 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for ENROLL.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 3909 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 3641 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for PD.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 6314 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 5720 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for QUERY.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 59403 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 54606 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for SITE.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 636 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 632 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Ingesting data for STUDY.</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
@@ -513,9 +526,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 6688x8 data.frame saved as `lData$Mapped_AE`.</span></span>
+<span><span class="co">#&gt; ── 6545x8 data.frame saved as `lData$Mapped_AE`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6688x8 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6545x8 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_AE` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -534,9 +547,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 3909x7 data.frame saved as `lData$Mapped_ENROLL`.</span></span>
+<span><span class="co">#&gt; ── 3641x7 data.frame saved as `lData$Mapped_ENROLL`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 3909x7 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 3641x7 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_ENROLL` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -555,10 +568,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 42143 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 38626 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 42143x6 data.frame saved as `lData$ie_violation`.</span></span>
+<span><span class="co">#&gt; ── 38626x6 data.frame saved as `lData$ie_violation`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 2: `gsm.core::RunQuery`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -592,9 +605,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1585395x4 data.frame saved as `lData$Mapped_LB`.</span></span>
+<span><span class="co">#&gt; ── 1457497x4 data.frame saved as `lData$Mapped_LB`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1585395x4 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1457497x4 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_LB` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -613,9 +626,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 6314x5 data.frame saved as `lData$Mapped_PD`.</span></span>
+<span><span class="co">#&gt; ── 5720x5 data.frame saved as `lData$Mapped_PD`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6314x5 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 5720x5 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_PD` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -634,12 +647,12 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1819x6 data.frame saved as `lData$Mapped_Randomization`.</span></span>
+<span><span class="co">#&gt; ── 1661x6 data.frame saved as `lData$Mapped_Randomization`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1819x6 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1661x6 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_Randomization` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -658,9 +671,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 964x5 data.frame saved as `lData$Mapped_SDRGCOMP`.</span></span>
+<span><span class="co">#&gt; ── 876x5 data.frame saved as `lData$Mapped_SDRGCOMP`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 964x5 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 876x5 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_SDRGCOMP` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -679,9 +692,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 193x5 data.frame saved as `lData$Mapped_STUDCOMP`.</span></span>
+<span><span class="co">#&gt; ── 154x5 data.frame saved as `lData$Mapped_STUDCOMP`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 193x5 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 154x5 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_STUDCOMP` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -724,12 +737,12 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1819x14 data.frame saved as `lData$Mapped_SUBJ`.</span></span>
+<span><span class="co">#&gt; ── 1661x14 data.frame saved as `lData$Mapped_SUBJ`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1819x14 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1661x14 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_SUBJ` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -748,9 +761,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `=`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 39431x6 data.frame saved as `lData$Mapped_VISIT`.</span></span>
+<span><span class="co">#&gt; ── 36113x6 data.frame saved as `lData$Mapped_VISIT`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 39431x6 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 36113x6 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_Visit` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -773,7 +786,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::select`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1819x3 data.frame saved as `lData$Temp_SubjectLookup`.</span></span>
+<span><span class="co">#&gt; ── 1661x3 data.frame saved as `lData$Temp_SubjectLookup`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 3: `dplyr::left_join`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -784,7 +797,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::left_join`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 2968624x7 data.frame saved as `lData$Temp_DATACHG`.</span></span>
+<span><span class="co">#&gt; ── 2719904x7 data.frame saved as `lData$Temp_DATACHG`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 3: `dplyr::left_join`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -795,9 +808,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::left_join`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 2968624x9 data.frame saved as `lData$Mapped_DATACHG`.</span></span>
+<span><span class="co">#&gt; ── 2719904x9 data.frame saved as `lData$Mapped_DATACHG`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 2968624x9 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 2719904x9 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_DATACHG` Workflow</span> <span style="color: #00BBBB;">─────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -818,7 +831,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::select`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1819x2 data.frame saved as `lData$Temp_SubjectLookup`.</span></span>
+<span><span class="co">#&gt; ── 1661x2 data.frame saved as `lData$Temp_SubjectLookup`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 2: `dplyr::left_join`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -829,9 +842,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::left_join`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 347360x7 data.frame saved as `lData$Mapped_DATAENT`.</span></span>
+<span><span class="co">#&gt; ── 318256x7 data.frame saved as `lData$Mapped_DATAENT`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 347360x7 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 318256x7 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_DATAENT` Workflow</span> <span style="color: #00BBBB;">─────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -866,7 +879,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::left_join`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 3909x9 data.frame saved as `lData$add_ie`.</span></span>
+<span><span class="co">#&gt; ── 3641x9 data.frame saved as `lData$add_ie`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 5: `gsm.core::RunQuery`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -876,10 +889,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 66 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 69 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 66x3 data.frame saved as `lData$pivot_pd`.</span></span>
+<span><span class="co">#&gt; ── 69x3 data.frame saved as `lData$pivot_pd`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 5: `dplyr::left_join`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -890,7 +903,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::left_join`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 3909x10 data.frame saved as `lData$premapped`.</span></span>
+<span><span class="co">#&gt; ── 3641x10 data.frame saved as `lData$premapped`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 5 of 5: `gsm.core::RunQuery`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -900,12 +913,12 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1819 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1661 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1819x11 data.frame saved as `lData$Mapped_EXCLUSION`.</span></span>
+<span><span class="co">#&gt; ── 1661x11 data.frame saved as `lData$Mapped_EXCLUSION`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1819x11 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 1661x11 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_EXCLUSION` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -926,7 +939,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::select`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1819x2 data.frame saved as `lData$Temp_SubjectLookup`.</span></span>
+<span><span class="co">#&gt; ── 1661x2 data.frame saved as `lData$Temp_SubjectLookup`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 2: `dplyr::left_join`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -937,9 +950,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::left_join`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 59403x7 data.frame saved as `lData$Mapped_QUERY`.</span></span>
+<span><span class="co">#&gt; ── 54606x7 data.frame saved as `lData$Mapped_QUERY`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 59403x7 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 54606x7 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_QUERY` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -993,10 +1006,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 636 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 632 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 636x9 data.frame saved as `lData$Temp_CTMSSiteWide`.</span></span>
+<span><span class="co">#&gt; ── 632x9 data.frame saved as `lData$Temp_CTMSSiteWide`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 5: `gsm.mapping::MakeLongMeta`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1006,7 +1019,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.mapping::MakeLongMeta`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 5088x4 data.frame saved as `lData$Temp_CTMSSite`.</span></span>
+<span><span class="co">#&gt; ── 5056x4 data.frame saved as `lData$Temp_CTMSSite`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 5: `gsm.core::RunQuery`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1016,10 +1029,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 606 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 591 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 606x3 data.frame saved as `lData$Temp_SiteCountsWide`.</span></span>
+<span><span class="co">#&gt; ── 591x3 data.frame saved as `lData$Temp_SiteCountsWide`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 5: `gsm.mapping::MakeLongMeta`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1029,7 +1042,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.mapping::MakeLongMeta`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1212x4 data.frame saved as `lData$Temp_SiteCounts`.</span></span>
+<span><span class="co">#&gt; ── 1182x4 data.frame saved as `lData$Temp_SiteCounts`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 5 of 5: `dplyr::bind_rows`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1039,9 +1052,9 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::bind_rows`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 6300x4 data.frame saved as `lData$Mapped_SITE`.</span></span>
+<span><span class="co">#&gt; ── 6238x4 data.frame saved as `lData$Mapped_SITE`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6300x4 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6238x4 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Mapped_SITE` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1202,7 +1215,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 34632x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 32420x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 3: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1212,7 +1225,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1121x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 3: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1251,10 +1264,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 193 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 171 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 193x8 data.frame saved as `lData$Mapped_SAE`.</span></span>
+<span><span class="co">#&gt; ── 171x8 data.frame saved as `lData$Mapped_SAE`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1274,7 +1287,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 34632x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 32420x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1284,7 +1297,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1121x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1317,10 +1330,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 5650 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 5141 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 5650x5 data.frame saved as `lData$Temp_NONIMPORTANT`.</span></span>
+<span><span class="co">#&gt; ── 5141x5 data.frame saved as `lData$Temp_NONIMPORTANT`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1340,7 +1353,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 34771x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 32572x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1350,7 +1363,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1121x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1383,10 +1396,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 664 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 579 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 664x5 data.frame saved as `lData$Temp_IMPORTANT`.</span></span>
+<span><span class="co">#&gt; ── 579x5 data.frame saved as `lData$Temp_IMPORTANT`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1406,7 +1419,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 34645x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 32433x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1416,7 +1429,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1121x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1449,10 +1462,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 2235 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1861 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 2235x4 data.frame saved as `lData$Temp_ABNORMAL`.</span></span>
+<span><span class="co">#&gt; ── 1861x4 data.frame saved as `lData$Temp_ABNORMAL`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 5: `RunQuery`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1462,10 +1475,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 800395 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 735123 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 800395x4 data.frame saved as `lData$Temp_LB`.</span></span>
+<span><span class="co">#&gt; ── 735123x4 data.frame saved as `lData$Temp_LB`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 5: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1484,7 +1497,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 27746x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 25894x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 5: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1494,7 +1507,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1145x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1132x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 5 of 5: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1527,10 +1540,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 177 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 137 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 177x5 data.frame saved as `lData$Temp_DROPOUT`.</span></span>
+<span><span class="co">#&gt; ── 137x5 data.frame saved as `lData$Temp_DROPOUT`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1549,7 +1562,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1960x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 1758x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1559,7 +1572,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1032x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1017x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1592,10 +1605,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 189 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 153 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 189x5 data.frame saved as `lData$Temp_DISCONTINUED`.</span></span>
+<span><span class="co">#&gt; ── 153x5 data.frame saved as `lData$Temp_DISCONTINUED`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1614,7 +1627,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1971x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 1774x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1624,7 +1637,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1040x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1036x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1658,10 +1671,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 59403 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 54606 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 59403x7 data.frame saved as `lData$Temp_QUERY`.</span></span>
+<span><span class="co">#&gt; ── 54606x7 data.frame saved as `lData$Temp_QUERY`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1680,7 +1693,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 32247x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 30075x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1690,7 +1703,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1139x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1125x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1723,10 +1736,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1173 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1074 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1173x7 data.frame saved as `lData$Temp_OLDQUERY`.</span></span>
+<span><span class="co">#&gt; ── 1074x7 data.frame saved as `lData$Temp_OLDQUERY`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 5: `RunQuery`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1736,10 +1749,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 59403 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 54606 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 59403x7 data.frame saved as `lData$Temp_QUERY`.</span></span>
+<span><span class="co">#&gt; ── 54606x7 data.frame saved as `lData$Temp_QUERY`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 5: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1758,7 +1771,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 23336x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 21615x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 5: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1768,7 +1781,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1102x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1085x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 5 of 5: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1801,10 +1814,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 14516 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 13398 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 14516x7 data.frame saved as `lData$Temp_LAG`.</span></span>
+<span><span class="co">#&gt; ── 13398x7 data.frame saved as `lData$Temp_LAG`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1823,7 +1836,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 30350x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 28273x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1833,7 +1846,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1135x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1119x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1866,10 +1879,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 770726 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 706869 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 770726x9 data.frame saved as `lData$Temp_CHANGED`.</span></span>
+<span><span class="co">#&gt; ── 706869x9 data.frame saved as `lData$Temp_CHANGED`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1888,7 +1901,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 30366x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 28301x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1898,7 +1911,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1139x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1125x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1930,10 +1943,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 2090 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 1980 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 2090x7 data.frame saved as `lData$Temp_SCREENED`.</span></span>
+<span><span class="co">#&gt; ── 1980x7 data.frame saved as `lData$Temp_SCREENED`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1952,7 +1965,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 3493x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 3261x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1962,7 +1975,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1018x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 997x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1995,10 +2008,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 11453 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 10512 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 11453x6 data.frame saved as `lData$PK_Collected`.</span></span>
+<span><span class="co">#&gt; ── 10512x6 data.frame saved as `lData$PK_Collected`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2017,7 +2030,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 27201x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 25308x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2027,7 +2040,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1089x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 1076x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2060,10 +2073,10 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 10 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 18 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 10x11 data.frame saved as `lData$TEMP_VIOLATIONS`.</span></span>
+<span><span class="co">#&gt; ── 18x11 data.frame saved as `lData$TEMP_VIOLATIONS`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2082,7 +2095,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Input_CountSiteByMonth`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 1787x8 data.frame saved as `lData$Analysis_Input`.</span></span>
+<span><span class="co">#&gt; ── 1622x8 data.frame saved as `lData$Analysis_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2092,7 +2105,7 @@ will be built, while the others serve as reference.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_CumCount`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 993x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
+<span><span class="co">#&gt; ── 982x7 data.frame saved as `lData$Analysis_Transformed`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 4 of 4: `list`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2145,89 +2158,89 @@ KRI that use the same denominator.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">lJoined</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 8</span></span>
-<span><span class="co">#&gt;  $ Days on Study      : tibble [34,783 × 9] (S3: tbl_df/tbl/data.frame)</span></span>
-<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:34783] "AA-1_0X001" "AA-1_0X003" "AA-1_0X003" "AA-1_0X003" ...</span></span>
-<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:34783] "Site" "Site" "Site" "Site" ...</span></span>
-<span><span class="co">#&gt;   ..$ Denominator               : int [1:34783] 31 30 31 60 60 62 60 62 60 62 ...</span></span>
-<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:34783] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
-<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:34783] 201105 200706 200712 200804 200806 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0001: int [1:34783] 1 1 1 2 4 2 6 1 2 2 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0002: int [1:34783] 0 0 0 0 0 0 0 0 0 0 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0003: int [1:34783] 0 0 0 0 0 0 0 0 0 0 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0004: int [1:34783] 0 0 0 0 0 0 0 0 0 0 ...</span></span>
-<span><span class="co">#&gt;  $ Total Lab Samples  : tibble [27,746 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
-<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:27746] "AA-1_0X003" "AA-1_0X003" "AA-1_0X005" "AA-1_0X005" ...</span></span>
-<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:27746] "Site" "Site" "Site" "Site" ...</span></span>
-<span><span class="co">#&gt;   ..$ Denominator               : int [1:27746] 42 72 21 38 55 22 21 23 21 37 ...</span></span>
-<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:27746] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
-<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:27746] 200804 200805 201008 201009 201010 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0005: int [1:27746] 2 5 1 4 6 2 2 2 2 2 ...</span></span>
-<span><span class="co">#&gt;  $ Enrolled Subjects  : tibble [2,008 × 8] (S3: tbl_df/tbl/data.frame)</span></span>
-<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:2008] "AA-1_0X001" "AA-1_0X005" "AA-1_0X010" "AA-1_0X023" ...</span></span>
-<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:2008] "Site" "Site" "Site" "Site" ...</span></span>
-<span><span class="co">#&gt;   ..$ Denominator               : int [1:2008] 0 0 0 0 0 0 0 0 0 0 ...</span></span>
-<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:2008] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
-<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:2008] 201411 201101 200511 200710 201205 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0006: int [1:2008] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0007: int [1:2008] 1 NA NA NA NA 1 1 1 1 1 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0014: int [1:2008] NA NA NA NA NA NA NA NA NA NA ...</span></span>
-<span><span class="co">#&gt;  $ Total Data Points  : tibble [32,247 × 7] (S3: tbl_df/tbl/data.frame)</span></span>
-<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:32247] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...</span></span>
-<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:32247] "Site" "Site" "Site" "Site" ...</span></span>
-<span><span class="co">#&gt;   ..$ Denominator               : int [1:32247] 35 50 93 77 77 69 85 77 77 22 ...</span></span>
-<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:32247] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
-<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:32247] 201007 201008 201010 201011 201012 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0008: int [1:32247] 2 5 1 5 3 1 1 1 3 1 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0011: int [1:32247] 8 12 29 16 18 23 21 25 18 6 ...</span></span>
-<span><span class="co">#&gt;  $ Total Queries      : tibble [23,336 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
-<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:23336] "AA-1_0X003" "AA-1_0X005" "AA-1_0X007" "AA-1_0X010" ...</span></span>
-<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:23336] "Site" "Site" "Site" "Site" ...</span></span>
-<span><span class="co">#&gt;   ..$ Denominator               : int [1:23336] 3 2 2 3 2 1 5 2 5 4 ...</span></span>
-<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:23336] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
-<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:23336] 201303 201708 201508 200806 200901 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0009: int [1:23336] 1 1 1 1 1 1 1 1 2 1 ...</span></span>
-<span><span class="co">#&gt;  $ Total Data Pages   : tibble [30,350 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
-<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:30350] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...</span></span>
-<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:30350] "Site" "Site" "Site" "Site" ...</span></span>
-<span><span class="co">#&gt;   ..$ Denominator               : int [1:30350] 9 10 9 9 3 1 10 9 9 11 ...</span></span>
-<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:30350] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
-<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:30350] 201012 201102 201104 201105 201108 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0010: int [1:30350] 2 1 2 1 1 1 2 1 1 2 ...</span></span>
-<span><span class="co">#&gt;  $ Screened Subjects  : tibble [3,493 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
-<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:3493] "0X002" "0X002" "0X003" "0X004" ...</span></span>
-<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:3493] "Site" "Site" "Site" "Site" ...</span></span>
-<span><span class="co">#&gt;   ..$ Denominator               : int [1:3493] 4 50 9 4 1 16 4 18 9 4 ...</span></span>
-<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:3493] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
-<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:3493] 201109 201407 201305 201205 201407 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0012: int [1:3493] 2 10 3 2 1 4 2 6 3 2 ...</span></span>
-<span><span class="co">#&gt;  $ PK Samples Expected: tibble [27,201 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
-<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:27201] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...</span></span>
-<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:27201] "Site" "Site" "Site" "Site" ...</span></span>
-<span><span class="co">#&gt;   ..$ Denominator               : int [1:27201] 1 1 1 2 1 1 2 1 1 1 ...</span></span>
-<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:27201] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
-<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:27201] 201007 201008 201102 201107 201201 ...</span></span>
-<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0013: int [1:27201] 1 1 1 1 1 1 2 1 1 1 ...</span></span></code></pre></div>
+<span><span class="co">#&gt;  $ Days on Study      : tibble [32,584 × 9] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:32584] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...</span></span>
+<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:32584] "Site" "Site" "Site" "Site" ...</span></span>
+<span><span class="co">#&gt;   ..$ Denominator               : int [1:32584] 31 30 29 30 30 31 30 28 31 30 ...</span></span>
+<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:32584] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
+<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:32584] 200705 200709 200802 200804 200809 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0001: int [1:32584] 1 1 1 1 1 1 1 1 1 2 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0002: int [1:32584] 0 0 0 0 0 0 0 0 0 0 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0003: int [1:32584] 0 0 0 0 0 0 0 0 0 0 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0004: int [1:32584] 0 0 0 0 0 0 0 0 0 0 ...</span></span>
+<span><span class="co">#&gt;  $ Total Lab Samples  : tibble [25,894 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:25894] "AA-1_0X001" "AA-1_0X001" "AA-1_0X003" "AA-1_0X005" ...</span></span>
+<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:25894] "Site" "Site" "Site" "Site" ...</span></span>
+<span><span class="co">#&gt;   ..$ Denominator               : int [1:25894] 21 37 41 21 21 37 21 21 21 21 ...</span></span>
+<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:25894] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
+<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:25894] 200705 200706 200707 200505 201401 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0005: int [1:25894] 2 3 1 1 1 1 1 1 1 1 ...</span></span>
+<span><span class="co">#&gt;  $ Enrolled Subjects  : tibble [1,804 × 8] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:1804] "AA-1_0X003" "AA-1_0X013" "AA-1_0X023" "AA-1_0X029" ...</span></span>
+<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:1804] "Site" "Site" "Site" "Site" ...</span></span>
+<span><span class="co">#&gt;   ..$ Denominator               : int [1:1804] 0 0 0 0 0 0 0 0 0 0 ...</span></span>
+<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:1804] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
+<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:1804] 200506 200803 201706 201207 201010 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0006: int [1:1804] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0007: int [1:1804] NA 1 1 1 1 1 NA NA 1 1 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0014: int [1:1804] NA NA NA NA NA NA NA NA NA NA ...</span></span>
+<span><span class="co">#&gt;  $ Total Data Points  : tibble [30,075 × 7] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:30075] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...</span></span>
+<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:30075] "Site" "Site" "Site" "Site" ...</span></span>
+<span><span class="co">#&gt;   ..$ Denominator               : int [1:30075] 35 83 148 83 77 77 103 78 84 8 ...</span></span>
+<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:30075] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
+<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:30075] 200704 200705 200706 200707 200708 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0008: int [1:30075] 3 3 3 2 3 1 2 1 2 1 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0011: int [1:30075] 8 18 42 18 19 21 26 22 15 1 ...</span></span>
+<span><span class="co">#&gt;  $ Total Queries      : tibble [21,615 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:21615] "AA-1_0X006" "AA-1_0X006" "AA-1_0X006" "AA-1_0X007" ...</span></span>
+<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:21615] "Site" "Site" "Site" "Site" ...</span></span>
+<span><span class="co">#&gt;   ..$ Denominator               : int [1:21615] 4 3 1 2 1 2 1 4 8 2 ...</span></span>
+<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:21615] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
+<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:21615] 201604 201706 201801 200705 201812 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0009: int [1:21615] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
+<span><span class="co">#&gt;  $ Total Data Pages   : tibble [28,273 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:28273] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...</span></span>
+<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:28273] "Site" "Site" "Site" "Site" ...</span></span>
+<span><span class="co">#&gt;   ..$ Denominator               : int [1:28273] 10 9 10 9 1 4 1 16 10 9 ...</span></span>
+<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:28273] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
+<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:28273] 200707 200709 200803 200804 200807 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0010: int [1:28273] 2 2 1 1 1 3 1 1 2 1 ...</span></span>
+<span><span class="co">#&gt;  $ Screened Subjects  : tibble [3,261 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:3261] "0X001" "0X001" "0X003" "0X004" ...</span></span>
+<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:3261] "Site" "Site" "Site" "Site" ...</span></span>
+<span><span class="co">#&gt;   ..$ Denominator               : int [1:3261] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
+<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:3261] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
+<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:3261] 201008 201706 201705 200502 200607 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0012: int [1:3261] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
+<span><span class="co">#&gt;  $ PK Samples Expected: tibble [25,308 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt;   ..$ GroupID                   : chr [1:25308] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...</span></span>
+<span><span class="co">#&gt;   ..$ GroupLevel                : chr [1:25308] "Site" "Site" "Site" "Site" ...</span></span>
+<span><span class="co">#&gt;   ..$ Denominator               : int [1:25308] 1 1 2 1 1 1 1 2 1 2 ...</span></span>
+<span><span class="co">#&gt;   ..$ StudyID                   : chr [1:25308] "AA-1" "AA-1" "AA-1" "AA-1" ...</span></span>
+<span><span class="co">#&gt;   ..$ MonthYYYYMM               : num [1:25308] 200704 200705 200710 200804 200810 ...</span></span>
+<span><span class="co">#&gt;   ..$ Numerator_Analysis_kri0013: int [1:25308] 1 1 1 1 1 1 1 1 1 1 ...</span></span></code></pre></div>
 <p>Using the study references we can calculate the bootstrapped
 confidence intervals for all KRI at once.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">Bounds_Wide</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="va">lJoined</span>, <span class="op">~</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBounds.html">Analyze_StudyKRI_PredictBounds</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">dfStudyRef</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">BoundsRef_Wide</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="va">lJoined</span>, <span class="op">~</span> <span class="fu"><a href="../reference/Analyze_StudyKRI_PredictBoundsRef.html">Analyze_StudyKRI_PredictBoundsRef</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">dfStudyRef</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 164</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 164</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 146</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 146</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
 <span></span>
 <span><span class="va">dfBounds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Transform_long.html">Transform_Long</a></span><span class="op">(</span><span class="va">Bounds_Wide</span><span class="op">)</span></span>
 <span><span class="va">dfBoundsRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Transform_long.html">Transform_Long</a></span><span class="op">(</span><span class="va">BoundsRef_Wide</span><span class="op">)</span></span></code></pre></div>
@@ -2248,13 +2261,13 @@ confidence intervals for all KRI at once.</p>
 <span>  strInputPath <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"report"</span>, <span class="st">"Report_KRI.Rmd"</span>, package <span class="op">=</span> <span class="st">"gsm.studykri"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; processing file: Report_KRI.Rmd</span></span>
-<span><span class="co">#&gt; output file: /tmp/RtmpNXQelk/Report_KRI.knit.md</span></span>
-<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpNXQelk/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpNXQelk/rmarkdown-str1fa36cb2cd1a.html --variable code_folding=hide --variable code_menu=1</span></span>
+<span><span class="co">#&gt; output file: /tmp/RtmpbcSBiO/Report_KRI.knit.md</span></span>
+<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpbcSBiO/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpbcSBiO/rmarkdown-str21446130afa1.html --variable code_folding=hide --variable code_menu=1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Output created: report_studykri_AA-1.html</span></span>
 <span><span class="co">#&gt; processing file: Report_KRI.Rmd</span></span>
-<span><span class="co">#&gt; output file: /tmp/RtmpNXQelk/Report_KRI.knit.md</span></span>
-<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpNXQelk/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpNXQelk/rmarkdown-str1fa3442df9c8.html --variable code_folding=hide --variable code_menu=1</span></span>
+<span><span class="co">#&gt; output file: /tmp/RtmpbcSBiO/Report_KRI.knit.md</span></span>
+<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpbcSBiO/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpbcSBiO/rmarkdown-str21446b0a7c86.html --variable code_folding=hide --variable code_menu=1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Output created: report_studykri_AA-2.html</span></span>
 <span><span class="co">#&gt;                        AA-1                        AA-2 </span></span>
@@ -2294,9 +2307,9 @@ confidence intervals for all KRI at once.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::BindResults`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 15364x9 data.frame saved as `lData$lResults`.</span></span>
+<span><span class="co">#&gt; ── 15178x9 data.frame saved as `lData$lResults`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 15364x9 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 15178x9 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Results` Workflow</span> <span style="color: #00BBBB;">──────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2315,9 +2328,9 @@ confidence intervals for all KRI at once.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `dplyr::bind_rows`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 6438x4 data.frame saved as `lData$Reporting_Groups`.</span></span>
+<span><span class="co">#&gt; ── 6376x4 data.frame saved as `lData$Reporting_Groups`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6438x4 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 6376x4 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Groups` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2333,9 +2346,9 @@ confidence intervals for all KRI at once.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::BindResults`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 319137x10 data.frame saved as `lData$Reporting_Input`.</span></span>
+<span><span class="co">#&gt; ── 297726x10 data.frame saved as `lData$Reporting_Input`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 319137x10 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 297726x10 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Input` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2395,13 +2408,12 @@ confidence intervals for all KRI at once.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 3: `purrr::map`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Evaluating 6 parameter(s) for `purrr::map`</span></span>
+<span><span class="co">#&gt; ── Evaluating 5 parameter(s) for `purrr::map`</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> .x = Reporting_Join: Passing lData$Reporting_Join.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> .f = PredictBounds_Func: Passing lData$PredictBounds_Func.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nConfLevel = Threshold: Passing lMeta$Threshold.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> seed = 42: No matching data found. Passing '42' as a string.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `purrr::map`</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2414,9 +2426,9 @@ confidence intervals for all KRI at once.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_Long`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 5232x8 data.frame saved as `lData$Reporting_Bounds`.</span></span>
+<span><span class="co">#&gt; ── 5132x8 data.frame saved as `lData$Reporting_Bounds`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 5232x8 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 5132x8 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_Bounds` Workflow</span> <span style="color: #00BBBB;">───────────────────────────────────────</span></span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2444,25 +2456,25 @@ confidence intervals for all KRI at once.</p>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> nConfLevel = Threshold: Passing lMeta$Threshold.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> seed = 42: No matching data found. Passing '42' as a string.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> bMixStudies = bMixStudies: Passing lMeta$bMixStudies.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `purrr::map`</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 164</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 164</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
-<span><span class="co">#&gt; Resampling with minimum group count: 80</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 146</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 146</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
+<span><span class="co">#&gt; Calculated minimum group count: 69</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── list of length 8 saved as `lData$Analysis_BoundsRef_Wide`.</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2473,9 +2485,9 @@ confidence intervals for all KRI at once.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Transform_Long`</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 5133x11 data.frame saved as `lData$Reporting_BoundsRef`.</span></span>
+<span><span class="co">#&gt; ── 5102x11 data.frame saved as `lData$Reporting_BoundsRef`.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 5133x11 data.frame`.</span> ──</span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Returning results from final step: 5102x11 data.frame`.</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Completed `Reporting_BoundsRef` Workflow</span> <span style="color: #00BBBB;">────────────────────────────────────</span></span></span>
 <span></span>
@@ -2529,10 +2541,10 @@ confidence intervals for all KRI at once.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 8995 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 8902 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 8995x9 data.frame saved as `lData$ResultsLog`.</span></span>
+<span><span class="co">#&gt; ── 8902x9 data.frame saved as `lData$ResultsLog`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 2 of 6: `gsm.core::RunQuery`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2562,10 +2574,10 @@ confidence intervals for all KRI at once.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.core::RunQuery`</span></span>
 <span><span class="co">#&gt; Creating a new temporary DuckDB connection.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 7508 rows returned.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> SQL Query complete: 7401 rows returned.</span></span>
 <span><span class="co">#&gt; Disconnected from temporary DuckDB connection.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── 7508x9 data.frame saved as `lData$ResultsNorm`.</span></span>
+<span><span class="co">#&gt; ── 7401x9 data.frame saved as `lData$ResultsNorm`.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── <span style="font-weight: bold;">Workflow Step 3 of 6: `gsm.studykri::MakeCharts_StudyKRI`</span> ──</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -2616,13 +2628,13 @@ confidence intervals for all KRI at once.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Calling `gsm.studykri::Report_StudyKRI`</span></span>
 <span><span class="co">#&gt; processing file: Report_KRI.Rmd</span></span>
-<span><span class="co">#&gt; output file: /tmp/RtmpNXQelk/Report_KRI.knit.md</span></span>
-<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpNXQelk/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpNXQelk/rmarkdown-str1fa3203996b.html --variable code_folding=hide --variable code_menu=1</span></span>
+<span><span class="co">#&gt; output file: /tmp/RtmpbcSBiO/Report_KRI.knit.md</span></span>
+<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpbcSBiO/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpbcSBiO/rmarkdown-str214450961a2f.html --variable code_folding=hide --variable code_menu=1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Output created: report_studykri_AA-1.html</span></span>
 <span><span class="co">#&gt; processing file: Report_KRI.Rmd</span></span>
-<span><span class="co">#&gt; output file: /tmp/RtmpNXQelk/Report_KRI.knit.md</span></span>
-<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpNXQelk/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpNXQelk/rmarkdown-str1fa36cb11736.html --variable code_folding=hide --variable code_menu=1</span></span>
+<span><span class="co">#&gt; output file: /tmp/RtmpbcSBiO/Report_KRI.knit.md</span></span>
+<span><span class="co">#&gt; /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpbcSBiO/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpbcSBiO/rmarkdown-str214454a5e47.html --variable code_folding=hide --variable code_menu=1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Output created: report_studykri_AA-2.html</span></span>
 <span><span class="co">#&gt; </span></span>

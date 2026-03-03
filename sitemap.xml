@@ -10,6 +10,7 @@
 <url><loc>https://impala-consortium.github.io/gsm.studykri/index.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/news/index.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/AddScreeningFailures.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/AggrStudyMonth.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBounds.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRef.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRefSet.html</loc></url>
@@ -17,7 +18,9 @@
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/BindLists.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/BindResults.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/CalculateDaysByMonth.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/CumulativeCounts.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/GenerateMonthSeq.html</loc></url>
+<url><loc>https://impala-consortium.github.io/gsm.studykri/reference/GenerateUniqueTempName.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/HandleLazyTable.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/Input_CountSiteByMonth.html</loc></url>
 <url><loc>https://impala-consortium.github.io/gsm.studykri/reference/JoinKRIByDenominator.html</loc></url>

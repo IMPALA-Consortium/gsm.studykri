@@ -1,5 +1,44 @@
 # Changelog
 
+## gsm.studykri 0.3.0
+
+- Established compatibility with snowflake backend by:
+- Added `vDbIntRandomRange` parameter to bootstrap functions
+  ([`Analyze_StudyKRI_PredictBounds()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBounds.md),
+  [`Analyze_StudyKRI_PredictBoundsRef()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRef.md),
+  [`Analyze_StudyKRI_PredictBoundsRefSet()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRefSet.md))
+  to support database backends that use large integer values for random
+  number generation (e.g., Snowflake) (#7)
+- Added `nMinGroups` parameter to
+  [`Analyze_StudyKRI_PredictBoundsRefSet()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRefSet.md)
+  to allow passing pre-calculated minimum group counts, avoiding
+  expensive
+  [`collect()`](https://dplyr.tidyverse.org/reference/compute.html)
+  operations on database backends
+- Added `strMinGroupsCol` parameter to
+  [`Analyze_StudyKRI_PredictBoundsRef()`](https://impala-consortium.github.io/gsm.studykri/reference/Analyze_StudyKRI_PredictBoundsRef.md)
+  to specify custom column name for minimum group counts in StudyRef
+  tables (default: “MinGroups”)
+- Added `bSkipValidation` parameter to
+  [`JoinKRIByDenominator()`](https://impala-consortium.github.io/gsm.studykri/reference/JoinKRIByDenominator.md)
+  to disable validation checks that require
+  [`collect()`](https://dplyr.tidyverse.org/reference/compute.html)
+  operations for improved performance with database backends
+- Revised reference calculation now creating study-level timelines for
+  each bootstrap iteration before calculating confidcence intervalls.
+  introduced bMixStudies: FALSE this better conserves inter-study
+  variability leading to wider reference confidence intervalls.
+- Fixed Bug that mixed patients with identical subject ids between
+  studies in Input_CountSiteByMonth
+- dfSubjects from Input_CountSiteByMonth() is optional when strGroupCol
+  already in dfNumerator and dfDenominator
+- HandleLazyTables will use unique names for temp tables using random
+  integers
+- remove seed parameter for bootstrap functions
+- add funCompute paramter to `Analyze_StudyKRI_PredictBoundsRef` which
+  allows to create temporary tables for each reference set to solve
+  backend issues
+
 ## gsm.studykri 0.2.0
 
 - Added 10 additional KRI workflows (kri0005-kri0014) covering lab

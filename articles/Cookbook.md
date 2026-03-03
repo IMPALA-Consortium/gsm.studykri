@@ -75,11 +75,15 @@ lPortfolio <- SimulatePortfolio(
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4"),
     nSubjects = c(500, 750, 150, 200),
-    strOversamplDomain = rep("Raw_AE", 4),
+    strOversampleDomain = rep("Raw_AE", 4),
     vOversamplQuantileRange_min = c(0, 0, 0, 0),
-    vOversamplQuantileRange_max = c(1, 1, 1, 0.75)
+    vOversamplQuantileRange_max = c(0.5, 1, 1, 1)
   )
 )
+#> Filtered to 521 subjects with Raw_AE records in 0.00-0.50 quantile range (1-3 records)
+#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
+#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
+#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
 ```
 
 ## Calculate KRI
@@ -113,20 +117,20 @@ dfInput <- gsm.studykri::Input_CountSiteByMonth(
 )
 
 dfInput
-#> # A tibble: 19,811 × 7
+#> # A tibble: 18,252 × 7
 #>    GroupID    GroupLevel Numerator Denominator Metric StudyID MonthYYYYMM
 #>    <chr>      <chr>          <int>       <int>  <dbl> <chr>         <dbl>
-#>  1 AA-1_0X001 Site               1           1    1   AA-1         201610
-#>  2 AA-1_0X001 Site               1           1    1   AA-1         201611
-#>  3 AA-1_0X001 Site               1           1    1   AA-1         201803
-#>  4 AA-1_0X001 Site               1           0   NA   AA-1         201806
-#>  5 AA-1_0X003 Site               3           1    3   AA-1         200410
-#>  6 AA-1_0X003 Site               2           1    2   AA-1         200504
-#>  7 AA-1_0X003 Site               1           0   NA   AA-1         200506
-#>  8 AA-1_0X003 Site               1           1    1   AA-1         200602
-#>  9 AA-1_0X003 Site               1           2    0.5 AA-1         200605
-#> 10 AA-1_0X003 Site               1           1    1   AA-1         200907
-#> # ℹ 19,801 more rows
+#>  1 AA-1_0X004 Site               1           1  1     AA-1         201105
+#>  2 AA-1_0X005 Site               1           1  1     AA-1         200811
+#>  3 AA-1_0X005 Site               1           0 NA     AA-1         200906
+#>  4 AA-1_0X005 Site               1           1  1     AA-1         201105
+#>  5 AA-1_0X005 Site               1           1  1     AA-1         201204
+#>  6 AA-1_0X011 Site               1           1  1     AA-1         200411
+#>  7 AA-1_0X011 Site               1           1  1     AA-1         201107
+#>  8 AA-1_0X011 Site               2           3  0.667 AA-1         201306
+#>  9 AA-1_0X011 Site               1           0 NA     AA-1         201506
+#> 10 AA-1_0X011 Site               1           2  0.5   AA-1         201601
+#> # ℹ 18,242 more rows
 ```
 
 Alternatively we can also use days on study as a denominator by passing
@@ -148,20 +152,20 @@ dfInputDays <- gsm.studykri::Input_CountSiteByMonth(
 )
 
 dfInputDays
-#> # A tibble: 24,266 × 7
+#> # A tibble: 22,473 × 7
 #>    GroupID    GroupLevel Numerator Denominator Metric StudyID MonthYYYYMM
 #>    <chr>      <chr>          <int>       <int>  <dbl> <chr>         <dbl>
-#>  1 AA-1_0X001 Site               1          31 0.0323 AA-1         201610
-#>  2 AA-1_0X001 Site               1          30 0.0333 AA-1         201611
-#>  3 AA-1_0X001 Site               1          31 0.0323 AA-1         201803
-#>  4 AA-1_0X001 Site               1          30 0.0333 AA-1         201806
-#>  5 AA-1_0X003 Site               3          31 0.0968 AA-1         200410
-#>  6 AA-1_0X003 Site               2          30 0.0667 AA-1         200504
-#>  7 AA-1_0X003 Site               1          30 0.0333 AA-1         200506
-#>  8 AA-1_0X003 Site               1          56 0.0179 AA-1         200602
-#>  9 AA-1_0X003 Site               1          62 0.0161 AA-1         200605
-#> 10 AA-1_0X003 Site               1          31 0.0323 AA-1         200907
-#> # ℹ 24,256 more rows
+#>  1 AA-1_0X004 Site               1          31 0.0323 AA-1         201105
+#>  2 AA-1_0X005 Site               1          30 0.0333 AA-1         200811
+#>  3 AA-1_0X005 Site               1          30 0.0333 AA-1         200906
+#>  4 AA-1_0X005 Site               1          31 0.0323 AA-1         201105
+#>  5 AA-1_0X005 Site               1          30 0.0333 AA-1         201204
+#>  6 AA-1_0X011 Site               1          30 0.0333 AA-1         200411
+#>  7 AA-1_0X011 Site               1          31 0.0323 AA-1         201107
+#>  8 AA-1_0X011 Site               2          53 0.0377 AA-1         201306
+#>  9 AA-1_0X011 Site               1          30 0.0333 AA-1         201506
+#> 10 AA-1_0X011 Site               1          31 0.0323 AA-1         201601
+#> # ℹ 22,463 more rows
 ```
 
 Next we transform the data to return the cumulated event counts on
@@ -175,20 +179,20 @@ dfTransformed <- gsm.studykri::Transform_CumCount(
 )
 
 dfTransformed
-#> # A tibble: 742 × 7
+#> # A tibble: 745 × 7
 #>    StudyID MonthYYYYMM StudyMonth Numerator Denominator Metric GroupCount
 #>    <chr>         <dbl>      <int>     <int>       <int>  <dbl>      <int>
-#>  1 AA-1         200403          1         2          25  0.08          10
-#>  2 AA-1         200404          2         6          39  0.154         13
-#>  3 AA-1         200405          3        12          60  0.2           16
-#>  4 AA-1         200406          4        12          80  0.15          16
-#>  5 AA-1         200407          5        16         106  0.151         18
-#>  6 AA-1         200408          6        19         137  0.139         22
-#>  7 AA-1         200409          7        26         168  0.155         23
-#>  8 AA-1         200410          8        31         200  0.155         24
-#>  9 AA-1         200411          9        34         233  0.146         24
-#> 10 AA-1         200412         10        36         268  0.134         22
-#> # ℹ 732 more rows
+#>  1 AA-1         200404          1         6          28 0.214           9
+#>  2 AA-1         200405          2         8          45 0.178          12
+#>  3 AA-1         200406          3         8          61 0.131          13
+#>  4 AA-1         200407          4        10          85 0.118          16
+#>  5 AA-1         200408          5        12         115 0.104          18
+#>  6 AA-1         200409          6        17         142 0.120          17
+#>  7 AA-1         200410          7        18         176 0.102          19
+#>  8 AA-1         200411          8        20         208 0.0962         19
+#>  9 AA-1         200412          9        23         238 0.0966         18
+#> 10 AA-1         200501         10        26         276 0.0942         21
+#> # ℹ 735 more rows
 ```
 
 Analyze_StudyKRI_PredictBounds calculates upper and lower confidence
@@ -200,20 +204,20 @@ dfBounds <- dfInput %>%
 #> Using all 4 studies found in dfInput
 
 dfBounds
-#> # A tibble: 742 × 6
+#> # A tibble: 745 × 6
 #>    StudyID StudyMonth Median  Lower Upper BootstrapCount
 #>    <chr>        <int>  <dbl>  <dbl> <dbl>          <int>
-#>  1 AA-1             1 0.0741 0      0.211           1000
-#>  2 AA-1             2 0.15   0      0.308           1000
-#>  3 AA-1             3 0.194  0.0556 0.343           1000
-#>  4 AA-1             4 0.144  0.0385 0.269           1000
-#>  5 AA-1             5 0.146  0.0547 0.261           1000
-#>  6 AA-1             6 0.135  0.0552 0.234           1000
-#>  7 AA-1             7 0.152  0.0684 0.242           1000
-#>  8 AA-1             8 0.152  0.0732 0.242           1000
-#>  9 AA-1             9 0.143  0.0647 0.227           1000
-#> 10 AA-1            10 0.132  0.0596 0.209           1000
-#> # ℹ 732 more rows
+#>  1 AA-1             1 0.214  0.0713 0.333           1000
+#>  2 AA-1             2 0.172  0.0476 0.322           1000
+#>  3 AA-1             3 0.127  0.0345 0.237           1000
+#>  4 AA-1             4 0.115  0.0357 0.197           1000
+#>  5 AA-1             5 0.104  0.0404 0.164           1000
+#>  6 AA-1             6 0.120  0.0642 0.175           1000
+#>  7 AA-1             7 0.102  0.0597 0.147           1000
+#>  8 AA-1             8 0.0952 0.0621 0.134           1000
+#>  9 AA-1             9 0.0973 0.0574 0.130           1000
+#> 10 AA-1            10 0.0945 0.0613 0.124           1000
+#> # ℹ 735 more rows
 ```
 
 We can plot the preliminary results.
@@ -238,23 +242,23 @@ dfStudyRef <- tibble(
 )
 
 dfBoundsRef <- gsm.studykri::Analyze_StudyKRI_PredictBoundsRef(dfInput, dfStudyRef)
-#> Resampling with minimum group count: 78
+#> Calculated minimum group count: 74
 
 dfBoundsRef
-#> # A tibble: 189 × 9
+#> # A tibble: 187 × 9
 #>    StudyMonth Median  Lower Upper BootstrapCount GroupCount StudyCount StudyID
 #>         <int>  <dbl>  <dbl> <dbl>          <int>      <int>      <int> <chr>  
-#>  1          1  0.125 0      0.25            1000         78          3 AA-1   
-#>  2          2  0.179 0      0.429           1000         78          3 AA-1   
-#>  3          3  0.182 0      0.421           1000         78          3 AA-1   
-#>  4          4  0.172 0.0171 0.407           1000         78          3 AA-1   
-#>  5          5  0.185 0.0455 0.353           1000         78          3 AA-1   
-#>  6          6  0.156 0.0482 0.286           1000         78          3 AA-1   
-#>  7          7  0.118 0.0392 0.206           1000         78          3 AA-1   
-#>  8          8  0.133 0.0650 0.211           1000         78          3 AA-1   
-#>  9          9  0.143 0.0759 0.220           1000         78          3 AA-1   
-#> 10         10  0.136 0.0782 0.203           1000         78          3 AA-1   
-#> # ℹ 179 more rows
+#>  1          1  0.154 0      0.722           1000         74          3 AA-1   
+#>  2          2  0.143 0      0.519           1000         74          3 AA-1   
+#>  3          3  0.143 0      0.6             1000         74          3 AA-1   
+#>  4          4  0.120 0      0.654           1000         74          3 AA-1   
+#>  5          5  0.146 0.0294 0.651           1000         74          3 AA-1   
+#>  6          6  0.161 0.0526 0.663           1000         74          3 AA-1   
+#>  7          7  0.149 0.0476 0.607           1000         74          3 AA-1   
+#>  8          8  0.157 0.0541 0.611           1000         74          3 AA-1   
+#>  9          9  0.151 0.0571 0.577           1000         74          3 AA-1   
+#> 10         10  0.149 0.0575 0.527           1000         74          3 AA-1   
+#> # ℹ 177 more rows
 #> # ℹ 1 more variable: StudyRefID <chr>
 ```
 
@@ -265,8 +269,11 @@ gsm.studykri::Visualize_StudyKRI(
   dfStudyKRI = dfTransformed,
   dfBounds = dfBounds,
   dfBoundsRef = dfBoundsRef,
-  strStudyID = "AA-1"
+  strStudyID = "AA-1",
+  bLogY = TRUE
 )
+#> Warning in ggplot2::scale_y_log10(): log-10 transformation
+#> introduced infinite values.
 ```
 
 ![](Cookbook_files/figure-html/unnamed-chunk-8-1.png)
@@ -284,7 +291,7 @@ dfBounds <- dfInputDays %>%
 #> Using all 4 studies found in dfInput
 
 dfBoundsRef <- gsm.studykri::Analyze_StudyKRI_PredictBoundsRef(dfInputDays, dfStudyRef)
-#> Resampling with minimum group count: 78
+#> Calculated minimum group count: 74
 
 library(ggplot2)
 
@@ -335,12 +342,18 @@ lRaw <- SimulatePortfolio(
   dfConfig = tibble(
     studyid = c("AA-1", "AA-2", "AA-3", "AA-4", "AA-5", "AA-6"),
     nSubjects = c(500, 750, 150, 200, 250, 300),
-    strOversamplDomain = rep("Raw_AE", 6),
+    strOversampleDomain = rep("Raw_AE", 6),
     vOversamplQuantileRange_min = c(0, 0, 0, 0, 0, 0),
     vOversamplQuantileRange_max = c(1, 0.75, 1, 1, 0.95, 0.9),
     nScreeningFailureRatio = c(0.2, 0.2, 0.2, 0.2, 0.2, 0.2)
   )
 )
+#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
+#> Filtered to 773 subjects with Raw_AE records in 0.00-0.75 quantile range (1-6 records)
+#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
+#> Filtered to 1016 subjects with Raw_AE records in 0.00-1.00 quantile range (1-31 records)
+#> Filtered to 969 subjects with Raw_AE records in 0.00-0.95 quantile range (1-13 records)
+#> Filtered to 914 subjects with Raw_AE records in 0.00-0.90 quantile range (1-10 records)
 
 lRaw$Raw_StudyRef <- tibble(
   studyid = c(rep("AA-1", 3), rep("AA-2", 4)),
@@ -364,35 +377,35 @@ mapping_wf <- gsm.core::MakeWorkflowList(
 lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
 #> ℹ Ingesting data for AE.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 6688 rows returned.
+#> ✔ SQL Query complete: 6545 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for ENROLL.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 3909 rows returned.
+#> ✔ SQL Query complete: 3641 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for IE.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 42143 rows returned.
+#> ✔ SQL Query complete: 38626 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for LB.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 1585395 rows returned.
+#> ✔ SQL Query complete: 1457497 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for PD.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 6314 rows returned.
+#> ✔ SQL Query complete: 5720 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for Randomization.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 1819 rows returned.
+#> ✔ SQL Query complete: 1661 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for SDRGCOMP.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 964 rows returned.
+#> ✔ SQL Query complete: 876 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for STUDCOMP.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 193 rows returned.
+#> ✔ SQL Query complete: 154 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for StudyRef.
 #> Creating a new temporary DuckDB connection.
@@ -400,44 +413,44 @@ lIngest <- gsm.mapping::Ingest(lRaw, gsm.mapping::CombineSpecs(mapping_wf))
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for SUBJ.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 1819 rows returned.
+#> ✔ SQL Query complete: 1661 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for VISIT.
 #> Creating a new temporary DuckDB connection.
-#> Warning: Field `visit_dt`: 27 unparsable Date(s) set to NA
-#> ✔ SQL Query complete: 39431 rows returned.
+#> Warning: Field `visit_dt`: 13 unparsable Date(s) set to NA
+#> ✔ SQL Query complete: 36113 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for DATACHG.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 2968624 rows returned.
+#> ✔ SQL Query complete: 2719904 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for DATAENT.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 347360 rows returned.
+#> ✔ SQL Query complete: 318256 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for SUBJ.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 1819 rows returned.
+#> ✔ SQL Query complete: 1661 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for IE.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 42143 rows returned.
+#> ✔ SQL Query complete: 38626 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for ENROLL.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 3909 rows returned.
+#> ✔ SQL Query complete: 3641 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for PD.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 6314 rows returned.
+#> ✔ SQL Query complete: 5720 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for QUERY.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 59403 rows returned.
+#> ✔ SQL Query complete: 54606 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for SITE.
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 636 rows returned.
+#> ✔ SQL Query complete: 632 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> ℹ Ingesting data for STUDY.
 #> Creating a new temporary DuckDB connection.
@@ -464,9 +477,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 6688x8 data.frame saved as `lData$Mapped_AE`.
+#> ── 6545x8 data.frame saved as `lData$Mapped_AE`.
 #> 
-#> ── Returning results from final step: 6688x8 data.frame`. ──
+#> ── Returning results from final step: 6545x8 data.frame`. ──
 #> 
 #> ── Completed `Mapped_AE` Workflow ──────────────────────────────────────────────
 #> 
@@ -485,9 +498,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 3909x7 data.frame saved as `lData$Mapped_ENROLL`.
+#> ── 3641x7 data.frame saved as `lData$Mapped_ENROLL`.
 #> 
-#> ── Returning results from final step: 3909x7 data.frame`. ──
+#> ── Returning results from final step: 3641x7 data.frame`. ──
 #> 
 #> ── Completed `Mapped_ENROLL` Workflow ──────────────────────────────────────────
 #> 
@@ -506,10 +519,10 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 42143 rows returned.
+#> ✔ SQL Query complete: 38626 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 42143x6 data.frame saved as `lData$ie_violation`.
+#> ── 38626x6 data.frame saved as `lData$ie_violation`.
 #> 
 #> ── Workflow Step 2 of 2: `gsm.core::RunQuery` ──
 #> 
@@ -543,9 +556,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 1585395x4 data.frame saved as `lData$Mapped_LB`.
+#> ── 1457497x4 data.frame saved as `lData$Mapped_LB`.
 #> 
-#> ── Returning results from final step: 1585395x4 data.frame`. ──
+#> ── Returning results from final step: 1457497x4 data.frame`. ──
 #> 
 #> ── Completed `Mapped_LB` Workflow ──────────────────────────────────────────────
 #> 
@@ -564,9 +577,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 6314x5 data.frame saved as `lData$Mapped_PD`.
+#> ── 5720x5 data.frame saved as `lData$Mapped_PD`.
 #> 
-#> ── Returning results from final step: 6314x5 data.frame`. ──
+#> ── Returning results from final step: 5720x5 data.frame`. ──
 #> 
 #> ── Completed `Mapped_PD` Workflow ──────────────────────────────────────────────
 #> 
@@ -585,12 +598,12 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 1819 rows returned.
+#> ✔ SQL Query complete: 1661 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 1819x6 data.frame saved as `lData$Mapped_Randomization`.
+#> ── 1661x6 data.frame saved as `lData$Mapped_Randomization`.
 #> 
-#> ── Returning results from final step: 1819x6 data.frame`. ──
+#> ── Returning results from final step: 1661x6 data.frame`. ──
 #> 
 #> ── Completed `Mapped_Randomization` Workflow ───────────────────────────────────
 #> 
@@ -609,9 +622,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 964x5 data.frame saved as `lData$Mapped_SDRGCOMP`.
+#> ── 876x5 data.frame saved as `lData$Mapped_SDRGCOMP`.
 #> 
-#> ── Returning results from final step: 964x5 data.frame`. ──
+#> ── Returning results from final step: 876x5 data.frame`. ──
 #> 
 #> ── Completed `Mapped_SDRGCOMP` Workflow ────────────────────────────────────────
 #> 
@@ -630,9 +643,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 193x5 data.frame saved as `lData$Mapped_STUDCOMP`.
+#> ── 154x5 data.frame saved as `lData$Mapped_STUDCOMP`.
 #> 
-#> ── Returning results from final step: 193x5 data.frame`. ──
+#> ── Returning results from final step: 154x5 data.frame`. ──
 #> 
 #> ── Completed `Mapped_STUDCOMP` Workflow ────────────────────────────────────────
 #> 
@@ -675,12 +688,12 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 1819 rows returned.
+#> ✔ SQL Query complete: 1661 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 1819x14 data.frame saved as `lData$Mapped_SUBJ`.
+#> ── 1661x14 data.frame saved as `lData$Mapped_SUBJ`.
 #> 
-#> ── Returning results from final step: 1819x14 data.frame`. ──
+#> ── Returning results from final step: 1661x14 data.frame`. ──
 #> 
 #> ── Completed `Mapped_SUBJ` Workflow ────────────────────────────────────────────
 #> 
@@ -699,9 +712,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `=`
 #> 
-#> ── 39431x6 data.frame saved as `lData$Mapped_VISIT`.
+#> ── 36113x6 data.frame saved as `lData$Mapped_VISIT`.
 #> 
-#> ── Returning results from final step: 39431x6 data.frame`. ──
+#> ── Returning results from final step: 36113x6 data.frame`. ──
 #> 
 #> ── Completed `Mapped_Visit` Workflow ───────────────────────────────────────────
 #> 
@@ -724,7 +737,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::select`
 #> 
-#> ── 1819x3 data.frame saved as `lData$Temp_SubjectLookup`.
+#> ── 1661x3 data.frame saved as `lData$Temp_SubjectLookup`.
 #> 
 #> ── Workflow Step 2 of 3: `dplyr::left_join` ──
 #> 
@@ -735,7 +748,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::left_join`
 #> 
-#> ── 2968624x7 data.frame saved as `lData$Temp_DATACHG`.
+#> ── 2719904x7 data.frame saved as `lData$Temp_DATACHG`.
 #> 
 #> ── Workflow Step 3 of 3: `dplyr::left_join` ──
 #> 
@@ -746,9 +759,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::left_join`
 #> 
-#> ── 2968624x9 data.frame saved as `lData$Mapped_DATACHG`.
+#> ── 2719904x9 data.frame saved as `lData$Mapped_DATACHG`.
 #> 
-#> ── Returning results from final step: 2968624x9 data.frame`. ──
+#> ── Returning results from final step: 2719904x9 data.frame`. ──
 #> 
 #> ── Completed `Mapped_DATACHG` Workflow ─────────────────────────────────────────
 #> 
@@ -769,7 +782,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::select`
 #> 
-#> ── 1819x2 data.frame saved as `lData$Temp_SubjectLookup`.
+#> ── 1661x2 data.frame saved as `lData$Temp_SubjectLookup`.
 #> 
 #> ── Workflow Step 2 of 2: `dplyr::left_join` ──
 #> 
@@ -780,9 +793,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::left_join`
 #> 
-#> ── 347360x7 data.frame saved as `lData$Mapped_DATAENT`.
+#> ── 318256x7 data.frame saved as `lData$Mapped_DATAENT`.
 #> 
-#> ── Returning results from final step: 347360x7 data.frame`. ──
+#> ── Returning results from final step: 318256x7 data.frame`. ──
 #> 
 #> ── Completed `Mapped_DATAENT` Workflow ─────────────────────────────────────────
 #> 
@@ -817,7 +830,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::left_join`
 #> 
-#> ── 3909x9 data.frame saved as `lData$add_ie`.
+#> ── 3641x9 data.frame saved as `lData$add_ie`.
 #> 
 #> ── Workflow Step 3 of 5: `gsm.core::RunQuery` ──
 #> 
@@ -827,10 +840,10 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 66 rows returned.
+#> ✔ SQL Query complete: 69 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 66x3 data.frame saved as `lData$pivot_pd`.
+#> ── 69x3 data.frame saved as `lData$pivot_pd`.
 #> 
 #> ── Workflow Step 4 of 5: `dplyr::left_join` ──
 #> 
@@ -841,7 +854,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::left_join`
 #> 
-#> ── 3909x10 data.frame saved as `lData$premapped`.
+#> ── 3641x10 data.frame saved as `lData$premapped`.
 #> 
 #> ── Workflow Step 5 of 5: `gsm.core::RunQuery` ──
 #> 
@@ -851,12 +864,12 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 1819 rows returned.
+#> ✔ SQL Query complete: 1661 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 1819x11 data.frame saved as `lData$Mapped_EXCLUSION`.
+#> ── 1661x11 data.frame saved as `lData$Mapped_EXCLUSION`.
 #> 
-#> ── Returning results from final step: 1819x11 data.frame`. ──
+#> ── Returning results from final step: 1661x11 data.frame`. ──
 #> 
 #> ── Completed `Mapped_EXCLUSION` Workflow ───────────────────────────────────────
 #> 
@@ -877,7 +890,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::select`
 #> 
-#> ── 1819x2 data.frame saved as `lData$Temp_SubjectLookup`.
+#> ── 1661x2 data.frame saved as `lData$Temp_SubjectLookup`.
 #> 
 #> ── Workflow Step 2 of 2: `dplyr::left_join` ──
 #> 
@@ -888,9 +901,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::left_join`
 #> 
-#> ── 59403x7 data.frame saved as `lData$Mapped_QUERY`.
+#> ── 54606x7 data.frame saved as `lData$Mapped_QUERY`.
 #> 
-#> ── Returning results from final step: 59403x7 data.frame`. ──
+#> ── Returning results from final step: 54606x7 data.frame`. ──
 #> 
 #> ── Completed `Mapped_QUERY` Workflow ───────────────────────────────────────────
 #> 
@@ -944,10 +957,10 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 636 rows returned.
+#> ✔ SQL Query complete: 632 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 636x9 data.frame saved as `lData$Temp_CTMSSiteWide`.
+#> ── 632x9 data.frame saved as `lData$Temp_CTMSSiteWide`.
 #> 
 #> ── Workflow Step 2 of 5: `gsm.mapping::MakeLongMeta` ──
 #> 
@@ -957,7 +970,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `gsm.mapping::MakeLongMeta`
 #> 
-#> ── 5088x4 data.frame saved as `lData$Temp_CTMSSite`.
+#> ── 5056x4 data.frame saved as `lData$Temp_CTMSSite`.
 #> 
 #> ── Workflow Step 3 of 5: `gsm.core::RunQuery` ──
 #> 
@@ -967,10 +980,10 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 606 rows returned.
+#> ✔ SQL Query complete: 591 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 606x3 data.frame saved as `lData$Temp_SiteCountsWide`.
+#> ── 591x3 data.frame saved as `lData$Temp_SiteCountsWide`.
 #> 
 #> ── Workflow Step 4 of 5: `gsm.mapping::MakeLongMeta` ──
 #> 
@@ -980,7 +993,7 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `gsm.mapping::MakeLongMeta`
 #> 
-#> ── 1212x4 data.frame saved as `lData$Temp_SiteCounts`.
+#> ── 1182x4 data.frame saved as `lData$Temp_SiteCounts`.
 #> 
 #> ── Workflow Step 5 of 5: `dplyr::bind_rows` ──
 #> 
@@ -990,9 +1003,9 @@ lMapped <- gsm.core::RunWorkflows(lWorkflows = mapping_wf, lData = lIngest)
 #> 
 #> ── Calling `dplyr::bind_rows`
 #> 
-#> ── 6300x4 data.frame saved as `lData$Mapped_SITE`.
+#> ── 6238x4 data.frame saved as `lData$Mapped_SITE`.
 #> 
-#> ── Returning results from final step: 6300x4 data.frame`. ──
+#> ── Returning results from final step: 6238x4 data.frame`. ──
 #> 
 #> ── Completed `Mapped_SITE` Workflow ────────────────────────────────────────────
 #> 
@@ -1153,7 +1166,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 34632x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 32420x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 2 of 3: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1163,7 +1176,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1121x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 3 of 3: `list` ──
 #> 
@@ -1202,10 +1215,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 193 rows returned.
+#> ✔ SQL Query complete: 171 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 193x8 data.frame saved as `lData$Mapped_SAE`.
+#> ── 171x8 data.frame saved as `lData$Mapped_SAE`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1225,7 +1238,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 34632x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 32420x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1235,7 +1248,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1121x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -1268,10 +1281,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 5650 rows returned.
+#> ✔ SQL Query complete: 5141 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 5650x5 data.frame saved as `lData$Temp_NONIMPORTANT`.
+#> ── 5141x5 data.frame saved as `lData$Temp_NONIMPORTANT`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1291,7 +1304,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 34771x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 32572x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1301,7 +1314,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1121x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -1334,10 +1347,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 664 rows returned.
+#> ✔ SQL Query complete: 579 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 664x5 data.frame saved as `lData$Temp_IMPORTANT`.
+#> ── 579x5 data.frame saved as `lData$Temp_IMPORTANT`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1357,7 +1370,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 34645x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 32433x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1367,7 +1380,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1133x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1121x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -1400,10 +1413,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 2235 rows returned.
+#> ✔ SQL Query complete: 1861 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 2235x4 data.frame saved as `lData$Temp_ABNORMAL`.
+#> ── 1861x4 data.frame saved as `lData$Temp_ABNORMAL`.
 #> 
 #> ── Workflow Step 2 of 5: `RunQuery` ──
 #> 
@@ -1413,10 +1426,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 800395 rows returned.
+#> ✔ SQL Query complete: 735123 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 800395x4 data.frame saved as `lData$Temp_LB`.
+#> ── 735123x4 data.frame saved as `lData$Temp_LB`.
 #> 
 #> ── Workflow Step 3 of 5: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1435,7 +1448,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 27746x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 25894x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 4 of 5: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1445,7 +1458,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1145x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1132x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 5 of 5: `list` ──
 #> 
@@ -1478,10 +1491,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 177 rows returned.
+#> ✔ SQL Query complete: 137 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 177x5 data.frame saved as `lData$Temp_DROPOUT`.
+#> ── 137x5 data.frame saved as `lData$Temp_DROPOUT`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1500,7 +1513,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 1960x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 1758x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1510,7 +1523,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1032x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1017x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -1543,10 +1556,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 189 rows returned.
+#> ✔ SQL Query complete: 153 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 189x5 data.frame saved as `lData$Temp_DISCONTINUED`.
+#> ── 153x5 data.frame saved as `lData$Temp_DISCONTINUED`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1565,7 +1578,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 1971x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 1774x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1575,7 +1588,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1040x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1036x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -1609,10 +1622,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 59403 rows returned.
+#> ✔ SQL Query complete: 54606 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 59403x7 data.frame saved as `lData$Temp_QUERY`.
+#> ── 54606x7 data.frame saved as `lData$Temp_QUERY`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1631,7 +1644,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 32247x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 30075x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1641,7 +1654,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1139x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1125x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -1674,10 +1687,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 1173 rows returned.
+#> ✔ SQL Query complete: 1074 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 1173x7 data.frame saved as `lData$Temp_OLDQUERY`.
+#> ── 1074x7 data.frame saved as `lData$Temp_OLDQUERY`.
 #> 
 #> ── Workflow Step 2 of 5: `RunQuery` ──
 #> 
@@ -1687,10 +1700,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 59403 rows returned.
+#> ✔ SQL Query complete: 54606 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 59403x7 data.frame saved as `lData$Temp_QUERY`.
+#> ── 54606x7 data.frame saved as `lData$Temp_QUERY`.
 #> 
 #> ── Workflow Step 3 of 5: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1709,7 +1722,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 23336x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 21615x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 4 of 5: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1719,7 +1732,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1102x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1085x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 5 of 5: `list` ──
 #> 
@@ -1752,10 +1765,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 14516 rows returned.
+#> ✔ SQL Query complete: 13398 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 14516x7 data.frame saved as `lData$Temp_LAG`.
+#> ── 13398x7 data.frame saved as `lData$Temp_LAG`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1774,7 +1787,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 30350x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 28273x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1784,7 +1797,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1135x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1119x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -1817,10 +1830,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 770726 rows returned.
+#> ✔ SQL Query complete: 706869 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 770726x9 data.frame saved as `lData$Temp_CHANGED`.
+#> ── 706869x9 data.frame saved as `lData$Temp_CHANGED`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1839,7 +1852,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 30366x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 28301x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1849,7 +1862,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1139x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1125x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -1881,10 +1894,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 2090 rows returned.
+#> ✔ SQL Query complete: 1980 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 2090x7 data.frame saved as `lData$Temp_SCREENED`.
+#> ── 1980x7 data.frame saved as `lData$Temp_SCREENED`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1903,7 +1916,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 3493x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 3261x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1913,7 +1926,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1018x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 997x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -1946,10 +1959,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 11453 rows returned.
+#> ✔ SQL Query complete: 10512 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 11453x6 data.frame saved as `lData$PK_Collected`.
+#> ── 10512x6 data.frame saved as `lData$PK_Collected`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -1968,7 +1981,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 27201x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 25308x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -1978,7 +1991,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 1089x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 1076x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -2011,10 +2024,10 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 10 rows returned.
+#> ✔ SQL Query complete: 18 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 10x11 data.frame saved as `lData$TEMP_VIOLATIONS`.
+#> ── 18x11 data.frame saved as `lData$TEMP_VIOLATIONS`.
 #> 
 #> ── Workflow Step 2 of 4: `gsm.studykri::Input_CountSiteByMonth` ──
 #> 
@@ -2033,7 +2046,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Input_CountSiteByMonth`
 #> 
-#> ── 1787x8 data.frame saved as `lData$Analysis_Input`.
+#> ── 1622x8 data.frame saved as `lData$Analysis_Input`.
 #> 
 #> ── Workflow Step 3 of 4: `gsm.studykri::Transform_CumCount` ──
 #> 
@@ -2043,7 +2056,7 @@ lAnalyzed <- gsm.core::RunWorkflows(lWorkflows = metrics_wf, lData = lMapped)
 #> 
 #> ── Calling `gsm.studykri::Transform_CumCount`
 #> 
-#> ── 993x7 data.frame saved as `lData$Analysis_Transformed`.
+#> ── 982x7 data.frame saved as `lData$Analysis_Transformed`.
 #> 
 #> ── Workflow Step 4 of 4: `list` ──
 #> 
@@ -2101,68 +2114,68 @@ lJoined <- gsm.studykri::JoinKRIByDenominator(dfInput, dfMetrics)
 
 str(lJoined)
 #> List of 8
-#>  $ Days on Study      : tibble [34,783 × 9] (S3: tbl_df/tbl/data.frame)
-#>   ..$ GroupID                   : chr [1:34783] "AA-1_0X001" "AA-1_0X003" "AA-1_0X003" "AA-1_0X003" ...
-#>   ..$ GroupLevel                : chr [1:34783] "Site" "Site" "Site" "Site" ...
-#>   ..$ Denominator               : int [1:34783] 31 30 31 60 60 62 60 62 60 62 ...
-#>   ..$ StudyID                   : chr [1:34783] "AA-1" "AA-1" "AA-1" "AA-1" ...
-#>   ..$ MonthYYYYMM               : num [1:34783] 201105 200706 200712 200804 200806 ...
-#>   ..$ Numerator_Analysis_kri0001: int [1:34783] 1 1 1 2 4 2 6 1 2 2 ...
-#>   ..$ Numerator_Analysis_kri0002: int [1:34783] 0 0 0 0 0 0 0 0 0 0 ...
-#>   ..$ Numerator_Analysis_kri0003: int [1:34783] 0 0 0 0 0 0 0 0 0 0 ...
-#>   ..$ Numerator_Analysis_kri0004: int [1:34783] 0 0 0 0 0 0 0 0 0 0 ...
-#>  $ Total Lab Samples  : tibble [27,746 × 6] (S3: tbl_df/tbl/data.frame)
-#>   ..$ GroupID                   : chr [1:27746] "AA-1_0X003" "AA-1_0X003" "AA-1_0X005" "AA-1_0X005" ...
-#>   ..$ GroupLevel                : chr [1:27746] "Site" "Site" "Site" "Site" ...
-#>   ..$ Denominator               : int [1:27746] 42 72 21 38 55 22 21 23 21 37 ...
-#>   ..$ StudyID                   : chr [1:27746] "AA-1" "AA-1" "AA-1" "AA-1" ...
-#>   ..$ MonthYYYYMM               : num [1:27746] 200804 200805 201008 201009 201010 ...
-#>   ..$ Numerator_Analysis_kri0005: int [1:27746] 2 5 1 4 6 2 2 2 2 2 ...
-#>  $ Enrolled Subjects  : tibble [2,008 × 8] (S3: tbl_df/tbl/data.frame)
-#>   ..$ GroupID                   : chr [1:2008] "AA-1_0X001" "AA-1_0X005" "AA-1_0X010" "AA-1_0X023" ...
-#>   ..$ GroupLevel                : chr [1:2008] "Site" "Site" "Site" "Site" ...
-#>   ..$ Denominator               : int [1:2008] 0 0 0 0 0 0 0 0 0 0 ...
-#>   ..$ StudyID                   : chr [1:2008] "AA-1" "AA-1" "AA-1" "AA-1" ...
-#>   ..$ MonthYYYYMM               : num [1:2008] 201411 201101 200511 200710 201205 ...
-#>   ..$ Numerator_Analysis_kri0006: int [1:2008] 1 1 1 1 1 1 1 1 1 1 ...
-#>   ..$ Numerator_Analysis_kri0007: int [1:2008] 1 NA NA NA NA 1 1 1 1 1 ...
-#>   ..$ Numerator_Analysis_kri0014: int [1:2008] NA NA NA NA NA NA NA NA NA NA ...
-#>  $ Total Data Points  : tibble [32,247 × 7] (S3: tbl_df/tbl/data.frame)
-#>   ..$ GroupID                   : chr [1:32247] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...
-#>   ..$ GroupLevel                : chr [1:32247] "Site" "Site" "Site" "Site" ...
-#>   ..$ Denominator               : int [1:32247] 35 50 93 77 77 69 85 77 77 22 ...
-#>   ..$ StudyID                   : chr [1:32247] "AA-1" "AA-1" "AA-1" "AA-1" ...
-#>   ..$ MonthYYYYMM               : num [1:32247] 201007 201008 201010 201011 201012 ...
-#>   ..$ Numerator_Analysis_kri0008: int [1:32247] 2 5 1 5 3 1 1 1 3 1 ...
-#>   ..$ Numerator_Analysis_kri0011: int [1:32247] 8 12 29 16 18 23 21 25 18 6 ...
-#>  $ Total Queries      : tibble [23,336 × 6] (S3: tbl_df/tbl/data.frame)
-#>   ..$ GroupID                   : chr [1:23336] "AA-1_0X003" "AA-1_0X005" "AA-1_0X007" "AA-1_0X010" ...
-#>   ..$ GroupLevel                : chr [1:23336] "Site" "Site" "Site" "Site" ...
-#>   ..$ Denominator               : int [1:23336] 3 2 2 3 2 1 5 2 5 4 ...
-#>   ..$ StudyID                   : chr [1:23336] "AA-1" "AA-1" "AA-1" "AA-1" ...
-#>   ..$ MonthYYYYMM               : num [1:23336] 201303 201708 201508 200806 200901 ...
-#>   ..$ Numerator_Analysis_kri0009: int [1:23336] 1 1 1 1 1 1 1 1 2 1 ...
-#>  $ Total Data Pages   : tibble [30,350 × 6] (S3: tbl_df/tbl/data.frame)
-#>   ..$ GroupID                   : chr [1:30350] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...
-#>   ..$ GroupLevel                : chr [1:30350] "Site" "Site" "Site" "Site" ...
-#>   ..$ Denominator               : int [1:30350] 9 10 9 9 3 1 10 9 9 11 ...
-#>   ..$ StudyID                   : chr [1:30350] "AA-1" "AA-1" "AA-1" "AA-1" ...
-#>   ..$ MonthYYYYMM               : num [1:30350] 201012 201102 201104 201105 201108 ...
-#>   ..$ Numerator_Analysis_kri0010: int [1:30350] 2 1 2 1 1 1 2 1 1 2 ...
-#>  $ Screened Subjects  : tibble [3,493 × 6] (S3: tbl_df/tbl/data.frame)
-#>   ..$ GroupID                   : chr [1:3493] "0X002" "0X002" "0X003" "0X004" ...
-#>   ..$ GroupLevel                : chr [1:3493] "Site" "Site" "Site" "Site" ...
-#>   ..$ Denominator               : int [1:3493] 4 50 9 4 1 16 4 18 9 4 ...
-#>   ..$ StudyID                   : chr [1:3493] "AA-1" "AA-1" "AA-1" "AA-1" ...
-#>   ..$ MonthYYYYMM               : num [1:3493] 201109 201407 201305 201205 201407 ...
-#>   ..$ Numerator_Analysis_kri0012: int [1:3493] 2 10 3 2 1 4 2 6 3 2 ...
-#>  $ PK Samples Expected: tibble [27,201 × 6] (S3: tbl_df/tbl/data.frame)
-#>   ..$ GroupID                   : chr [1:27201] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...
-#>   ..$ GroupLevel                : chr [1:27201] "Site" "Site" "Site" "Site" ...
-#>   ..$ Denominator               : int [1:27201] 1 1 1 2 1 1 2 1 1 1 ...
-#>   ..$ StudyID                   : chr [1:27201] "AA-1" "AA-1" "AA-1" "AA-1" ...
-#>   ..$ MonthYYYYMM               : num [1:27201] 201007 201008 201102 201107 201201 ...
-#>   ..$ Numerator_Analysis_kri0013: int [1:27201] 1 1 1 1 1 1 2 1 1 1 ...
+#>  $ Days on Study      : tibble [32,584 × 9] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:32584] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...
+#>   ..$ GroupLevel                : chr [1:32584] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:32584] 31 30 29 30 30 31 30 28 31 30 ...
+#>   ..$ StudyID                   : chr [1:32584] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:32584] 200705 200709 200802 200804 200809 ...
+#>   ..$ Numerator_Analysis_kri0001: int [1:32584] 1 1 1 1 1 1 1 1 1 2 ...
+#>   ..$ Numerator_Analysis_kri0002: int [1:32584] 0 0 0 0 0 0 0 0 0 0 ...
+#>   ..$ Numerator_Analysis_kri0003: int [1:32584] 0 0 0 0 0 0 0 0 0 0 ...
+#>   ..$ Numerator_Analysis_kri0004: int [1:32584] 0 0 0 0 0 0 0 0 0 0 ...
+#>  $ Total Lab Samples  : tibble [25,894 × 6] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:25894] "AA-1_0X001" "AA-1_0X001" "AA-1_0X003" "AA-1_0X005" ...
+#>   ..$ GroupLevel                : chr [1:25894] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:25894] 21 37 41 21 21 37 21 21 21 21 ...
+#>   ..$ StudyID                   : chr [1:25894] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:25894] 200705 200706 200707 200505 201401 ...
+#>   ..$ Numerator_Analysis_kri0005: int [1:25894] 2 3 1 1 1 1 1 1 1 1 ...
+#>  $ Enrolled Subjects  : tibble [1,804 × 8] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:1804] "AA-1_0X003" "AA-1_0X013" "AA-1_0X023" "AA-1_0X029" ...
+#>   ..$ GroupLevel                : chr [1:1804] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:1804] 0 0 0 0 0 0 0 0 0 0 ...
+#>   ..$ StudyID                   : chr [1:1804] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:1804] 200506 200803 201706 201207 201010 ...
+#>   ..$ Numerator_Analysis_kri0006: int [1:1804] 1 1 1 1 1 1 1 1 1 1 ...
+#>   ..$ Numerator_Analysis_kri0007: int [1:1804] NA 1 1 1 1 1 NA NA 1 1 ...
+#>   ..$ Numerator_Analysis_kri0014: int [1:1804] NA NA NA NA NA NA NA NA NA NA ...
+#>  $ Total Data Points  : tibble [30,075 × 7] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:30075] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...
+#>   ..$ GroupLevel                : chr [1:30075] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:30075] 35 83 148 83 77 77 103 78 84 8 ...
+#>   ..$ StudyID                   : chr [1:30075] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:30075] 200704 200705 200706 200707 200708 ...
+#>   ..$ Numerator_Analysis_kri0008: int [1:30075] 3 3 3 2 3 1 2 1 2 1 ...
+#>   ..$ Numerator_Analysis_kri0011: int [1:30075] 8 18 42 18 19 21 26 22 15 1 ...
+#>  $ Total Queries      : tibble [21,615 × 6] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:21615] "AA-1_0X006" "AA-1_0X006" "AA-1_0X006" "AA-1_0X007" ...
+#>   ..$ GroupLevel                : chr [1:21615] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:21615] 4 3 1 2 1 2 1 4 8 2 ...
+#>   ..$ StudyID                   : chr [1:21615] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:21615] 201604 201706 201801 200705 201812 ...
+#>   ..$ Numerator_Analysis_kri0009: int [1:21615] 1 1 1 1 1 1 1 1 1 1 ...
+#>  $ Total Data Pages   : tibble [28,273 × 6] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:28273] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...
+#>   ..$ GroupLevel                : chr [1:28273] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:28273] 10 9 10 9 1 4 1 16 10 9 ...
+#>   ..$ StudyID                   : chr [1:28273] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:28273] 200707 200709 200803 200804 200807 ...
+#>   ..$ Numerator_Analysis_kri0010: int [1:28273] 2 2 1 1 1 3 1 1 2 1 ...
+#>  $ Screened Subjects  : tibble [3,261 × 6] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:3261] "0X001" "0X001" "0X003" "0X004" ...
+#>   ..$ GroupLevel                : chr [1:3261] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:3261] 1 1 1 1 1 1 1 1 1 1 ...
+#>   ..$ StudyID                   : chr [1:3261] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:3261] 201008 201706 201705 200502 200607 ...
+#>   ..$ Numerator_Analysis_kri0012: int [1:3261] 1 1 1 1 1 1 1 1 1 1 ...
+#>  $ PK Samples Expected: tibble [25,308 × 6] (S3: tbl_df/tbl/data.frame)
+#>   ..$ GroupID                   : chr [1:25308] "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" "AA-1_0X001" ...
+#>   ..$ GroupLevel                : chr [1:25308] "Site" "Site" "Site" "Site" ...
+#>   ..$ Denominator               : int [1:25308] 1 1 2 1 1 1 1 2 1 2 ...
+#>   ..$ StudyID                   : chr [1:25308] "AA-1" "AA-1" "AA-1" "AA-1" ...
+#>   ..$ MonthYYYYMM               : num [1:25308] 200704 200705 200710 200804 200810 ...
+#>   ..$ Numerator_Analysis_kri0013: int [1:25308] 1 1 1 1 1 1 1 1 1 1 ...
 ```
 
 Using the study references we can calculate the bootstrapped confidence
@@ -2171,22 +2184,22 @@ intervals for all KRI at once.
 ``` r
 Bounds_Wide <- purrr::map(lJoined, ~ Analyze_StudyKRI_PredictBounds(., dfStudyRef))
 BoundsRef_Wide <- purrr::map(lJoined, ~ Analyze_StudyKRI_PredictBoundsRef(., dfStudyRef))
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 164
-#> Resampling with minimum group count: 164
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 146
+#> Calculated minimum group count: 146
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
 
 dfBounds <- Transform_Long(Bounds_Wide)
 dfBoundsRef <- Transform_Long(BoundsRef_Wide)
@@ -2209,13 +2222,13 @@ gsm.studykri::Report_StudyKRI(
   strInputPath = system.file("report", "Report_KRI.Rmd", package = "gsm.studykri")
 )
 #> processing file: Report_KRI.Rmd
-#> output file: /tmp/RtmpNXQelk/Report_KRI.knit.md
-#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpNXQelk/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpNXQelk/rmarkdown-str1fa36cb2cd1a.html --variable code_folding=hide --variable code_menu=1
+#> output file: /tmp/RtmpbcSBiO/Report_KRI.knit.md
+#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpbcSBiO/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpbcSBiO/rmarkdown-str21446130afa1.html --variable code_folding=hide --variable code_menu=1
 #> 
 #> Output created: report_studykri_AA-1.html
 #> processing file: Report_KRI.Rmd
-#> output file: /tmp/RtmpNXQelk/Report_KRI.knit.md
-#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpNXQelk/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpNXQelk/rmarkdown-str1fa3442df9c8.html --variable code_folding=hide --variable code_menu=1
+#> output file: /tmp/RtmpbcSBiO/Report_KRI.knit.md
+#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpbcSBiO/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpbcSBiO/rmarkdown-str21446b0a7c86.html --variable code_folding=hide --variable code_menu=1
 #> 
 #> Output created: report_studykri_AA-2.html
 #>                        AA-1                        AA-2 
@@ -2255,9 +2268,9 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `gsm.studykri::BindResults`
 #> 
-#> ── 15364x9 data.frame saved as `lData$lResults`.
+#> ── 15178x9 data.frame saved as `lData$lResults`.
 #> 
-#> ── Returning results from final step: 15364x9 data.frame`. ──
+#> ── Returning results from final step: 15178x9 data.frame`. ──
 #> 
 #> ── Completed `Reporting_Results` Workflow ──────────────────────────────────────
 #> 
@@ -2276,9 +2289,9 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `dplyr::bind_rows`
 #> 
-#> ── 6438x4 data.frame saved as `lData$Reporting_Groups`.
+#> ── 6376x4 data.frame saved as `lData$Reporting_Groups`.
 #> 
-#> ── Returning results from final step: 6438x4 data.frame`. ──
+#> ── Returning results from final step: 6376x4 data.frame`. ──
 #> 
 #> ── Completed `Reporting_Groups` Workflow ───────────────────────────────────────
 #> 
@@ -2294,9 +2307,9 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `gsm.studykri::BindResults`
 #> 
-#> ── 319137x10 data.frame saved as `lData$Reporting_Input`.
+#> ── 297726x10 data.frame saved as `lData$Reporting_Input`.
 #> 
-#> ── Returning results from final step: 319137x10 data.frame`. ──
+#> ── Returning results from final step: 297726x10 data.frame`. ──
 #> 
 #> ── Completed `Reporting_Input` Workflow ────────────────────────────────────────
 #> 
@@ -2356,13 +2369,12 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Workflow Step 2 of 3: `purrr::map` ──
 #> 
-#> ── Evaluating 6 parameter(s) for `purrr::map`
+#> ── Evaluating 5 parameter(s) for `purrr::map`
 #> ✔ .x = Reporting_Join: Passing lData$Reporting_Join.
 #> ✔ .f = PredictBounds_Func: Passing lData$PredictBounds_Func.
 #> ✔ dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.
 #> ✔ nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.
 #> ✔ nConfLevel = Threshold: Passing lMeta$Threshold.
-#> ℹ seed = 42: No matching data found. Passing '42' as a string.
 #> 
 #> ── Calling `purrr::map`
 #> 
@@ -2375,9 +2387,9 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `gsm.studykri::Transform_Long`
 #> 
-#> ── 5232x8 data.frame saved as `lData$Reporting_Bounds`.
+#> ── 5132x8 data.frame saved as `lData$Reporting_Bounds`.
 #> 
-#> ── Returning results from final step: 5232x8 data.frame`. ──
+#> ── Returning results from final step: 5132x8 data.frame`. ──
 #> 
 #> ── Completed `Reporting_Bounds` Workflow ───────────────────────────────────────
 #> 
@@ -2405,25 +2417,25 @@ lReporting <- gsm.core::RunWorkflows(
 #> ✔ dfStudyRef = Mapped_StudyRef: Passing lData$Mapped_StudyRef.
 #> ✔ nBootstrapReps = BootstrapReps: Passing lMeta$BootstrapReps.
 #> ✔ nConfLevel = Threshold: Passing lMeta$Threshold.
-#> ℹ seed = 42: No matching data found. Passing '42' as a string.
+#> ✔ bMixStudies = bMixStudies: Passing lMeta$bMixStudies.
 #> 
 #> ── Calling `purrr::map`
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 164
-#> Resampling with minimum group count: 164
-#> Resampling with minimum group count: 80
-#> Resampling with minimum group count: 80
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 146
+#> Calculated minimum group count: 146
+#> Calculated minimum group count: 69
+#> Calculated minimum group count: 69
 #> 
 #> ── list of length 8 saved as `lData$Analysis_BoundsRef_Wide`.
 #> 
@@ -2434,9 +2446,9 @@ lReporting <- gsm.core::RunWorkflows(
 #> 
 #> ── Calling `gsm.studykri::Transform_Long`
 #> 
-#> ── 5133x11 data.frame saved as `lData$Reporting_BoundsRef`.
+#> ── 5102x11 data.frame saved as `lData$Reporting_BoundsRef`.
 #> 
-#> ── Returning results from final step: 5133x11 data.frame`. ──
+#> ── Returning results from final step: 5102x11 data.frame`. ──
 #> 
 #> ── Completed `Reporting_BoundsRef` Workflow ────────────────────────────────────
 
@@ -2490,10 +2502,10 @@ lModule <- gsm.core::RunWorkflows(module_wf_gsm, lReporting)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 8995 rows returned.
+#> ✔ SQL Query complete: 8902 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 8995x9 data.frame saved as `lData$ResultsLog`.
+#> ── 8902x9 data.frame saved as `lData$ResultsLog`.
 #> 
 #> ── Workflow Step 2 of 6: `gsm.core::RunQuery` ──
 #> 
@@ -2523,10 +2535,10 @@ lModule <- gsm.core::RunWorkflows(module_wf_gsm, lReporting)
 #> 
 #> ── Calling `gsm.core::RunQuery`
 #> Creating a new temporary DuckDB connection.
-#> ✔ SQL Query complete: 7508 rows returned.
+#> ✔ SQL Query complete: 7401 rows returned.
 #> Disconnected from temporary DuckDB connection.
 #> 
-#> ── 7508x9 data.frame saved as `lData$ResultsNorm`.
+#> ── 7401x9 data.frame saved as `lData$ResultsNorm`.
 #> 
 #> ── Workflow Step 3 of 6: `gsm.studykri::MakeCharts_StudyKRI` ──
 #> 
@@ -2577,13 +2589,13 @@ lModule <- gsm.core::RunWorkflows(module_wf_gsm, lReporting)
 #> 
 #> ── Calling `gsm.studykri::Report_StudyKRI`
 #> processing file: Report_KRI.Rmd
-#> output file: /tmp/RtmpNXQelk/Report_KRI.knit.md
-#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpNXQelk/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpNXQelk/rmarkdown-str1fa3203996b.html --variable code_folding=hide --variable code_menu=1
+#> output file: /tmp/RtmpbcSBiO/Report_KRI.knit.md
+#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpbcSBiO/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-1.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpbcSBiO/rmarkdown-str214450961a2f.html --variable code_folding=hide --variable code_menu=1
 #> 
 #> Output created: report_studykri_AA-1.html
 #> processing file: Report_KRI.Rmd
-#> output file: /tmp/RtmpNXQelk/Report_KRI.knit.md
-#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpNXQelk/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpNXQelk/rmarkdown-str1fa36cb11736.html --variable code_folding=hide --variable code_menu=1
+#> output file: /tmp/RtmpbcSBiO/Report_KRI.knit.md
+#> /opt/hostedtoolcache/pandoc/3.1.11/x64/pandoc +RTS -K512m -RTS /tmp/RtmpbcSBiO/Report_KRI.knit.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output /home/runner/work/gsm.studykri/gsm.studykri/vignettes/report_studykri_AA-2.html --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/runner/work/_temp/Library/rmarkdown/rmarkdown/lua/latex-div.lua --embed-resources --standalone --variable bs3=TRUE --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /home/runner/work/_temp/Library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable theme=flatly --mathjax --variable 'mathjax-url=https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' --include-in-header /tmp/RtmpbcSBiO/rmarkdown-str214454a5e47.html --variable code_folding=hide --variable code_menu=1
 #> 
 #> Output created: report_studykri_AA-2.html
 #> 

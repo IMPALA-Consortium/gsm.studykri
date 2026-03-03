@@ -11,7 +11,7 @@ mapped reference studies."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,9 +62,12 @@ mapped reference studies.</p>
 <span>  nConfLevel <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  strGroupCol <span class="op">=</span> <span class="st">"GroupID"</span>,</span>
 <span>  strStudyMonthCol <span class="op">=</span> <span class="st">"StudyMonth"</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  strMinGroupsCol <span class="op">=</span> <span class="st">"MinGroups"</span>,</span>
+<span>  bMixStudies <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  tblBootstrapReps <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  tblMonthSequence <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  tblMonthSequence <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  vDbIntRandomRange <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  funCompute <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -80,7 +83,9 @@ Must contain one or more <code>Numerator_*</code> columns, <code>Denominator</co
 <dt id="arg-dfstudyref">dfStudyRef<a class="anchor" aria-label="anchor" href="#arg-dfstudyref"></a></dt>
 <dd><p>data.frame or tbl_lazy. Study-to-reference mappings with at least
 two columns: first column = target studies, second column = reference studies.
-Can have multiple rows per target study (one row per target-reference pair).</p></dd>
+Can have multiple rows per target study (one row per target-reference pair).
+Optional column (name specified by strMinGroupsCol): minimum group count for
+performance optimization.</p></dd>
 
 
 <dt id="arg-nbootstrapreps">nBootstrapReps<a class="anchor" aria-label="anchor" href="#arg-nbootstrapreps"></a></dt>
@@ -99,8 +104,20 @@ Can have multiple rows per target study (one row per target-reference pair).</p>
 <dd><p>character. Column name for study month (default: "StudyMonth").</p></dd>
 
 
-<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>integer or NULL. Random seed (default: NULL).</p></dd>
+<dt id="arg-strmingroupscol">strMinGroupsCol<a class="anchor" aria-label="anchor" href="#arg-strmingroupscol"></a></dt>
+<dd><p>character. Column name for minimum groups in dfStudyRef (default: "MinGroups").
+If this column exists in dfStudyRef, its value will be used instead of calculating
+minimum group counts, improving performance with database backends.</p></dd>
+
+
+<dt id="arg-bmixstudies">bMixStudies<a class="anchor" aria-label="anchor" href="#arg-bmixstudies"></a></dt>
+<dd><p>logical. If TRUE, aggregates studies at the StudyMonth level
+before calculating cumulative counts (faster SQL performance, but disables
+extrapolation). If FALSE (default), keeps study-level granularity through
+extrapolation step, allowing studies with different timeline lengths to be
+properly aligned before aggregation. Use TRUE for database backends when
+SQL performance is critical and all studies have similar timeline lengths.
+Default: FALSE.</p></dd>
 
 
 <dt id="arg-tblbootstrapreps">tblBootstrapReps<a class="anchor" aria-label="anchor" href="#arg-tblbootstrapreps"></a></dt>
@@ -117,6 +134,25 @@ Optional pre-generated month sequence with only a <code>MonthYYYYMM</code> colum
 (output of <code><a href="GenerateMonthSeq.html">GenerateMonthSeq()</a></code>). If NULL, attempts to create temp table
 (requires write privileges).</p></dd>
 
+
+<dt id="arg-vdbintrandomrange">vDbIntRandomRange<a class="anchor" aria-label="anchor" href="#arg-vdbintrandomrange"></a></dt>
+<dd><p>Numeric vector of length 2 or NULL. When using database
+backends that return large integers instead of 0-1 decimals for random numbers,
+specify the min/max range as c(min, max). Accepts both numeric and character
+vectors (character values are automatically converted to numeric, useful when
+reading from YAML files). Common values:</p><ul><li><p>Snowflake: c(-9223372036854775808, 9223372036854775807) (signed 64-bit)</p></li>
+<li><p>Other backends: c(0, 18446744073709551615) (unsigned 64-bit)
+Default: NULL (no normalization, assumes 0-1 decimal random values).</p></li>
+</ul></dd>
+
+
+<dt id="arg-funcompute">funCompute<a class="anchor" aria-label="anchor" href="#arg-funcompute"></a></dt>
+<dd><p>function or NULL. Optional function to apply to intermediate
+database results for performance optimization. Typically used to cache/materialize
+intermediate results using <code><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">dplyr::compute()</a></code>. Only applied when dfInput is a
+database table (tbl_dbi). Requires database write permissions to create temporary
+tables. Example: <code>funCompute = dplyr::compute</code>. Default: NULL.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -124,6 +160,13 @@ Optional pre-generated month sequence with only a <code>MonthYYYYMM</code> colum
 <code>Median_*</code>, <code>Lower_*</code>, <code>Upper_*</code> for each Metric column, <code>BootstrapCount</code>,
 <code>GroupCount</code>, <code>StudyCount</code>.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>For optimal performance with database backends:</p><ul><li><p>Include a MinGroups column in dfStudyRef (or specify custom name via strMinGroupsCol)
+to avoid collecting the full dataset to count groups</p></li>
+<li><p>Calculate as: min(n_distinct(GroupID)) across all reference studies per target study</p></li>
+<li><p>This avoids materializing the entire Analysis_Input table just to count groups</p></li>
+</ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
@@ -148,22 +191,42 @@ Optional pre-generated month sequence with only a <code>MonthYYYYMM</code> colum
 <span class="r-in"><span><span class="va">dfBounds</span> <span class="op">&lt;-</span> <span class="fu">Analyze_StudyKRI_PredictBoundsRef</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  dfInput <span class="op">=</span> <span class="va">dfSiteLevel</span>,</span></span>
 <span class="r-in"><span>  dfStudyRef <span class="op">=</span> <span class="va">dfStudyRef</span>,</span></span>
-<span class="r-in"><span>  nBootstrapReps <span class="op">=</span> <span class="fl">100</span>,</span></span>
-<span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">42</span></span></span>
+<span class="r-in"><span>  nBootstrapReps <span class="op">=</span> <span class="fl">100</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Resampling with minimum group count: 10</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Resampling with minimum group count: 10</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculated minimum group count: 10</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculated minimum group count: 10</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example with Snowflake backend</span></span></span>
+<span class="r-in"><span><span class="va">dfBounds_Snowflake</span> <span class="op">&lt;-</span> <span class="fu">Analyze_StudyKRI_PredictBoundsRef</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  dfInput <span class="op">=</span> <span class="va">dfSiteLevel</span>,</span></span>
+<span class="r-in"><span>  dfStudyRef <span class="op">=</span> <span class="va">dfStudyRef</span>,</span></span>
+<span class="r-in"><span>  nBootstrapReps <span class="op">=</span> <span class="fl">100</span>,</span></span>
+<span class="r-in"><span>  vDbIntRandomRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">9223372036854775808</span>, <span class="fl">9223372036854775807</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculated minimum group count: 10</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculated minimum group count: 10</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example with database backend using funCompute to cache results</span></span></span>
+<span class="r-in"><span><span class="co"># (Assumes dfSiteLevel is a tbl_dbi database table)</span></span></span>
+<span class="r-in"><span><span class="va">dfBounds_Cached</span> <span class="op">&lt;-</span> <span class="fu">Analyze_StudyKRI_PredictBoundsRef</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  dfInput <span class="op">=</span> <span class="va">dfSiteLevel</span>,</span></span>
+<span class="r-in"><span>  dfStudyRef <span class="op">=</span> <span class="va">dfStudyRef</span>,</span></span>
+<span class="r-in"><span>  nBootstrapReps <span class="op">=</span> <span class="fl">100</span>,</span></span>
+<span class="r-in"><span>  funCompute <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="va"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">compute</a></span>  <span class="co"># Cache intermediate results in database</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculated minimum group count: 10</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculated minimum group count: 10</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dfBounds</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 9</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   StudyMonth Median Lower Upper BootstrapCount GroupCount StudyCount StudyID</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>          1  0.144 0.110 0.160            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>          2  0.156 0.133 0.172            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>          3  0.148 0.126 0.166            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>          4  0.140 0.124 0.158            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>          5  0.147 0.131 0.160            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>          6  0.147 0.134 0.159             98         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>          1  0.144 0.103 0.194            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>          2  0.156 0.112 0.178            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>          3  0.150 0.104 0.175            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>          4  0.142 0.113 0.166            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>          5  0.146 0.121 0.167            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>          6  0.148 0.122 0.168            100         10          2 STUDY1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: StudyRefID &lt;chr&gt;</span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
