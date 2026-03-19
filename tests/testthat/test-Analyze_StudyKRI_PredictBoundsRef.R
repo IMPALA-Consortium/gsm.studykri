@@ -933,4 +933,31 @@ test_that("Analyze_StudyKRI_PredictBoundsRef warns and returns empty tibble when
   expect_equal(nrow(result), 0)
 })
 
+test_that("GetInputContext returns KRI IDs from Numerator columns", {
+  dfInput <- data.frame(
+    Numerator_Analysis_kri0001 = 1,
+    Numerator_Analysis_kri0004 = 2,
+    Denominator = 10
+  )
+  result <- GetInputContext(dfInput)
+  expect_true(grepl("KRI: Analysis_kri0001, Analysis_kri0004", result))
+})
+
+test_that("GetInputContext returns empty string when no Numerator columns", {
+  dfInput <- data.frame(Count = 1, Denominator = 10)
+  result <- GetInputContext(dfInput)
+  expect_equal(result, "")
+})
+
+test_that("GetInputContext includes DenominatorType when present", {
+  dfInput <- data.frame(
+    Numerator_kri0001 = 1,
+    Denominator = 10,
+    DenominatorType = "Days on Study"
+  )
+  result <- GetInputContext(dfInput)
+  expect_true(grepl("KRI: kri0001", result))
+  expect_true(grepl("DenominatorType: Days on Study", result))
+})
+
 # Lazy table tests have been moved to test-dbplyr-compatibility.R
