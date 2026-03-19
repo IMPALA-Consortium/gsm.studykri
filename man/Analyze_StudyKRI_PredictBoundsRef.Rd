@@ -135,7 +135,7 @@ dfBounds_Cached <- Analyze_StudyKRI_PredictBoundsRef(
   dfInput = dfSiteLevel,
   dfStudyRef = dfStudyRef,
   nBootstrapReps = 100,
-  funCompute = dplyr::compute  # Cache intermediate results in database
+  funCompute = dplyr::compute # Cache intermediate results in database
 )
 
 print(head(dfBounds))

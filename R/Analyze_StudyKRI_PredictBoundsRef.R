@@ -1,3 +1,32 @@
+#' Extract KRI context string from dfInput for warning messages
+#'
+#' Builds a descriptive suffix from Numerator column names (KRI IDs) and
+#' DenominatorType (if present). DenominatorType is only collected when
+#' this function is called, keeping it lazy.
+#'
+#' @param dfInput data.frame or tbl
+#' @return character scalar, e.g. " KRI: Analysis_kri0004. DenominatorType: Days on Study."
+#' @keywords internal
+GetInputContext <- function(dfInput) {
+  vKriIDs <- sub("^Numerator_?", "", grep("^Numerator", colnames(dfInput), value = TRUE))
+  strKri <- if (length(vKriIDs) > 0) {
+    paste0(" KRI: ", paste(vKriIDs, collapse = ", "), ".")
+  } else {
+    ""
+  }
+
+  strDenom <- ""
+  if ("DenominatorType" %in% colnames(dfInput)) {
+    vDenomTypes <- dfInput %>%
+      dplyr::distinct(.data[["DenominatorType"]]) %>%
+      dplyr::collect() %>%
+      dplyr::pull(.data[["DenominatorType"]])
+    strDenom <- paste0(" DenominatorType: ", paste(vDenomTypes, collapse = ", "), ".")
+  }
+
+  paste0(strKri, strDenom)
+}
+
 #' Predict Bounds for Combined Group of Studies
 #'
 #' @description
@@ -432,6 +461,13 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
   # Get unique target studies
   vTargetStudies <- unique(dfStudyRefCollected[[strStudyCol]])
 
+  # Pre-collect available studies from dfInput to avoid repeated queries
+  # and to skip target studies whose references are not in the data
+  vAvailableStudies <- dfInput %>%
+    dplyr::distinct(.data[["StudyID"]]) %>%
+    dplyr::collect() %>%
+    dplyr::pull(.data[["StudyID"]])
+
   # Initialize list to collect results
   lResults <- list()
 
@@ -443,6 +479,16 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
 
     vRefStudies <- studyRefRow %>%
       dplyr::pull(.data[[strStudyRefCol]])
+
+    # Skip if none of the reference studies have data for this KRI
+    vRefStudies <- intersect(vRefStudies, vAvailableStudies)
+    if (length(vRefStudies) == 0) {
+      warning(sprintf(
+        "Skipping study '%s': none of its reference studies found in data.%s",
+        study, GetInputContext(dfInput)
+      ))
+      next
+    }
 
     # Get nMinGroups if available (performance optimization)
     nMinGroupsProvided <- if (bHasMinGroups) {
@@ -489,6 +535,15 @@ Analyze_StudyKRI_PredictBoundsRef <- function(
 
     # Store in list
     lResults[[study]] <- dfBounds
+  }
+
+  # Handle case where all target studies were skipped
+  if (length(lResults) == 0) {
+    warning(sprintf(
+      "No results produced: no reference studies found in data for any target study.%s",
+      GetInputContext(dfInput)
+    ))
+    return(tibble::tibble())
   }
 
   # Combine all results - use union_all for lazy table compatibility

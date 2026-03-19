@@ -870,4 +870,67 @@ test_that("Analyze_StudyKRI_PredictBoundsRef passes through bMixStudies", {
   expect_true("StudyID" %in% names(result))
 })
 
+test_that("Analyze_StudyKRI_PredictBoundsRef warns and skips when some reference studies are missing", {
+  # dfInput only has REF1 data, not REF2
+  dfTest <- data.frame(
+    StudyID = rep(c("STUDY1", "REF1"), each = 24),
+    GroupID = rep(paste0("Site", 1:4), each = 6, times = 2),
+    Numerator = rep(1:6, times = 8),
+    Denominator = rep(10:15, times = 8),
+    MonthYYYYMM = rep(202301:202306, times = 8),
+    Metric = runif(48, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # dfStudyRef maps STUDY1 -> REF1, REF2 but REF2 has no data
+  dfStudyRef <- data.frame(
+    study = c("STUDY1", "STUDY1"),
+    studyref = c("REF1", "REF2")
+  )
+
+  # Should succeed using only REF1 (REF2 filtered out silently via intersect)
+  result <- Analyze_StudyKRI_PredictBoundsRef(
+    dfInput = dfTest,
+    dfStudyRef = dfStudyRef,
+    nBootstrapReps = 10
+  )
+
+  expect_s3_class(result, "data.frame")
+  expect_true(nrow(result) > 0)
+  expect_true("StudyID" %in% names(result))
+})
+
+test_that("Analyze_StudyKRI_PredictBoundsRef warns and returns empty tibble when all references missing", {
+  # dfInput only has STUDY1 data, none of the reference studies
+  dfTest <- data.frame(
+    StudyID = rep("STUDY1", 24),
+    GroupID = rep(paste0("Site", 1:4), each = 6),
+    Numerator = rep(1:6, times = 4),
+    Denominator = rep(10:15, times = 4),
+    MonthYYYYMM = rep(202301:202306, times = 4),
+    Metric = runif(24, 0.05, 0.5),
+    GroupLevel = "Site",
+    stringsAsFactors = FALSE
+  )
+
+  # dfStudyRef maps STUDY1 -> REF1, REF2 but neither exists in data
+  dfStudyRef <- data.frame(
+    study = "STUDY1",
+    studyref = c("REF1", "REF2")
+  )
+
+  expect_warning(
+    result <- Analyze_StudyKRI_PredictBoundsRef(
+      dfInput = dfTest,
+      dfStudyRef = dfStudyRef,
+      nBootstrapReps = 10
+    ),
+    "none of its reference studies found in data"
+  )
+
+  expect_s3_class(result, "tbl_df")
+  expect_equal(nrow(result), 0)
+})
+
 # Lazy table tests have been moved to test-dbplyr-compatibility.R

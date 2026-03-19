@@ -1,3 +1,9 @@
+# gsm.studykri 0.3.1
+
+- `Analyze_StudyKRI_PredictBoundsRef()` now gracefully handles heterogeneous KRI
+  availability across reference studies. When a reference study has no data for a
+  given KRI, it is skipped with a warning instead of causing an error (#9).
+
 # gsm.studykri 0.3.0
 
 
