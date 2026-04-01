@@ -11,7 +11,7 @@ mapped reference studies."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">gsm.studykri</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -212,21 +212,21 @@ to avoid collecting the full dataset to count groups</p></li>
 <span class="r-in"><span>  dfInput <span class="op">=</span> <span class="va">dfSiteLevel</span>,</span></span>
 <span class="r-in"><span>  dfStudyRef <span class="op">=</span> <span class="va">dfStudyRef</span>,</span></span>
 <span class="r-in"><span>  nBootstrapReps <span class="op">=</span> <span class="fl">100</span>,</span></span>
-<span class="r-in"><span>  funCompute <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="va"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">compute</a></span>  <span class="co"># Cache intermediate results in database</span></span></span>
+<span class="r-in"><span>  funCompute <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="va"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">compute</a></span> <span class="co"># Cache intermediate results in database</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Calculated minimum group count: 10</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Calculated minimum group count: 10</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dfBounds</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 9</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   StudyMonth Median Lower Upper BootstrapCount GroupCount StudyCount StudyID</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>          1  0.144 0.103 0.194            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>          2  0.156 0.112 0.178            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>          3  0.150 0.104 0.175            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>          4  0.142 0.113 0.166            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>          5  0.146 0.121 0.167            100         10          2 STUDY1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>          6  0.148 0.122 0.168            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   StudyMonth Median  Lower Upper BootstrapCount GroupCount StudyCount StudyID</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>          1  0.118 0.051<span style="text-decoration: underline;">7</span> 0.172            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>          2  0.143 0.088<span style="text-decoration: underline;">4</span> 0.175            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>          3  0.137 0.088<span style="text-decoration: underline;">1</span> 0.169            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>          4  0.136 0.099<span style="text-decoration: underline;">3</span> 0.169            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span>          5  0.145 0.119  0.171            100         10          2 STUDY1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span>          6  0.146 0.124  0.167            100         10          2 STUDY1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: StudyRefID &lt;chr&gt;</span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

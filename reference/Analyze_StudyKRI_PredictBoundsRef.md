@@ -176,20 +176,20 @@ dfBounds_Cached <- Analyze_StudyKRI_PredictBoundsRef(
   dfInput = dfSiteLevel,
   dfStudyRef = dfStudyRef,
   nBootstrapReps = 100,
-  funCompute = dplyr::compute  # Cache intermediate results in database
+  funCompute = dplyr::compute # Cache intermediate results in database
 )
 #> Calculated minimum group count: 10
 #> Calculated minimum group count: 10
 
 print(head(dfBounds))
 #> # A tibble: 6 × 9
-#>   StudyMonth Median Lower Upper BootstrapCount GroupCount StudyCount StudyID
-#>        <int>  <dbl> <dbl> <dbl>          <int>      <int>      <int> <chr>  
-#> 1          1  0.144 0.103 0.194            100         10          2 STUDY1 
-#> 2          2  0.156 0.112 0.178            100         10          2 STUDY1 
-#> 3          3  0.150 0.104 0.175            100         10          2 STUDY1 
-#> 4          4  0.142 0.113 0.166            100         10          2 STUDY1 
-#> 5          5  0.146 0.121 0.167            100         10          2 STUDY1 
-#> 6          6  0.148 0.122 0.168            100         10          2 STUDY1 
+#>   StudyMonth Median  Lower Upper BootstrapCount GroupCount StudyCount StudyID
+#>        <int>  <dbl>  <dbl> <dbl>          <int>      <int>      <int> <chr>  
+#> 1          1  0.118 0.0517 0.172            100         10          2 STUDY1 
+#> 2          2  0.143 0.0884 0.175            100         10          2 STUDY1 
+#> 3          3  0.137 0.0881 0.169            100         10          2 STUDY1 
+#> 4          4  0.136 0.0993 0.169            100         10          2 STUDY1 
+#> 5          5  0.145 0.119  0.171            100         10          2 STUDY1 
+#> 6          6  0.146 0.124  0.167            100         10          2 STUDY1 
 #> # ℹ 1 more variable: StudyRefID <chr>
 ```

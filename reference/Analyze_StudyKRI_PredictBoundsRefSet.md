@@ -175,12 +175,12 @@ dfGroupBounds_Mixed <- Analyze_StudyKRI_PredictBoundsRefSet(
 
 print(head(dfGroupBounds))
 #> # A tibble: 6 × 7
-#>   StudyMonth Median  Lower Upper BootstrapCount GroupCount StudyCount
-#>        <int>  <dbl>  <dbl> <dbl>          <int>      <int>      <int>
-#> 1          1  0.157 0.05   0.242            100         10          3
-#> 2          2  0.174 0.0787 0.241            100         10          3
-#> 3          3  0.187 0.110  0.234            100         10          3
-#> 4          4  0.190 0.126  0.233            100         10          3
-#> 5          5  0.188 0.138  0.227            100         10          3
-#> 6          6  0.190 0.148  0.225            100         10          3
+#>   StudyMonth Median Lower Upper BootstrapCount GroupCount StudyCount
+#>        <int>  <dbl> <dbl> <dbl>          <int>      <int>      <int>
+#> 1          1  0.143 0.1   0.275            100         10          3
+#> 2          2  0.162 0.114 0.269            100         10          3
+#> 3          3  0.185 0.135 0.241            100         10          3
+#> 4          4  0.187 0.145 0.237            100         10          3
+#> 5          5  0.188 0.149 0.225            100         10          3
+#> 6          6  0.189 0.158 0.217            100         10          3
 ```
