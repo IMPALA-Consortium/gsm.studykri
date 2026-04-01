@@ -185,20 +185,20 @@ lJoined
 #> $Visit
 #> # Source:   SQL [?? x 7]
 #> # Database: DuckDB 1.5.1 [unknown@Linux 6.17.0-1008-azure:R 4.5.3/:memory:]
-#>    GroupID    GroupLevel Denominator StudyID MonthYYYYMM Numerator_kri0002
+#>    GroupID    GroupLevel Denominator StudyID MonthYYYYMM Numerator_kri0001
 #>    <chr>      <chr>            <dbl> <chr>         <dbl>             <dbl>
-#>  1 AA-1_0X035 Site                 1 AA-1         200402                 0
-#>  2 AA-1_0X035 Site                 1 AA-1         200403                 0
-#>  3 AA-1_0X035 Site                 1 AA-1         200406                 0
-#>  4 AA-1_0X035 Site                 1 AA-1         200410                 0
-#>  5 AA-1_0X035 Site                 1 AA-1         200411                 0
-#>  6 AA-1_0X035 Site                 1 AA-1         200412                 0
-#>  7 AA-1_0X035 Site                 1 AA-1         200504                 0
-#>  8 AA-1_0X069 Site                 2 AA-1         200511                 0
-#>  9 AA-1_0X065 Site                 5 AA-1         200503                 0
-#> 10 AA-1_0X161 Site                 3 AA-1         200906                 0
+#>  1 AA-1_0X035 Site                 1 AA-1         200508                 0
+#>  2 AA-1_0X069 Site                 2 AA-1         200610                 1
+#>  3 AA-1_0X069 Site                 2 AA-1         200605                 0
+#>  4 AA-1_0X161 Site                 3 AA-1         200911                 3
+#>  5 AA-1_0X096 Site                 1 AA-1         200711                 1
+#>  6 AA-1_0X096 Site                 1 AA-1         200806                 0
+#>  7 AA-1_0X096 Site                 1 AA-1         200812                 0
+#>  8 AA-1_0X096 Site                 1 AA-1         200902                 0
+#>  9 AA-1_0X096 Site                 1 AA-1         200905                 0
+#> 10 AA-1_0X062 Site                 1 AA-1         201509                 0
 #> # ℹ more rows
-#> # ℹ 1 more variable: Numerator_kri0001 <dbl>
+#> # ℹ 1 more variable: Numerator_kri0002 <dbl>
 ```
 
 Next we prepare for the actual bootstrap simulation. For this we need to
@@ -278,18 +278,18 @@ tblBounds
 #> # Source:     SQL [?? x 8]
 #> # Database:   DuckDB 1.5.1 [unknown@Linux 6.17.0-1008-azure:R 4.5.3/:memory:]
 #> # Ordered by: StudyID, StudyMonth
-#>    MetricID DenominatorType StudyID StudyMonth BootstrapCount  Median    Lower
-#>    <chr>    <chr>           <chr>        <dbl>          <int>   <dbl>    <dbl>
-#>  1 kri0002  Visit           AA-1             2            100 0       0       
-#>  2 kri0002  Visit           AA-1            10            100 0       0       
-#>  3 kri0002  Visit           AA-1            18            100 0       0       
-#>  4 kri0002  Visit           AA-1            28            100 0.00120 0       
-#>  5 kri0002  Visit           AA-1            29            100 0.00139 0       
-#>  6 kri0002  Visit           AA-1            34            100 0.00291 0       
-#>  7 kri0002  Visit           AA-1            39            100 0.00368 0.000806
-#>  8 kri0002  Visit           AA-1            42            100 0.00408 0.000965
-#>  9 kri0002  Visit           AA-1            47            100 0.00349 0.000810
-#> 10 kri0002  Visit           AA-1            49            100 0.00330 0.000759
+#>    MetricID DenominatorType StudyID StudyMonth BootstrapCount Median  Lower
+#>    <chr>    <chr>           <chr>        <dbl>          <int>  <dbl>  <dbl>
+#>  1 kri0001  Visit           AA-1             2            100  0.211 0     
+#>  2 kri0001  Visit           AA-1            10            100  0.2   0.0972
+#>  3 kri0001  Visit           AA-1            18            100  0.136 0.0953
+#>  4 kri0001  Visit           AA-1            28            100  0.159 0.123 
+#>  5 kri0001  Visit           AA-1            29            100  0.163 0.132 
+#>  6 kri0001  Visit           AA-1            34            100  0.181 0.145 
+#>  7 kri0001  Visit           AA-1            39            100  0.181 0.148 
+#>  8 kri0001  Visit           AA-1            42            100  0.186 0.153 
+#>  9 kri0001  Visit           AA-1            47            100  0.186 0.155 
+#> 10 kri0001  Visit           AA-1            49            100  0.185 0.157 
 #> # ℹ more rows
 #> # ℹ 1 more variable: Upper <dbl>
 
@@ -302,16 +302,16 @@ tblBoundsRef
 #> # Ordered by: StudyMonth
 #>    MetricID DenominatorType StudyMonth BootstrapCount GroupCount StudyCount
 #>    <chr>    <chr>                <dbl>          <int>      <dbl>      <int>
-#>  1 kri0002  Visit                    5            100         73          3
-#>  2 kri0002  Visit                    9            100         73          3
-#>  3 kri0002  Visit                   11            100         73          3
-#>  4 kri0002  Visit                   14            100         73          3
-#>  5 kri0002  Visit                   15            100         73          3
-#>  6 kri0002  Visit                   16            100         73          3
-#>  7 kri0002  Visit                   17            100         73          3
-#>  8 kri0002  Visit                   22            100         73          3
-#>  9 kri0002  Visit                   26            100         73          3
-#> 10 kri0002  Visit                   30            100         73          3
+#>  1 kri0001  Visit                  143            100         73          3
+#>  2 kri0001  Visit                  154            100         73          3
+#>  3 kri0001  Visit                  155            100         73          3
+#>  4 kri0001  Visit                  160            100         73          3
+#>  5 kri0001  Visit                  162            100         73          3
+#>  6 kri0001  Visit                  163            100         73          3
+#>  7 kri0001  Visit                  165            100         73          3
+#>  8 kri0001  Visit                  166            100         73          3
+#>  9 kri0001  Visit                  168            100         73          3
+#> 10 kri0001  Visit                  172            100         73          3
 #> # ℹ more rows
 #> # ℹ 5 more variables: StudyID <chr>, StudyRefID <chr>, Median <dbl>,
 #> #   Lower <dbl>, Upper <dbl>
@@ -690,18 +690,18 @@ lReporting
 #> # Source:     SQL [?? x 9]
 #> # Database:   DuckDB 1.5.1 [unknown@Linux 6.17.0-1008-azure:R 4.5.3/:memory:]
 #> # Ordered by: StudyID, StudyMonth
-#>    StudyID MonthYYYYMM StudyMonth Numerator Denominator  Metric GroupCount
-#>    <chr>         <dbl>      <dbl>     <dbl>       <dbl>   <dbl>      <dbl>
-#>  1 AA-4         200403          1         0         140 0                5
-#>  2 AA-4         200404          2         2         309 0.00647          6
-#>  3 AA-4         200405          3         2         522 0.00383          7
-#>  4 AA-4         200406          4         2         752 0.00266          9
-#>  5 AA-4         200407          5         4        1047 0.00382          9
-#>  6 AA-4         200408          6         5        1409 0.00355         12
-#>  7 AA-4         200409          7         5        1799 0.00278         12
-#>  8 AA-4         200410          8         6        2220 0.00270         13
-#>  9 AA-4         200411          9         8        2640 0.00303         13
-#> 10 AA-4         200412         10         9        3074 0.00293         13
+#>    StudyID MonthYYYYMM StudyMonth Numerator Denominator Metric GroupCount
+#>    <chr>         <dbl>      <dbl>     <dbl>       <dbl>  <dbl>      <dbl>
+#>  1 AA-3         200410          1        22          65 0.338           5
+#>  2 AA-3         200411          2        22         209 0.105           5
+#>  3 AA-3         200412          3        25         333 0.0751          4
+#>  4 AA-3         200501          4        26         457 0.0569          4
+#>  5 AA-3         200502          5        26         581 0.0448          7
+#>  6 AA-3         200503          6        27         873 0.0309         10
+#>  7 AA-3         200504          7        32        1259 0.0254         13
+#>  8 AA-3         200505          8        35        1693 0.0207         13
+#>  9 AA-3         200506          9        39        2113 0.0185         13
+#> 10 AA-3         200507         10        41        2559 0.0160         14
 #> # ℹ more rows
 #> # ℹ 2 more variables: MetricID <chr>, SnapshotDate <date>
 #> 
@@ -759,16 +759,16 @@ lReporting
 #> # Ordered by: StudyID, StudyMonth
 #>    MetricID    DenominatorType StudyID StudyMonth BootstrapCount  Median   Lower
 #>    <chr>       <chr>           <chr>        <dbl>          <int>   <dbl>   <dbl>
-#>  1 Analysis_k… Days on Study   AA-1             2            100 0.0208  0.00849
-#>  2 Analysis_k… Days on Study   AA-1            10            100 0.00567 0.00322
-#>  3 Analysis_k… Days on Study   AA-1            18            100 0.00551 0.00395
-#>  4 Analysis_k… Days on Study   AA-1            28            100 0.00597 0.00460
-#>  5 Analysis_k… Days on Study   AA-1            29            100 0.00596 0.00447
-#>  6 Analysis_k… Days on Study   AA-1            34            100 0.00578 0.00448
-#>  7 Analysis_k… Days on Study   AA-1            39            100 0.00558 0.00439
-#>  8 Analysis_k… Days on Study   AA-1            42            100 0.00571 0.00455
-#>  9 Analysis_k… Days on Study   AA-1            47            100 0.00572 0.00458
-#> 10 Analysis_k… Days on Study   AA-1            49            100 0.00560 0.00458
+#>  1 Analysis_k… Days on Study   AA-1             1            100 0.0411  0.02   
+#>  2 Analysis_k… Days on Study   AA-1             7            100 0.00825 0.00475
+#>  3 Analysis_k… Days on Study   AA-1             8            100 0.00692 0.00372
+#>  4 Analysis_k… Days on Study   AA-1            13            100 0.00572 0.00358
+#>  5 Analysis_k… Days on Study   AA-1            19            100 0.00573 0.00389
+#>  6 Analysis_k… Days on Study   AA-1            21            100 0.00526 0.00382
+#>  7 Analysis_k… Days on Study   AA-1            25            100 0.00632 0.00467
+#>  8 Analysis_k… Days on Study   AA-1            27            100 0.00604 0.00442
+#>  9 Analysis_k… Days on Study   AA-1            46            100 0.00564 0.00468
+#> 10 Analysis_k… Days on Study   AA-1            48            100 0.00563 0.00461
 #> # ℹ more rows
 #> # ℹ 1 more variable: Upper <dbl>
 #> 
@@ -778,16 +778,16 @@ lReporting
 #> # Ordered by: StudyMonth
 #>    MetricID      DenominatorType StudyMonth BootstrapCount GroupCount StudyCount
 #>    <chr>         <chr>                <dbl>          <int>      <dbl>      <int>
-#>  1 Analysis_kri… Days on Study            5            100         73          3
-#>  2 Analysis_kri… Days on Study            9            100         73          3
-#>  3 Analysis_kri… Days on Study           11            100         73          3
-#>  4 Analysis_kri… Days on Study           14            100         73          3
-#>  5 Analysis_kri… Days on Study           15            100         73          3
-#>  6 Analysis_kri… Days on Study           16            100         73          3
-#>  7 Analysis_kri… Days on Study           17            100         73          3
-#>  8 Analysis_kri… Days on Study           22            100         73          3
-#>  9 Analysis_kri… Days on Study           26            100         73          3
-#> 10 Analysis_kri… Days on Study           30            100         73          3
+#>  1 Analysis_kri… Days on Study          165            100         73          3
+#>  2 Analysis_kri… Days on Study          166            100         73          3
+#>  3 Analysis_kri… Days on Study          168            100         73          3
+#>  4 Analysis_kri… Days on Study          172            100         73          3
+#>  5 Analysis_kri… Days on Study          177            100         73          3
+#>  6 Analysis_kri… Days on Study          179            100         73          3
+#>  7 Analysis_kri… Days on Study          180            100         73          3
+#>  8 Analysis_kri… Days on Study            5            100         73          3
+#>  9 Analysis_kri… Days on Study            9            100         73          3
+#> 10 Analysis_kri… Days on Study           11            100         73          3
 #> # ℹ more rows
 #> # ℹ 5 more variables: StudyID <chr>, StudyRefID <chr>, Median <dbl>,
 #> #   Lower <dbl>, Upper <dbl>
