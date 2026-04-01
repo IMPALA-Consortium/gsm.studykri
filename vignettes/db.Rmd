@@ -186,7 +186,7 @@ dfStudyRef <- tibble(
 )
 
 dfRep <- tibble(
-  BootstrapRep = seq(1, 1000)
+  BootstrapRep = seq(1, 100)
 )
 
 dfMonths <- tibble(
@@ -301,6 +301,9 @@ reporting_wf <- gsm.core::MakeWorkflowList(
   strNames = c("Bounds", "BoundsRef", "Input", "Join", "Metrics", "Results"),
   strPath = system.file("workflow/3_reporting", package = "gsm.studykri")
 )
+
+reporting_wf$BoundsRef$meta$BootstrapReps <- 100
+reporting_wf$Bounds$meta$BootstrapReps <- 100
 
 lReporting <- gsm.core::RunWorkflows(
   lWorkflows = reporting_wf,
